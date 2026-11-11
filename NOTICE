@@ -1,0 +1,24 @@
+Lumantic
+Copyright 2026 The Lumantic Authors
+
+This product includes software developed by The Lumantic Authors
+(https://github.com/Dominik1407/lumantic).
+
+The web interface bundles the following fonts, each licensed under the
+SIL Open Font License, Version 1.1 (https://openfontlicense.org).
+The font files and their license texts come from the Fontsource packages
+listed in web/package.json.
+
+  Geist          Copyright 2024 The Geist Project Authors
+                 https://github.com/vercel/geist-font
+  IBM Plex Sans  Copyright 2019 IBM Corp.
+  IBM Plex Mono  Copyright 2017 IBM Corp.
+                 https://github.com/IBM/plex
+  Martian Mono   Copyright 2020 The Martian Mono Project Authors
+                 https://github.com/evilmartians/mono
+  Newsreader     Copyright 2020 The Newsreader Project Authors
+                 https://github.com/productiontype/Newsreader
+  Sora           Copyright 2019 The Sora Project Authors
+                 https://github.com/sora-xor/sora-font
+  Source Sans 3  Copyright Adobe, with Reserved Font Name 'Source'
+                 https://github.com/adobe-fonts/source-sans

@@ -1,0 +1,33 @@
+name: Idea or proposal
+description: Suggest a feature, an adapter or a change. Also the place to agree on a pull request before writing it.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does it solve?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Data source adapter
+        - Corporate design
+        - Key figure template
+        - Translation
+        - Surface and design
+        - Other
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I would like to build this myself and send a pull request.
