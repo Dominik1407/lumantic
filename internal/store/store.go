@@ -10,6 +10,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -243,13 +244,27 @@ func (s *Store) SetWorkspaceOf(id string, raw json.RawMessage) error {
 	return s.save()
 }
 
-// DropWorkspace forgets the workspace of a Kosmos that was removed.
+// HasWorkspace says whether a workspace document was ever saved under id.
+func (s *Store) HasWorkspace(id string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return len(s.data.Workspaces[id]) > 0
+}
+
+// DropWorkspace forgets the workspace of a Kosmos that was removed, and the
+// workspaces people kept in it ("id|person").
 func (s *Store) DropWorkspace(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if _, ok := s.data.Workspaces[id]; !ok {
+	dropped := false
+	for key := range s.data.Workspaces {
+		if key == id || strings.HasPrefix(key, id+"|") {
+			delete(s.data.Workspaces, key)
+			dropped = true
+		}
+	}
+	if !dropped {
 		return nil
 	}
-	delete(s.data.Workspaces, id)
 	return s.save()
 }

@@ -59,6 +59,8 @@ function start() {
   wireMenu();
   buildWorld();
   load();
+  if (fine(G)) { AT = PERIODS[G].length - 1; T.base = PERIODS[G][AT].mi; }
+  lens.m = endOf(lens.m);
   if (HOST.prefs().hints === false) seenHint = true;
   buildLens();
   buildRuler();

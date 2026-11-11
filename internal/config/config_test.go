@@ -178,7 +178,7 @@ func TestExampleConfigIsValid(t *testing.T) {
 	if len(c.Brand.Designs) == 0 || c.Brand.Designs[0].ID != "musterbank" {
 		t.Fatalf("example design missing: %+v", c.Brand)
 	}
-	if len(c.Kosmen) != 2 || c.Kosmen[0].ID != "firmenkunden" || c.Kosmen[0].Data.Type != "files" {
+	if len(c.Kosmen) != 3 || c.Kosmen[2].ID != "industrie" || c.Kosmen[0].ID != "firmenkunden" || c.Kosmen[0].Data.Type != "files" {
 		t.Fatalf("example kosmen missing: %+v", c.Kosmen)
 	}
 }
@@ -324,5 +324,47 @@ func TestRefreshSchedules(t *testing.T) {
 	}
 	if err := ValidateRefresh(Refresh{Daily: []string{"00:00", "23:59"}, Watch: 1440}); err != nil {
 		t.Error(err)
+	}
+}
+
+func TestLoginChosenByVariableGetsItsDefaults(t *testing.T) {
+	dir := t.TempDir()
+	m, err := Open(filepath.Join(dir, "lumantic.json"), "", envOf(map[string]string{"LUMANTIC_AUTH": "proxy", "LUMANTIC_ADMINS": "GG-A, GG-B"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := m.Effective().Auth
+	if a.Kind != "proxy" || a.Proxy.User != "X-authentik-username" || len(a.Proxy.Trust) != 2 || a.Proxy.Logout == "" || strings.Join(a.Admins, ",") != "GG-A,GG-B" {
+		t.Fatalf("%+v", a)
+	}
+}
+
+// A Kosmos judges in its standard raster: monat unless the file says quartal or jahr.
+func TestGrains(t *testing.T) {
+	c := Defaults()
+	c.Grain = " Quartal "
+	c.Kosmen = []Kosmos{{ID: "werk", Data: Data{Type: "files", Name: "Werk", Path: "daten/werk"}, Grain: "JAHR"}}
+	normalize(&c)
+	if err := Validate(c); err != nil || c.Grain != "quartal" || c.Kosmen[0].Grain != "jahr" {
+		t.Fatalf("%v %q %q", err, c.Grain, c.Kosmen[0].Grain)
+	}
+	if GrainOf("") != "monat" || GrainOf("jahr") != "jahr" {
+		t.Fatal("GrainOf")
+	}
+	for name, set := range map[string]func(*Config){
+		"weeks for the first":  func(c *Config) { c.Grain = "woche" },
+		"days for another one": func(c *Config) { c.Kosmen[0].Grain = "tag" },
+	} {
+		bad := c
+		bad.Kosmen = append([]Kosmos{}, c.Kosmen...)
+		set(&bad)
+		if err := Validate(bad); err == nil || !strings.Contains(err.Error(), "Raster") {
+			t.Errorf("%s must be refused: %v", name, err)
+		}
+	}
+	m, _ := Open(filepath.Join(t.TempDir(), "lumantic.json"), "", envOf(nil))
+	got, err := m.Merge(map[string]json.RawMessage{"grain": json.RawMessage(`"Jahr"`)})
+	if err != nil || got.Grain != "jahr" {
+		t.Fatalf("merge: %v %q", err, got.Grain)
 	}
 }

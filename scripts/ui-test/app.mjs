@@ -253,6 +253,77 @@ export default async (t) => {
   await t.wait(1200);
   await t.shot("15-verbunden");
 
+  // ── the Sternkatalog: every star with where its words come from, and a way to add what is open
+  await booted();
+  await t.wait(2500);
+  await t.clickSel("#places [data-katalog]");
+  check("the places row opens the Sternkatalog", await until(`return !document.getElementById("katalog").hidden && document.querySelectorAll("#katalog .kt-list .kt-row").length >= 5`, 6000));
+  const kt = await q(`return { hl: document.querySelector("#katalog .kt-hl").textContent, marks: [...new Set([...document.querySelectorAll("#katalog .kt-trace .kt-o")].map((m) => m.dataset.from))].sort().join() }`);
+  check("it counts its stars and shows where words come from", /Sterne, .+ Themen?\.$/.test(kt.hl) && kt.marks === "lumantic,vermutet", kt);
+  await clickText("#katalog .kt-row", "01");
+  await t.wait(400);
+  await q(`const dt = [...document.querySelectorAll("#katalog .kt-facts dt")].find((x) => x.textContent === "Berechnung"); dt.nextElementSibling.querySelector(".kt-add").click(); return 1`);
+  await t.wait(200);
+  await q(`const i = document.querySelector("#katalog .kt-in-text"); i.value = "HQLA ÷ Abflüsse der nächsten 30 Tage"; return 1`);
+  await clickText("#katalog .kt-btn", "Speichern");
+  await t.wait(500);
+  check("an open field is added in place", (await q(`return document.querySelector("#katalog .kt-facts").textContent`)).includes("HQLA ÷ Abflüsse der nächsten 30 Tage"));
+  check("it says the raster the data gives", (await q(`return document.querySelector("#katalog .kt-facts").textContent`)).includes("täglich erhoben"));
+  await t.shot("14c-sternkatalog");
+  // A flow's target spreads over the year by the standard until someone changes it.
+  await q(`const r = [...document.querySelectorAll("#katalog .kt-row")].find((x) => x.textContent.includes("Netto-Neugeld")); r.click(); return 1`);
+  await t.wait(400);
+  const spread = () => q(`const dt = [...document.querySelectorAll("#katalog .kt-facts dt")].find((x) => x.textContent === "Verteilung"); return dt ? dt.nextElementSibling.textContent : ""`);
+  check("a flow says how its target spreads, the standard first", (await spread()).includes("gleich auf die Monate, im Monat auf die Arbeitstage"), await spread());
+  await q(`const dt = [...document.querySelectorAll("#katalog .kt-facts dt")].find((x) => x.textContent === "Verteilung"); dt.nextElementSibling.querySelector(".kt-add").click(); return 1`);
+  await t.wait(200);
+  await q(`const s = document.querySelector("#katalog .kt-edit select"); s.value = "arbeitstage"; return 1`);
+  await clickText("#katalog .kt-btn", "Speichern");
+  await t.wait(500);
+  check("and someone can change it", (await spread()).includes("nach den Arbeitstagen des Jahres") && (await mock({})).kosmen[0].adds?.nnm?.phasing === "arbeitstage", await spread());
+  await clickText("#katalog .kt-row", "Wörter");
+  await t.wait(400);
+  await q(`const f = document.querySelectorAll("#katalog .kt-edit.is-new .kt-in-line"); f[0].value = "Puffer"; f[1].value = "Abstand zur Grenze"; f[2].value = "Reserve, Polster"; return 1`);
+  await clickText("#katalog .kt-btn", "Hinzufügen");
+  await t.wait(500);
+  check("a word joins the words", (await q(`return document.querySelector("#katalog .kt-terms")?.textContent || ""`)).includes("Puffer"));
+  await q(`const i = document.querySelector("#katalog .kt-search"); i.value = "reserve"; i.dispatchEvent(new Event("input")); return 1`);
+  await t.wait(300);
+  check("the search finds words by their synonyms", (await q(`return document.querySelector("#katalog .kt-more").textContent`)).includes("Begriffe · 1"));
+  await t.key("Escape");
+  await t.wait(400);
+  check("Esc closes it", await q(`return document.getElementById("katalog").hidden`));
+  await q(`document.activeElement?.blur(); return 1`);
+  await t.key("c");
+  check("and C opens it again", await until(`return !document.getElementById("katalog").hidden`, 4000));
+  await t.key("Escape");
+  await t.wait(300);
+
+  // ── signed in without admin rights: what is not theirs to change is not offered
+  await mock({ me: { id: "mmuster", name: "Mia Muster", groups: ["GG-ALCO"], admin: false, editor: false, login: "oidc", logout: "/auth/logout" } });
+  await q(`location.reload(); return true`);
+  await t.wait(1500);
+  await booted();
+  await q(`document.activeElement?.blur(); return 1`);
+  await t.key(",");
+  await t.wait(300);
+  await clickText(".s-tabs [role=tab]", "Daten");
+  await t.wait(900);
+  const plain = await q(`return { inputs: document.querySelectorAll("#set-body input").length, buttons: [...document.querySelectorAll("#set-body .s-btn")].map((b) => b.textContent), text: document.getElementById("set-body").textContent }`);
+  check("without admin rights Daten offers nothing to change", plain.inputs === 0 && !plain.buttons.includes("Speichern") && !plain.buttons.includes("Kennzahl hinzufügen")
+    && plain.text.includes("richten Administratoren ein") && plain.text.includes("pflegen andere"), { inputs: plain.inputs, buttons: plain.buttons });
+  await clickText(".s-tabs [role=tab]", "Darstellung");
+  await t.wait(300);
+  check("and no «Für alle speichern»", !(await q(`return document.getElementById("set-body").textContent`)).includes("Für alle speichern"));
+  await clickText(".s-tabs [role=tab]", "Über");
+  await t.wait(400);
+  const about = await q(`return document.getElementById("set-body").textContent`);
+  check("Über says who is signed in, with a way out", about.includes("Mia Muster (mmuster)") && about.includes("GG-ALCO") && about.includes("Abmelden") && !about.includes("Konfiguration"), about.slice(0, 240));
+  await t.shot("15b-ohne-adminrechte");
+  await t.key("Escape");
+  await t.wait(300);
+  await mock({ me: null });
+
   // ── the very first start: where the gold layer lives, five kinds, one tap into the right form
   await mock({ empty: true, fresh: true });
   await q(`location.reload(); return true`);

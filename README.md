@@ -64,11 +64,14 @@ Einen weiteren Kosmos legt man im Hauptmenü an («Kosmos hinzufügen»): Name, 
 Einstellungen unter «Daten». Mit nur einem Kosmos gibt es kein Hauptmenü, die App öffnet
 direkt in ihm. Adressen: `/?k=<id>` ist ein Kosmos, `/?kosmen` das Hauptmenü.
 
-`.\scripts\run.ps1 -Seed` erzeugt neben «ALCO» zwei weitere Beispiel-Goldlayer als Ordner mit
-CSV-Dateien, «Firmenkunden» und «Privatkunden». Ihre Kennzahlen liegen in `config/beispiele/`,
-[config/lumantic.example.json](config/lumantic.example.json) verbindet alle drei.
+`.\scripts\run.ps1 -Seed` erzeugt neben «ALCO» drei weitere Beispiel-Goldlayer als Ordner mit
+CSV-Dateien: «Firmenkunden», «Privatkunden» und «Industrie», das Controlling eines erfundenen
+Herstellers von Antrieben und Steuerungen (Umsatz, Auftragseingang, EBIT-Marge, OEE,
+Liefertreue, Gutteile, Ausschuss, Lagerreichweite). Ohne die DuckDB-Datei neu zu bauen, schreibt
+`go run ./cmd/seed -folders` nur die Ordner. Ihre Kennzahlen liegen in `config/beispiele/`,
+[config/lumantic.example.json](config/lumantic.example.json) verbindet alle vier.
 
-Solange es keine Anmeldung gibt, sehen alle Personen alle Kosmen.
+Wer welchen Kosmos sieht, regelt die Anmeldung (siehe «Anmeldung und Rechte»).
 
 ### Tasten
 
@@ -76,9 +79,11 @@ Solange es keine Anmeldung gibt, sehen alle Personen alle Kosmen.
 |---|---|
 | `H` | Heute |
 | `K` | zurück ins Hauptmenü (bei mehreren Kosmen) |
+| `C` | Sternkatalog: im Raum der Katalog dieses Kosmos, im Hauptmenü der aller Kosmen |
 | `1` bis `9` | Themen-Seite öffnen, im Hauptmenü einen Kosmos |
 | `0` | Überblick über alle Seiten |
-| `←` `→` | Monat zurück oder vor, mit `Shift` ein Jahr |
+| `←` `→` | eine Periode zurück oder vor (Monat, Quartal oder Jahr), mit `Shift` ein Jahr |
+| `G` | Raster wechseln: Tag, Woche, Monat, Quartal, Jahr |
 | `Z` | zwischen jetzt und dem letzten Monat in der Vergangenheit wechseln |
 | `Leertaste` | Geschichte abspielen oder anhalten |
 | `/` | Baustein einfügen |
@@ -168,14 +173,89 @@ mit `LUMANTIC_METRICS` auf eine andere Datei.
 }
 ```
 
-- `kind`: `stock` (Bestand am Monatsende) oder `flow` (Summe im Monat).
+- `kind`: wie die Kennzahl über ein Quartal oder Jahr zusammenkommt: `stock` (Bestand am
+  Periodenende), `flow` (Summe), `avg` (Durchschnitt der Monate, etwa die Zinsmarge) oder
+  `ratio` (Verhältnis: Zähler und Nenner je für sich zusammengezählt, dann geteilt; braucht
+  `parts` mit `mode: "ratio"`).
 - `dir`: `1` mehr ist besser, `-1` weniger ist besser, `0` neutral.
 - `limit` ist die regulatorische Grenze, `target` das interne Ziel (bei `dir: -1` die Frühwarnung).
 - `parts` zerlegt eine Kennzahl: in Spalten (`columns`) oder nach einer Dimension (`split`, z. B. `segment`). `mode` ist `sum`, `ratio` oder `funnel`.
-- `daily` ist optional und speist die Tageswerte.
+  Bei `ratio` sagt `kind`, wie Zähler und Nenner zusammenkommen: `stock` (am Stichtag, wie bei
+  der LCR) oder `flow` (summiert, wie bei der Ausschussquote: Ausschuss ÷ gefertigte Teile).
+- `daily` ist optional: eine Tabelle mit einer Zeile pro Tag (oder pro Tag und Teil). Sie speist die Tageswerte und
+  macht die Kennzahl auch in Wochen und Tagen lesbar. Prozente brauchen eine Zeile pro Tag, denn Lumantic summiert die
+  Zeilen eines Tages.
 
 Beim Start prüft Lumantic jede Tabelle und Spalte gegen den Katalog. Fehlt einer Kennzahl
 eine Spalte, fällt nur sie weg; die Einstellungen zeigen, was fehlt.
+
+Einheiten (`unit`): `%`, Geld in Mio. CHF (`Mio`, als Mrd. gezeigt mit `Mrd`, `Tsd` für
+Tausend CHF), `Stk` (Stück), `Tage`, `h` (Stunden) und `Zahl`. Dazu kommen Felder für den
+Katalog: `formula` (die Berechnung in Worten), `owner` (wer für die Kennzahl geradesteht) und
+`bounds`, Ziele und Grenzen mit Gültigkeit, etwa ein Budget pro Jahr:
+
+```json
+"bounds": [ { "kind": "ziel", "value": 8.0, "name": "Budget 2025", "from": "2025-01", "until": "2025-12" },
+            { "kind": "ziel", "value": 9.0, "name": "Budget 2026", "from": "2026-01" } ]
+```
+
+Bei einem Fluss ist ein solches Ziel ein **Jahresbudget**, ausser es sagt `"per": "monat"`. Ein einzelnes
+`target` gilt wie bisher pro Monat; mit `"targetPer": "jahr"` ist es ein Jahresziel. Lumantic verteilt ein
+Jahresziel nach dem Branchenstandard: ein Zwölftel pro Monat, im Monat gleichmässig auf die Arbeitstage Montag
+bis Freitag. Umstellen lässt sich das pro Kennzahl mit `phasing` (auch im Sternkatalog unter «Verteilung»):
+`arbeitstage` (das Jahr nach seinen Arbeitstagen), `kalendertage` (nach allen Tagen) oder `profil` mit
+`"profile": [12 Gewichte]`, zum Beispiel mehr am Quartalsende. `phasing` ganz oben in der Datei gilt für alle.
+
+## Zeitraster: Tag, Woche, Monat, Quartal, Jahr
+
+Neben dem Datum auf «Heute» steht die Wahl des Rasters: **Tag**, **Woche**, **Monat**,
+**Quartal** oder **Jahr** (Taste `G`). Im Quartal zeigt jede Seite das Quartal, die Sätze vergleichen mit dem Vorquartal,
+die Diagramme beschriften ihre Achse in Quartalen, und `←` `→` gehen ein Quartal. Quartal und
+Jahr entstehen aus den Monaten, nach der Art der Kennzahl: ein Bestand zählt mit seinem letzten
+Monat, ein Fluss wird summiert, ein Durchschnitt gemittelt, ein Verhältnis aus Zähler und Nenner
+gerechnet. Prozente werden nie gemittelt, wenn ihre Teile bekannt sind.
+
+Ein laufendes Quartal heisst «Q4 2026 bis Oktober». Ein Fluss darin wird mit denselben Monaten
+des Vorjahrs verglichen und mit dem Ziel bis heute, nicht mit dem ganzen.
+
+**Woche und Tag** gibt es, sobald eine Kennzahl eine Tagestabelle hat (`daily`). Wochen zählen nach
+ISO 8601 ab Montag und entstehen nur aus Tagen, nie aus Monaten: «KW 46 2026». Eine laufende Woche
+heisst «KW 46 2026 bis Dienstag» und wird mit denselben Tagen der Vorwoche verglichen. Ein Tag ohne
+Zeile ist leer, nie null. Das Wochen- oder Tagesziel eines Flusses ist die Summe seiner Tage (siehe
+Jahresbudget oben). Eine Kennzahl ohne Tageswerte bleibt in Woche und Tag bei ihrem Monat und sagt
+«nur monatlich erhoben». Der Server schickt die Tage der letzten 90 Tage und die Wochen der letzten
+zwei Jahre.
+
+Der Status hat ein festes Raster: «Heute» und das Hauptmenü urteilen im **Standardraster** des
+Kosmos (Einstellungen → Daten → Raster, Standard Monat), damit eine Kennzahl beim Umschalten
+nicht von ruhig auf rot springt. Die Themen-Seiten urteilen im Raster, in dem man liest. Das
+gewählte Raster merkt sich der Arbeitsbereich.
+
+## Katalog: was die Zahlen bedeuten
+
+Jeder Kosmos hat einen **Sternkatalog** (Taste `C`, oder «Katalog» in der Leiste unten): jede
+Kennzahl als Eintrag mit Definition, Berechnung, Quelle, Einheit, Art, Richtung, Zielen über die
+Zeit und Eigner, dazu die Begriffe des Hauses mit Synonymen und die Tabellen darunter. Im
+Hauptmenü durchsucht er alle Kosmen. Lumina bekommt die Definitionen und Begriffe mit und
+versteht so «Termintreue» als Liefertreue.
+
+Die Bedeutung kommt aus drei Quellen, Feld für Feld in dieser Reihenfolge, und jedes Feld zeigt
+seine Herkunft:
+
+1. ● **Fachkatalog in der Quelle:** drei Tabellen oder Views mit festen Namen im Goldlayer
+   (`lumantic_kennzahlen`, `lumantic_ziele`, `lumantic_begriffe`). Gibt es sie, baut sich ein
+   Kosmos aus ihnen, ohne Kennzahlen-Datei. Was dort steht, ändert man dort.
+2. ○ **In Lumantic ergänzt:** eigene Kennzahlen in der Kennzahlen-Datei, und was der Fachkatalog
+   offen lässt (`extra`, zum Beispiel ein Ziel oder eine Definition). Das ergänzt man direkt im
+   Sternkatalog.
+3. ◌ **Vermutet:** Einheit und Art aus dem Spaltennamen (`_pct` ist Prozent, `_mio` Mio. CHF,
+   `_stk` Stück), immer nur ein Vorschlag.
+
+Lumantic schreibt nie in die Datenbank. Wer einen in Lumantic begonnenen Katalog in den Goldlayer
+übernehmen will, lädt ihn im Sternkatalog unter «Tabellen» als SQL herunter: Es legt die drei
+Views an, und von da an liest Lumantic den Katalog aus der Quelle. Vertrag und Spalten im Detail:
+`config/README.md`, Abschnitt «Katalog». Der Beispiel-Kosmos «Industrie» zeigt alle drei
+Herkünfte.
 
 ## Datenquelle anbinden
 
@@ -238,6 +318,23 @@ Liegen die Tagesdateien eines Ladeprozesses in einem Unterordner, ist der Ordner
 Jeder Tag kommt als Datei dazu, und `union_by_name` hält das aus, wenn später eine Spalte
 dazukommt. Ordner der Form `jahr=2026/monat=11/` liest DuckDB als Partitionen.
 
+## Anmeldung und Rechte
+
+Ohne Anmeldung ist Lumantic für einen Rechner: Alle dürfen alles, und es hört nur auf `127.0.0.1`. Für mehrere Personen
+meldet man sich über einen Proxy davor an (zum Beispiel einen Authentik-Outpost) oder mit OpenID Connect (Authentik,
+Entra ID, Keycloak, ADFS). Die Windows-Anmeldung übernimmt dabei der Anbieter. Lumantic hat keine eigenen Benutzer
+und keine Passwörter. Es nimmt Konto, Name und Gruppen aus der Anmeldung:
+
+- **Administratoren** (`auth.admins`) ändern Datenquellen, Lumina und Kosmen und sehen alle Kosmen.
+- **Ein Kosmos** zeigt sich nur den Gruppen unter `access`; die anderen sehen ihn auch im Hauptmenü nicht.
+- **Kennzahlen pflegen** dürfen Administratoren und die Gruppen unter `editors`.
+- **Eine Kennzahl** kann eigene Gruppen haben (`access` in der Kennzahlen-Datei).
+- **Im Namen der Person:** Bei Snowflake und Databricks kann Lumantic mit der Anmeldung der Person fragen
+  (`rights: "source"`); dann gelten die Rechte der Datenbank, auch Zeilenfilter und Masken.
+
+Jede Person hat ihre eigenen Seiten, und `data/zugriff.log` hält fest, wer sich anmeldet und welchen Kosmos öffnet.
+Einrichtung im Detail: `config/README.md`, Abschnitt «Anmeldung und Rechte».
+
 ## Lumina mit Claude
 
 Ohne API-Token sucht Lumina Fragen nach Stichwörtern ab. Mit Token (Einstellungen → Lumina,
@@ -276,6 +373,8 @@ Adresse ein. Die Regeln, Sätze und Empfehlungen auf den Seiten laufen ohne KI.
 | `config/beispiele/` | Kennzahlen-Definitionen der Beispiel-Kosmen «Firmenkunden» und «Privatkunden» |
 | `config/` | Vorlage und Beschreibung der Einstellungen, Firmen-Designs in `brand/` |
 | `internal/config` | Einstellungen laden, prüfen, speichern; Tokens |
+| `internal/auth` | Anmeldung: keine, über einen Proxy oder mit OpenID Connect |
+| `internal/katalog` | Fachkatalog lesen, mit Lumantics Definitionen und Vermutungen zusammenführen, als SQL ausgeben |
 | `internal/source`, `internal/adapter` | Datenquelle aus den Einstellungen; DuckDB-, Ordner- und Windmill-Adapter, die SQL-Dialekte |
 | `internal/adapter/snowflake`, `internal/adapter/databricks` | Snowflake über die SQL API, Databricks über die SQL Statement Execution API |
 | `internal/metrics` | Kennzahlen-Definitionen, Prüfung gegen den Katalog, Laden der Zeitreihen, Bearbeiten |
@@ -292,7 +391,7 @@ Adresse ein. Die Regeln, Sätze und Empfehlungen auf den Seiten laufen ohne KI.
 
 | | |
 |---|---|
-| `GET /api/metrics` | Kennzahlen mit Monats- und Tagesreihen, Teilen und Ereignissen (503 ohne Daten) |
+| `GET /api/metrics` | Kennzahlen mit Monats-, Wochen- und Tagesreihen, Teilen, Ereignissen und dem Standardraster (503 ohne Daten) |
 | `GET /api/workspace`, `PUT /api/workspace` | Seiten, Blöcke und die persönliche Darstellung |
 | `GET /api/settings`, `PUT /api/settings` | Einstellungen für alle (Tokens nie im Klartext) |
 | `POST /api/settings/data/test` | eine Datenquelle prüfen, ohne zu speichern |
@@ -301,6 +400,11 @@ Adresse ein. Die Regeln, Sätze und Empfehlungen auf den Seiten laufen ohne KI.
 | `GET /api/refresh` | Stand des letzten Laufs, Dauer, Auslöser und der nächste Termin |
 | `POST`/`DELETE /api/refresh/token` | den Aktualisierungs-Token eines Kosmos erzeugen (einmal angezeigt) oder entfernen |
 | `GET /api/events` | Meldungen an offene Seiten, wenn ein Kosmos neu gelesen wurde (Server-Sent Events) |
+| `GET /api/me` | wer angemeldet ist und was diese Person ändern darf |
+| `GET /api/katalog` | der Sternkatalog eines Kosmos: Einträge mit Herkunft je Feld, Begriffe, Tabellen |
+| `PUT /api/katalog/kennzahl/{id}`, `PUT /api/katalog/begriffe` | ergänzen, was der Fachkatalog offen lässt; die Begriffe von Lumantic |
+| `GET /api/katalog/export?format=sql` | den Katalog als SQL für die drei Views im Goldlayer (oder `json`) |
+| `/auth/login`, `/auth/callback`, `/auth/logout` | Anmeldung mit OpenID Connect; beim Proxy nur das Abmelden |
 | `POST /api/settings/ai/test` | eine kurze Anfrage an Claude |
 | `POST /api/refresh` | Katalog und Kennzahlen neu lesen |
 | `GET/POST /api/kpis`, `PUT/DELETE /api/kpis/{id}` | Kennzahlen-Definitionen |
@@ -318,7 +422,7 @@ von derselben Seite kommen.
 ```powershell
 go test ./...
 cd web; npm run build; cd ..
-node scripts/ui-test/run.mjs     # Oberfläche in Echtzeit: ein Kosmos (Desktop, Handy, reduzierte Bewegung), Hauptmenü mit dreien
+node scripts/ui-test/run.mjs     # Oberfläche in Echtzeit: ein Kosmos (Desktop, Handy, reduzierte Bewegung), Hauptmenü mit dreien, kurzes Fenster, Raster
 ```
 
 `run.mjs` startet einen Testserver mit festen Kennzahlen (`scripts/ui-test/mock-api.mjs`),
@@ -327,8 +431,9 @@ Bildschirmfotos in `scripts/ui-test/shots/` ab.
 
 ## Nächste Schritte
 
-- Anmeldung (SSO): Arbeitsbereich pro Person, und wer welchen Kosmos sieht; heute sehen alle alles und teilen sich die Seiten
-- Kennzahlen eines neuen Kosmos aus seinen Tabellen vorschlagen, und andere Einheiten als %, Mio. und Mrd. CHF
+- Rechte auf einzelne Teile einer Kennzahl (Region Ost sieht nur Ost) und Rechte wie die Windows-Ordnerrechte
+- Kennzahlen eines neuen Kosmos aus seinen Tabellen vorschlagen
+- Feiertage beim Verteilen von Zielen auf Arbeitstage (je nach Kanton)
 - Lagebericht als Nachricht in Teams oder per Mail, jeden Morgen
 - Windmill, Snowflake und Databricks gegen echte Instanzen testen
 - Korrektur für Mehrfachvergleiche, wenn Lumina sehr viele Reihen prüft

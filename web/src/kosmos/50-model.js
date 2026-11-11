@@ -74,7 +74,9 @@ function ghostFor(pg, kid) {
 function syncAuto(pg, resort) {
   const m = T.base, pre = "a:" + pg.id + ":", qid = "q:" + pg.id, xid = "x:" + pg.id;
   const lifted = new Set(blocksOf(pg).filter((b) => b.kind === "kpi" && b.lift).map((b) => b.k));
-  const sig = scopeKpis(scopeOf(pg)).map((k) => stateOf(k, m)).filter((r) => r.level !== "calm" && !lifted.has(r.k.id)).sort((a, b) => b.score - a.score).map((r) => pre + r.k.id);
+  // «Heute» lifts what the Kosmos' status says; a topic page what the raster the person reads in says.
+  const judge = pg.sys === "heute" ? stateOf : shownOf;
+  const sig = scopeKpis(scopeOf(pg)).map((k) => judge(k, m)).filter((r) => r.level !== "calm" && !lifted.has(r.k.id)).sort((a, b) => b.score - a.score).map((r) => pre + r.k.id);
   for (const id of sig) { const kid = id.slice(pre.length), form = pg.forms[kid] || defForm(pg, kid), b = blocks.get(id); if (b) b.form = form; else makeBlock(pg, { id, kind: "kpi", k: kid, form, auto: true }); }
   const out = [], kept = new Set();
   let last = -1, ai = 0;
@@ -100,7 +102,7 @@ function syncAuto(pg, resort) {
   if (!pg.ghostQuiet) for (const id of out) {
     const b = blocks.get(id);
     if (!b || !b.auto || b.kind !== "kpi") continue;
-    const level = stateOf(K[b.k], m).level, c = level === "alert" || level === "watch" ? ghostFor(pg, b.k) : null;
+    const level = judge(K[b.k], m).level, c = level === "alert" || level === "watch" ? ghostFor(pg, b.k) : null;
     if (c) { g = { after: id, k: b.k, cid: c.id }; break; }
   }
   const old = blocks.get(xid);
@@ -129,13 +131,38 @@ function ringFor() {
 const NARROW_ANGLES = [-90, -36, 50, 130, 216]; // five topics on a phone: one on top, two flanks, two below
 // The direction of a topic seen from «Heute», in degrees. Any number of topics share the ring evenly.
 const angleOf = (gi) => (narrow() && GROUP_ORDER.length === 5 ? NARROW_ANGLES[gi] : -90 + (gi * 360) / Math.max(1, GROUP_ORDER.length));
+// The ring also keeps clear of the pages' own height: where a topic stands right above or below «Heute», the two are
+// as far apart as the upper one is long, plus air. That distance only grows, so pages do not wander back and forth.
+let ringMinY = 0;
+function ringNeed() {
+  const ring = ringFor(), mid = pages.get("heute");
+  let need = 0;
+  GROUP_ORDER.forEach((gid, gi) => {
+    const pg = pages.get("g:" + gid), a = (angleOf(gi) * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
+    if (Math.abs(s) < 0.05 || Math.abs(c) * ring.rx >= PAGE_W + GUT + 160) return; // side by side: no overlap
+    const upper = s > 0 ? mid : pg;
+    need = Math.max(need, ((upper.h || 0) + 240) / Math.abs(s));
+  });
+  return need;
+}
 function placeWorld() {
   const ring = ringFor(), mid = pages.get("heute");
+  ringMinY = Math.max(ringMinY, ringNeed());
+  const ry = Math.max(ring.ry, ringMinY);
   if (!mid.user) { mid.x = 0; mid.y = -CY; }
   GROUP_ORDER.forEach((gid, gi) => {
     const pg = pages.get("g:" + gid), a = (angleOf(gi) * Math.PI) / 180;
-    if (!pg.user) { pg.x = Math.round(ring.rx * Math.cos(a)); pg.y = Math.round(ring.ry * Math.sin(a)) - CY; }
+    if (!pg.user) { pg.x = Math.round(ring.rx * Math.cos(a)); pg.y = Math.round(ry * Math.sin(a)) - CY; }
   });
+}
+// After the pages were measured: when one grew into its neighbour's way, the ring widens. The page in view keeps its
+// place on the screen, so nothing jumps while someone reads.
+function keepRingClear() {
+  // A flight or a pan sets the camera frame by frame; the ring waits until it has landed.
+  if (flyStop || zoomAnim || ringNeed() <= ringMinY + 1) return;
+  const pg = pages.get(activeId), y0 = pg ? pg.y : 0;
+  placeWorld();
+  if (pg && pg.y !== y0 && M.p >= 0.9) cam.y += pg.y - y0;
 }
 function buildWorld() {
   addPage({ id: "heute", sys: "heute", x: 0, y: -CY });
@@ -147,7 +174,7 @@ function buildWorld() {
 let saveTimer = 0;
 function snapshot() {
   const own = (b) => ({ id: b.id, kind: b.kind, k: b.k, form: b.form, open: b.open, segs: b.segs, q: b.q, text: b.text, t: b.t, lift: b.lift });
-  return { v: 1, seq, seen: seenHint, dismissed: [...dismissed], pages: [...pages.values()].map((pg) => ({ id: pg.id, sys: pg.sys, title: pg.title, x: Math.round(pg.x), y: Math.round(pg.y), user: pg.user, forms: pg.forms,
+  return { v: 1, seq, seen: seenHint, grain: G, dismissed: [...dismissed], pages: [...pages.values()].map((pg) => ({ id: pg.id, sys: pg.sys, title: pg.title, x: Math.round(pg.x), y: Math.round(pg.y), user: pg.user, forms: pg.forms,
     order: pg.blocks.filter((id) => id[0] !== "x"), own: blocksOf(pg).filter((b) => !b.auto).map(own) })) };
 }
 function save() {
@@ -160,6 +187,7 @@ function load() {
   if (!d || d.v !== 1 || !Array.isArray(d.pages)) return;
   seq = Math.max(seq, Number(d.seq) || 0);
   seenHint = !!d.seen;
+  if (AVAILABLE.includes(d.grain)) G = d.grain;
   for (const c of d.dismissed || []) if (typeof c === "string") dismissed.add(c);
   for (const s of d.pages) {
     if (!s || typeof s.id !== "string") continue;

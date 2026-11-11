@@ -141,14 +141,15 @@ lens.el.addEventListener("click", (e) => {
   userInput();
   lensSel = true;
   const act = b.dataset.lens;
-  if (act === "prev") setLensMonth(lens.m - 1);
-  else if (act === "next") setLensMonth(lens.m + 1);
+  if (act === "prev") setLensMonth(shiftBy(lens.m, -1));
+  else if (act === "next") setLensMonth(shiftBy(lens.m, 1));
   else if (act === "dive") dive(lens.m);
   else setLensMonth(T.base - Number(act.slice(1)));
 });
-// A new month in the glass: everything it touches is written again, quickly.
+// A new month in the glass: everything it touches is written again, quickly. In quarters or years the glass
+// stands on the last month of a period, like the room.
 function setLensMonth(m) {
-  m = clamp(Math.round(m), 0, N - 1);
+  m = endOf(clamp(Math.round(m), 0, N - 1));
   if (m === lens.m || diving) return;
   lens.m = m;
   updateLens();
@@ -160,11 +161,19 @@ function setLensMonth(m) {
 function updateLens() {
   if (!lens.month) return;
   const d = T.base - lens.m, deg = clamp(-d * MDEG, -356, 356), rad = lens.r + 3.5, [bx, by] = polar(rad, deg);
-  lens.month.textContent = PERIODS.monat[lens.m].label;
-  lens.rel.textContent = lens.m === N - 1 && d !== 0 ? "· heute" : d === 0 ? "· derselbe Monat" : d > 0 ? `· vor ${d === 1 ? "einem Monat" : d === 12 ? "einem Jahr" : d + " Monaten"}` : `· ${-d === 1 ? "ein Monat" : -d + " Monate"} später`;
+  lens.month.textContent = periodOf(lens.m).label;
+  const a = atOf(T.base), b = atOf(lens.m), far = a >= 0 && b >= 0 ? lensRel(a - b, G) : lensRel(d, "monat");
+  lens.rel.textContent = lens.m === N - 1 && d !== 0 ? "· heute" : "· " + far;
   lens.bead.setAttribute("cx", bx.toFixed(1)); lens.bead.setAttribute("cy", by.toFixed(1));
   lens.beadHit.setAttribute("cx", bx.toFixed(1)); lens.beadHit.setAttribute("cy", by.toFixed(1));
   lens.arc.setAttribute("d", Math.abs(deg) < 0.5 ? "" : `M0,${-rad} A${rad},${rad} 0 ${Math.abs(deg) > 180 ? 1 : 0} ${deg > 0 ? 1 : 0} ${bx.toFixed(1)},${by.toFixed(1)}`);
+}
+// How far the glass looks, in the room's raster: «vor einem Quartal», «zwei Jahre später».
+function lensRel(d, g) {
+  const one = { tag: ["einem Tag", "ein Tag"], woche: ["einer Woche", "eine Woche"], monat: ["einem Monat", "ein Monat"], quartal: ["einem Quartal", "ein Quartal"], jahr: ["einem Jahr", "ein Jahr"] }[g], many = RUN_NOUN[g];
+  if (d === 0) return { tag: "derselbe Tag", woche: "dieselbe Woche", monat: "derselbe Monat", quartal: "dasselbe Quartal", jahr: "dasselbe Jahr" }[g];
+  if (g === "monat" && d === 12) return "vor einem Jahr";
+  return d > 0 ? `vor ${d === 1 ? one[0] : d + " " + many}` : `${-d === 1 ? one[1] : -d + " " + PLURAL[g]} später`;
 }
 function lensClasses() {
   const coin = lens.k === 0 && !diving;
@@ -189,8 +198,10 @@ function placeLens() {
 // Eintauchen: the circle grows across the screen, and every block switches as the rim reaches it. Then the whole room
 // is at that month and the lens shows where you came from.
 function dive(target) {
-  target = clamp(Math.round(target), 0, N - 1);
-  if (diving || target === T.base) return;
+  target = endOf(clamp(Math.round(target), 0, N - 1));
+  // In days and weeks the dive lands on the last one of the month.
+  const at = fine(G) ? lastIn(target) : AT;
+  if (diving || (target === T.base && at === AT)) return;
   closeMenu();
   stopPlay();
   if (lens.m !== target) { lens.m = target; updateLens(); }
@@ -200,7 +211,8 @@ function dive(target) {
     // Whatever the glass held is released first, so nothing keeps showing the lens' month by accident.
     for (const st of STARS.values()) st.under = false;
     for (const b of blocks.values()) b.under = false;
-    T.base = target; lens.m = from; lens.vr = lens.rr = 0; lens.alpha = 0;
+    if (fine(G)) { AT = at; T.base = PERIODS[G][at].mi; } else T.base = target;
+    lens.m = from; lens.vr = lens.rr = 0; lens.alpha = 0;
     if (target < TODAY) T.memo = target;
     // The lens has done its work: it returns as the coin in its corner and keeps the month you came from.
     stopLensGlide();

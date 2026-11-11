@@ -336,18 +336,32 @@ func sentToken(r *http.Request) (string, bool) {
 // answer at once (202) while the read runs in the background. The settings
 // send no token and wait for the read.
 func (s *Server) postRefresh(w http.ResponseWriter, r *http.Request) {
-	id, k := s.pick(w, r)
-	if k == nil {
-		return
-	}
-	// A page of the app (same-origin) never needs a token, even when a proxy in front adds credentials.
+	// A loading job is no person: its token alone counts. A page of the app
+	// (same-origin) never needs one, even when a proxy in front adds credentials.
 	if tok, sent := sentToken(r); sent && r.Header.Get("Sec-Fetch-Site") != "same-origin" {
+		id := r.URL.Query().Get("k")
+		if id == "" {
+			id = config.MainID
+		}
+		if s.get(id) == nil {
+			fail(w, 404, errNoKosmos.Error())
+			return
+		}
 		if !s.tokenFits(id, tok) {
 			fail(w, 401, "Der Aktualisierungs-Token passt nicht zu diesem Kosmos.")
 			return
 		}
 		queued := s.readSoon(id, byTrigger)
 		writeJSON(w, 202, map[string]any{"kosmos": id, "queued": queued, "status": s.status(id)})
+		return
+	}
+	id, k := s.pick(w, r)
+	if k == nil {
+		return
+	}
+	// Reading again costs a warehouse time: by hand it is for those who look after the Kosmos.
+	if rm, ok := s.room(id); ok && !s.edits(userOf(r), rm) {
+		fail(w, 403, "Neu laden dürfen Administratoren und wer die Kennzahlen dieses Kosmos pflegt.")
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 90*time.Second)
@@ -466,6 +480,7 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 	h.Set("X-Accel-Buffering", "no") // a proxy in front must not hold the stream back
 	ch, done := s.hub.subscribe()
 	defer done()
+	u := userOf(r)
 	fmt.Fprint(w, "retry: 5000\n\n")
 	fl.Flush()
 	ping := time.NewTicker(25 * time.Second)
@@ -475,6 +490,9 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 		case <-r.Context().Done():
 			return
 		case e := <-ch:
+			if rm, ok := s.room(e.Kosmos); !ok || !s.sees(u, rm) {
+				continue
+			}
 			raw, _ := json.Marshal(e)
 			fmt.Fprintf(w, "event: refresh\ndata: %s\n\n", raw)
 			fl.Flush()

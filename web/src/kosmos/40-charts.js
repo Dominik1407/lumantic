@@ -2,8 +2,10 @@
 let uidN = 0;
 const NSS = { "vector-effect": "non-scaling-stroke" };
 const PART_COLORS = ["var(--c1)", "var(--c2)", "var(--c3)"];
-// Evidence shows up to 36 months and ends at the chosen month whenever history allows.
-const win = (m) => { const w1 = Math.max(m, Math.min(TODAY, 35)); return [Math.max(0, w1 - 35), w1]; };
+// Evidence shows up to three years in the room's raster (36 months, 12 quarters, the years there are) and ends at
+// the chosen period whenever history allows. i is the index of that period.
+const WIN = { tag: 66, woche: 52, monat: 36, quartal: 12, jahr: 12 };
+const win = (i, g = G) => { const n = WIN[g], w1 = Math.max(i, Math.min(PERIODS[g].length - 1, n - 1)); return [Math.max(0, w1 - n + 1), w1]; };
 const lineD = (pts, X, Y) => "M" + pts.map((p) => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(2)}`).join(" L");
 // The same line, broken where a month has no data of its own.
 const lineGaps = (pts, X, Y, gap) => { let out = "", pen = false; for (const p of pts) { if (gap(p[0])) { pen = false; continue; } out += (pen ? " L" : (out ? " M" : "M")) + `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(2)}`; pen = true; } return out || "M0,0"; };
@@ -82,12 +84,14 @@ const CHARTS = {
   trend(k, fr, legend, opt) {
     const flow = k.kind === "flow", tLab = fr.lab("pm"), rLab = fr.lab("pm"), runLab = fr.lab("prun"), dot = fr.lab("dot");
     return (m) => {
-      const [w0, w1] = win(m), n = w1 - w0 + 1, slot = 600 / n, r = stateOf(k, m), vals = k.series.slice(w0, w1 + 1);
-      const X = flow ? (t) => (t - w0 + 0.5) * slot : (t) => ((t - w0) / (w1 - w0)) * 592;
+      const [g, i] = placeOf(k, m), P = PERIODS[g], S = seriesOf(k, g), [w0, w1] = win(i, g), n = w1 - w0 + 1, slot = 600 / n, r = shownOf(k, m), vals = S.slice(w0, w1 + 1);
+      const X = flow ? (t) => (t - w0 + 0.5) * slot : (t) => ((t - w0) / Math.max(1, w1 - w0)) * 592, plan = (t) => targetAt(k, P[t]), hole = (t) => gapOf(k, P[t]);
       let lo = Math.min(...vals), hi = Math.max(...vals);
-      if (flow) { lo = Math.min(lo, 0); hi = Math.max(hi, 0, k.target || 0); }
-      const span = hi - lo || Math.abs(hi) * 0.1 || 1;
-      for (const th of [k.reg, flow ? null : k.target]) if (th !== null && th !== undefined && th > lo - span * 0.8 && th < hi + span * 0.8) { lo = Math.min(lo, th); hi = Math.max(hi, th); }
+      if (flow) { lo = Math.min(lo, 0); hi = Math.max(hi, 0, ...vals.map((_, j) => plan(w0 + j) || 0)); }
+      // The target of the period shown: for a flow the sum of its months (of a whole period: a running one has its
+      // plan so far as the outline of its bar), otherwise the one that holds then.
+      const goal = targetAt(k, flow && P[i].partial && i > 0 ? P[i - 1] : P[i]), span = hi - lo || Math.abs(hi) * 0.1 || 1;
+      for (const th of [k.reg, flow ? null : goal]) if (th !== null && th !== undefined && th > lo - span * 0.8 && th < hi + span * 0.8) { lo = Math.min(lo, th); hi = Math.max(hi, th); }
       const pad = (hi - lo) * 0.12 || 1;
       lo -= pad; hi += pad;
       const Y = (v) => 188 - ((v - lo) / (hi - lo)) * 176, inside = (v) => v !== null && v !== undefined && Y(v) > 2 && Y(v) < 187;
@@ -96,18 +100,18 @@ const CHARTS = {
       if (inside(k.reg)) {
         const y = Y(k.reg);
         fr.zones.append(sv("rect", { class: "c-limband", x: 0, width: 600, y: k.dir > 0 ? y : 0, height: k.dir > 0 ? 188 - y : y }), sv("line", { class: "c-lim", x1: 0, x2: 600, y1: y, y2: y, ...NSS }));
-        marks.push([rLab, y, `${k.dir < 0 ? "Limit" : "Minimum"} ${F(k, k.reg)}`, "var(--alert)"]);
+        marks.push([rLab, y, `${limitWords(k).mark} ${F(k, k.reg)}`, "var(--alert)"]);
       } else rLab.hidden = true;
-      if (inside(k.target)) {
-        const y = Y(k.target);
+      if (inside(goal)) {
+        const y = Y(goal);
         fr.zones.append(sv("line", { class: "c-tgt", x1: 0, x2: 600, y1: y, y2: y, ...NSS }));
-        marks.push([tLab, y, `${flow ? "Monatsziel" : k.dir < 0 ? "Frühwarnung" : "Ziel"} ${F(k, k.target)}`, "var(--accent)"]);
+        marks.push([tLab, y, `${targetWords(k, g).mark} ${F(k, goal)}`, "var(--accent)"]);
       } else tLab.hidden = true;
       placeMarks(marks);
       fr.hi.hidden = marks.some((mk) => mk[1] < 22);
       fr.lo.hidden = marks.some((mk) => mk[1] > 166);
       if (opt.run && r.run >= 2) {
-        const a = Math.max(w0, m - r.run), xa = flow ? X(a) - slot / 2 : X(a), xb = flow ? X(m) + slot / 2 : X(m);
+        const a = Math.max(w0, i - r.run), xa = flow ? X(a) - slot / 2 : X(a), xb = flow ? X(i) + slot / 2 : X(i);
         fr.zones.append(sv("rect", { class: "c-run", x: xa, width: Math.max(2, xb - xa), y: 0, height: 188 }));
         runLab.hidden = false;
         runLab.textContent = `${r.run} ${k.dir > 0 ? "Rückgänge" : "Anstiege"} in Folge`;
@@ -118,29 +122,29 @@ const CHARTS = {
       let to = 600;
       if (flow) {
         const y0 = Y(0), gap = Math.min(4, slot * 0.2);
-        vals.forEach((v, i) => {
-          const t = w0 + i, x = i * slot, short = v < 0 || (k.target !== null && v < k.target);
-          if (noData(k, t)) return;
-          if (k.target !== null) fr.over.append(sv("rect", { class: "c-plan", x: x + gap * 0.5, y: Math.min(Y(k.target), y0), width: slot - gap, height: Math.abs(y0 - Y(k.target)), ...NSS }));
-          fr.solid.append(sv("rect", { class: "c-bar" + (t > m ? " later" : short ? " short" : "") + (t === m ? " now" : ""), x: x + gap, y: Math.min(Y(v), y0), width: Math.max(0.5, slot - 2 * gap), height: Math.max(0.6, Math.abs(y0 - Y(v))) }));
+        vals.forEach((v, j) => {
+          const t = w0 + j, x = j * slot, tg = plan(t), short = v < 0 || (tg !== null && v < tg);
+          if (hole(t)) return;
+          if (tg !== null) fr.over.append(sv("rect", { class: "c-plan", x: x + gap * 0.5, y: Math.min(Y(tg), y0), width: slot - gap, height: Math.abs(y0 - Y(tg)), ...NSS }));
+          fr.solid.append(sv("rect", { class: "c-bar" + (t > i ? " later" : short ? " short" : "") + (t === i ? " now" : ""), x: x + gap, y: Math.min(Y(v), y0), width: Math.max(0.5, slot - 2 * gap), height: Math.max(0.6, Math.abs(y0 - Y(v))) }));
         });
         fr.over.append(sv("line", { class: "c-zero", x1: 0, x2: 600, y1: y0, y2: y0, ...NSS }));
         dot.hidden = true;
-        legend.replaceChildren(key(box("var(--ink-2)"), "Monatswert"), key(h("i", { class: "out" }), "Monatsziel als Umriss"), key(box("var(--alert)"), "unter dem Ziel"));
+        legend.replaceChildren(key(box("var(--ink-2)"), PER_WORD[g] + "wert"), key(h("i", { class: "out" }), `${PER_WORD[g]}ziel als Umriss`), key(box("var(--alert)"), "unter dem Ziel"));
       } else {
-        const pts = vals.map((v, i) => [w0 + i, v]), holes = pts.some((p) => noData(k, p[0])), d = holes ? lineGaps(pts, X, Y, (t) => noData(k, t)) : lineD(pts, X, Y);
+        const pts = vals.map((v, j) => [w0 + j, v]), holes = pts.some((p) => hole(p[0])), d = holes ? lineGaps(pts, X, Y, hole) : lineD(pts, X, Y);
         fr.ghost.append(sv("path", { class: "c-ghost", d, ...NSS }));
         if (!holes) fr.solid.append(sv("path", { class: "c-area", d: `${d} L592,188 L0,188 Z` }));
         fr.solid.append(sv("path", { class: "c-line", d, ...NSS }));
         dot.hidden = false;
-        dot.style.left = (X(m) / 6).toFixed(2) + "%";
-        dot.style.top = (Y(k.series[m]) / 2).toFixed(2) + "%";
-        to = X(m) + 1;
-        legend.replaceChildren(...(m < w1 ? [key(h("i", { style: "background:var(--ink);opacity:.25" }), `blass: der weitere Verlauf bis ${PERIODS.monat[w1].label}`)] : []));
+        dot.style.left = (X(i) / 6).toFixed(2) + "%";
+        dot.style.top = (Y(S[i]) / 2).toFixed(2) + "%";
+        to = X(i) + 1;
+        legend.replaceChildren(...(i < w1 ? [key(h("i", { style: "background:var(--ink);opacity:.25" }), `blass: der weitere Verlauf bis ${P[w1].label}`)] : []));
       }
-      fr.hv = { at: (f) => (flow ? Math.min(w1, w0 + Math.floor(f * n)) : Math.round(w0 + Math.min(1, (f * 600) / 592) * (w1 - w0))), x: (t) => X(t) / 6, text: (t) => `${PERIODS.monat[t].label} · ${F(k, k.series[t])}` };
+      fr.hv = { at: (f) => (flow ? Math.min(w1, w0 + Math.floor(f * n)) : Math.round(w0 + Math.min(1, (f * 600) / 592) * (w1 - w0))), x: (t) => X(t) / 6, text: (t) => `${P[t].label} · ${F(k, S[t])}` };
       fr.hi.textContent = F(k, hi); fr.lo.textContent = F(k, lo);
-      fr.x0.textContent = PERIODS.monat[w0].label; fr.x1.textContent = PERIODS.monat[w1].label;
+      fr.x0.textContent = P[w0].label; fr.x1.textContent = P[w1].label;
       return to;
     };
   },
@@ -149,31 +153,34 @@ const CHARTS = {
   parts(k, fr, legend) {
     const names = Object.keys(k.parts), flow = k.kind === "flow";
     return (m) => {
-      const [w0, w1] = win(m), n = w1 - w0 + 1, slot = 600 / n;
+      // Parts in days or weeks only where the daily table has them.
+      let [g, i] = placeOf(k, m);
+      if (fine(g) && names.some((nm) => !seriesOf(k, g, nm))) [g, i] = ["monat", m];
+      const P = PERIODS[g], S = seriesOf(k, g), PS = Object.fromEntries(names.map((nm) => [nm, seriesOf(k, g, nm)])), [w0, w1] = win(i, g), n = w1 - w0 + 1, slot = 600 / n;
       fr.clear();
       let to = 600;
       if (flow) {
         const stacks = [];
-        for (let t = w0; t <= w1; t++) stacks.push(names.map((nm) => k.parts[nm][t]));
+        for (let t = w0; t <= w1; t++) stacks.push(names.map((nm) => PS[nm][t]));
         let lo = Math.min(0, ...stacks.map((s) => sum(s.filter((v) => v < 0)))), hi = Math.max(0, ...stacks.map((s) => sum(s.filter((v) => v > 0))));
         const pad = (hi - lo) * 0.1 || 1;
         if (lo < 0) lo -= pad;
         hi += pad;
         const Y = (v) => 188 - ((v - lo) / (hi - lo)) * 176, y0 = Y(0), gap = Math.min(4, slot * 0.2);
-        stacks.forEach((s, i) => {
+        stacks.forEach((s, j0) => {
           let up = 0, down = 0;
           s.forEach((v, j) => {
             const from = v >= 0 ? up : down, till = from + v;
             if (v >= 0) up = till; else down = till;
-            fr.solid.append(sv("rect", { x: i * slot + gap, y: Math.min(Y(from), Y(till)), width: Math.max(0.5, slot - 2 * gap), height: Math.max(0.4, Math.abs(Y(from) - Y(till))), fill: PART_COLORS[j], "fill-opacity": w0 + i > m ? 0.12 : w0 + i === m ? 1 : 0.6 }));
+            fr.solid.append(sv("rect", { x: j0 * slot + gap, y: Math.min(Y(from), Y(till)), width: Math.max(0.5, slot - 2 * gap), height: Math.max(0.4, Math.abs(Y(from) - Y(till))), fill: PART_COLORS[j], "fill-opacity": w0 + j0 > i ? 0.12 : w0 + j0 === i ? 1 : 0.6 }));
           });
         });
         fr.over.append(sv("line", { class: "c-zero", x1: 0, x2: 600, y1: y0, y2: y0, ...NSS }));
         fr.hi.textContent = F(k, hi); fr.lo.textContent = lo < 0 ? F(k, lo) : "";
-        fr.hv = { at: (f) => Math.min(w1, w0 + Math.floor(f * n)), x: (t) => ((t - w0 + 0.5) * slot) / 6, text: (t) => `${PERIODS.monat[t].label} · ${F(k, k.series[t])}` };
+        fr.hv = { at: (f) => Math.min(w1, w0 + Math.floor(f * n)), x: (t) => ((t - w0 + 0.5) * slot) / 6, text: (t) => `${P[t].label} · ${F(k, S[t])}` };
       } else {
-        const X = (t) => ((t - w0) / (w1 - w0)) * 600, rows = [];
-        for (let t = w0; t <= w1; t++) rows.push(names.map((nm) => k.parts[nm][t]));
+        const X = (t) => ((t - w0) / Math.max(1, w1 - w0)) * 600, rows = [];
+        for (let t = w0; t <= w1; t++) rows.push(names.map((nm) => PS[nm][t]));
         const hi = Math.max(...rows.map((rw) => sum(rw))) * 1.08, Y = (v) => 188 - (v / hi) * 176;
         let base = rows.map(() => 0);
         names.forEach((nm, j) => {
@@ -182,30 +189,30 @@ const CHARTS = {
           fr.ghost.append(sv("path", { class: "c-ghost", d, ...NSS }));
           base = top;
         });
-        to = X(m) + 1;
+        to = X(i) + 1;
         fr.hi.textContent = F(k, hi); fr.lo.textContent = F(k, 0);
-        fr.hv = { at: (f) => Math.round(w0 + f * (w1 - w0)), x: (t) => X(t) / 6, text: (t) => `${PERIODS.monat[t].label} · ${F(k, k.series[t])}` };
+        fr.hv = { at: (f) => Math.round(w0 + f * (w1 - w0)), x: (t) => X(t) / 6, text: (t) => `${P[t].label} · ${F(k, S[t])}` };
       }
-      const now = names.map((nm) => k.parts[nm][m]), tot = sum(now.map(Math.abs)) || 1;
-      legend.replaceChildren(...names.map((nm, j) => key(box(PART_COLORS[j]), `${nm} ${flow ? (now[j] < 0 ? "−" : "+") + thousands(Math.abs(now[j])) + " Mio." : Math.round((now[j] / tot) * 100) + " %"}`)), ...(flow ? [] : [h("span", { text: "von unten nach oben gestapelt" })]));
-      fr.x0.textContent = PERIODS.monat[w0].label; fr.x1.textContent = PERIODS.monat[w1].label;
+      const now = names.map((nm) => PS[nm][i]), tot = sum(now.map(Math.abs)) || 1;
+      legend.replaceChildren(...names.map((nm, j) => key(box(PART_COLORS[j]), `${nm} ${flow ? (now[j] < 0 ? "−" : "+") + amount(k, now[j]) : Math.round((now[j] / tot) * 100) + " %"}`)), ...(flow ? [] : [h("span", { text: "von unten nach oben gestapelt" })]));
+      fr.x0.textContent = P[w0].label; fr.x1.textContent = P[w1].label;
       return to;
     };
   },
   drivers(k, fr, legend) {
     const names = Object.keys(k.parts);
-    return indexed(fr, legend, names.map((nm, j) => ({ name: nm, arr: k.parts[nm], color: PART_COLORS[j] })), () => `${k.name} = ${names[0]} ÷ ${names[1]}`);
+    return indexed(fr, legend, names.map((nm, j) => ({ name: nm, k, of: (g) => seriesOf(k, g, nm), color: PART_COLORS[j] })), () => `${k.name} = ${names[0]} ÷ ${names[1]}`);
   },
   compare(k, fr, legend, opt) {
-    return indexed(fr, legend, opt.ks.map((id, j) => ({ name: K[id].name, arr: K[id].series, color: PART_COLORS[j] })), (w0) => `beide = 100 im ${PERIODS.monat[w0].label}`);
+    return indexed(fr, legend, opt.ks.map((id, j) => ({ name: K[id].name, k: K[id], of: (g) => seriesOf(K[id], g), color: PART_COLORS[j] })), (first) => `beide ab ${first} = 100`);
   },
 
   // Kumuliert: the months of the year, their running total and the path to the annual target.
   cum(k, fr, legend) {
     const tLab = fr.lab("pm"), dot = fr.lab("dot");
     return (m) => {
-      const y0m = m - (m % 12), X = (t) => ((t - y0m + 0.5) / 12) * 600, months = [];
-      for (let t = y0m; t <= Math.min(TODAY, y0m + 11); t++) months.push([t, k.series[t]]);
+      const jan = m - mOf(m), y0m = Math.max(0, jan), X = (t) => ((t - jan + 0.5) / 12) * 600, months = [];
+      for (let t = y0m; t <= Math.min(TODAY, jan + 11); t++) months.push([t, k.series[t]]);
       let acc = 0;
       const cum = months.map(([t, v]) => [t, (acc += v)]), target = k.target * 12;
       const lo0 = Math.min(0, ...months.map((p) => p[1]), ...cum.map((p) => p[1])), hi0 = Math.max(target, ...cum.map((p) => p[1]), ...months.map((p) => p[1]));
@@ -222,11 +229,11 @@ const CHARTS = {
       tLab.replaceChildren(h("i", { style: "background:var(--accent)" }), `Jahresziel ${F(k, target)}`);
       tLab.style.cssText = `right:0;top:max(0px, calc(${(Y(target) / 2).toFixed(1)}% - 17px))`;
       legend.replaceChildren(key(box("var(--ink-2)"), "Monat"), key(h("i", { style: "background:var(--c1)" }), "kumuliert"), key(dash("var(--accent)"), "Zielpfad"),
-        h("span", { text: `${PERIODS.monat[m].y} bis ${MON[m % 12]}: ${F(k, cv)}, ${thousands(Math.abs(cv - path))} Mio. ${cv < path ? "unter" : "über"} dem Zielpfad` }));
+        h("span", { text: `${PERIODS.monat[m].y} bis ${MON[mOf(m)]}: ${F(k, cv)}, ${amount(k, cv - path)} ${cv < path ? "unter" : "über"} dem Zielpfad` }));
       fr.hi.textContent = F(k, hi); fr.lo.textContent = lo < 0 ? F(k, lo) : "";
       fr.x0.textContent = "Jan " + PERIODS.monat[m].y; fr.x1.textContent = "Dez";
       fr.hv = null;
-      return ((m - y0m + 1) / 12) * 600;
+      return ((m - jan + 1) / 12) * 600;
     };
   },
 
@@ -313,8 +320,10 @@ const CHARTS = {
 // Two or more series on one scale: each starts at 100 at the left edge. The second line is dashed, so colour is not the only cue.
 function indexed(fr, legend, series, caption) {
   return (m) => {
-    const [w0, w1] = win(m), X = (t) => ((t - w0) / (w1 - w0)) * 600;
-    const lines = series.map((s) => ({ ...s, pts: s.arr.slice(w0, w1 + 1).map((v, i) => [w0 + i, (v / s.arr[w0]) * 100]) }));
+    let [g, i] = placeOf(series[0].k, m);
+    if (fine(g) && series.some((s) => !s.of(g))) [g, i] = ["monat", m];
+    const P = PERIODS[g], [w0, w1] = win(i, g), X = (t) => ((t - w0) / Math.max(1, w1 - w0)) * 600;
+    const lines = series.map((s) => { const arr = s.of(g); return { ...s, pts: arr.slice(w0, w1 + 1).map((v, j) => [w0 + j, (v / arr[w0]) * 100]) }; });
     const all = lines.flatMap((l) => l.pts.map((p) => p[1])).concat([100]), lo = Math.min(...all) - 2, hi = Math.max(...all) + 2, Y = (v) => 188 - ((v - lo) / (hi - lo)) * 176;
     fr.clear();
     fr.zones.append(sv("line", { class: "c-base", x1: 0, x2: 600, y1: Y(100), y2: Y(100), ...NSS }));
@@ -323,11 +332,11 @@ function indexed(fr, legend, series, caption) {
       fr.ghost.append(sv("path", { class: "c-ghost", d, ...NSS }));
       fr.solid.append(sv("path", { d, fill: "none", stroke: l.color, "stroke-width": 1.9, "stroke-linejoin": "round", "stroke-dasharray": j ? "7 4" : null, ...NSS }));
     });
-    legend.replaceChildren(...lines.map((l, j) => key(j ? dash(l.color) : h("i", { style: `background:${l.color}` }), `${l.name} ${Math.round(l.pts[m - w0][1])}`)), h("span", { text: caption(w0) }));
+    legend.replaceChildren(...lines.map((l, j) => key(j ? dash(l.color) : h("i", { style: `background:${l.color}` }), `${l.name} ${Math.round(l.pts[i - w0][1])}`)), h("span", { text: caption(P[w0].label) }));
     fr.hi.textContent = String(Math.round(hi)); fr.lo.textContent = String(Math.round(lo));
-    fr.x0.textContent = PERIODS.monat[w0].label; fr.x1.textContent = PERIODS.monat[w1].label;
-    fr.hv = { at: (f) => Math.round(w0 + f * (w1 - w0)), x: (t) => X(t) / 6, text: (t) => `${PERIODS.monat[t].label} · ` + lines.map((l) => `${l.name} ${Math.round(l.pts[t - w0][1])}`).join(" · ") };
-    return X(m) + 1;
+    fr.x0.textContent = P[w0].label; fr.x1.textContent = P[w1].label;
+    fr.hv = { at: (f) => Math.round(w0 + f * (w1 - w0)), x: (t) => X(t) / 6, text: (t) => `${P[t].label} · ` + lines.map((l) => `${l.name} ${Math.round(l.pts[t - w0][1])}`).join(" · ") };
+    return X(i) + 1;
   };
 }
 // A chart for one figure. draw(m, first) redraws for a month; the first draw reveals it from the left.

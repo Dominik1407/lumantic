@@ -4,7 +4,7 @@
 const m = N - 1;
 return {
   title: TITLE,
-  month: PERIODS.monat[m].long,
+  month: periodOf(m, STD).long,
   headline: headlineFor(m, "all"),
   counts: levelCounts(m),
   groups: GROUP_ORDER.map((id) => ({ id, name: GROUPS[id] })),

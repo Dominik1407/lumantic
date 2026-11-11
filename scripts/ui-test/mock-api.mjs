@@ -18,6 +18,26 @@ const port = Number(argv[argv.indexOf("--port") + 1]) || 8098;
 const dist = resolve(here, "../../web/dist");
 const metrics = JSON.parse(readFileSync(join(here, "fixtures/metrics.json"), "utf8"));
 
+// Weeks from the fixture's days, the way the server builds them (internal/metrics/grain.go): ISO weeks from
+// Monday, a balance's last day, a flow's sum, an average's mean; a week without a value stays empty.
+const DAY = 864e5;
+function isoWeek(iso) {
+  const d = new Date(iso + "T00:00:00Z"), mon = new Date(d - ((d.getUTCDay() + 6) % 7) * DAY), thu = new Date(+mon + 3 * DAY), y = thu.getUTCFullYear();
+  return { key: `${y}-W${String(Math.floor((thu - Date.UTC(y, 0, 1)) / DAY / 7) + 1).padStart(2, "0")}`, from: mon.toISOString().slice(0, 10), to: new Date(+mon + 6 * DAY).toISOString().slice(0, 10) };
+}
+const sumUp = (kind, vals) => {
+  const xs = vals.filter((v) => v !== null && v !== undefined);
+  return !xs.length ? null : kind === "flow" ? xs.reduce((a, b) => a + b, 0) : kind === "avg" || kind === "ratio" ? xs.reduce((a, b) => a + b, 0) / xs.length : xs.at(-1);
+};
+metrics.weeks = [];
+for (const d of metrics.days) { const w = isoWeek(d); if (!metrics.weeks.some((x) => x.key === w.key)) metrics.weeks.push(w); }
+const byWeek = (vals, kind) => metrics.weeks.map((w) => sumUp(kind, metrics.days.map((d, i) => (d >= w.from && d <= w.to ? vals[i] : undefined))));
+for (const k of metrics.kpis) {
+  if (!k.daily) continue;
+  const partKind = k.partsMode === "ratio" ? k.partsKind || (k.kind === "flow" ? "flow" : "stock") : k.kind;
+  k.weekly = { series: byWeek(k.daily.series, k.kind), parts: (k.daily.parts || []).map((p) => ({ name: p.name, series: byWeek(p.series, partKind) })) };
+}
+
 const MODELS = [
   { id: "claude-opus-5-5", name: "Claude Opus 5.5", note: "am gründlichsten" },
   { id: "claude-sonnet-5-5", name: "Claude Sonnet 5.5", note: "schnell und gründlich" },
@@ -69,6 +89,7 @@ const state = {
     brand: { name: "", logo: "", logoDark: "", designs: [] },
   },
   secrets: { anthropicToken: "", windmillToken: "" }, // plus "key@id" entries for warehouse tokens
+  me: null, // who is signed in; null = nobody signs in, the local person may do everything
   asked: [],
   saves: 0,
 };
@@ -96,13 +117,33 @@ function lacking(d, id, given = {}) {
   return "";
 }
 const isWarehouse = (d) => d.type === "snowflake" || d.type === "databricks";
+const LOCAL = { id: "lokal", name: "Lokal", groups: [], admin: true, editor: true, login: "none", logout: "" };
+const meOf = () => state.me || LOCAL;
+// The Sternkatalog of a mock Kosmos: its figures are Lumantic's own; the first one's unit counts as a guess, so all
+// three marks show. Words and additions live on the Kosmos (k.terms, k.adds).
+const fld = (value, from = "lumantic") => ({ value, from });
+function katalogOf(k) {
+  const topics = Object.fromEntries(k.groups.map((g) => [g.id, g.name]));
+  const entries = k.defs.map((d, i) => {
+    const add = (k.adds || {})[d.id] || {};
+    const f = { desc: fld(add.desc ?? d.desc ?? ""), formula: fld(add.formula ?? ""), owner: fld(add.owner ?? ""), unit: fld(d.unit, i === 0 ? "vermutet" : "lumantic"),
+      kind: fld(d.kind), dir: fld(d.dir), topic: fld(topics[d.group] || ""), source: fld(`${d.monthly.table}.${d.monthly.value}`, "quelle") };
+    if (d.target != null) f.target = fld(d.target);
+    if (d.limit != null) f.limit = fld(d.limit);
+    // As on the server: the raster its data gives, and for a flow what time its target covers and how a year spreads.
+    f.raster = fld(metrics.kpis.find((x) => `${x.id}_wert` === d.monthly?.value)?.daily ? "tag" : "monat", "quelle");
+    if (d.kind === "flow") { if (d.target != null) f.targetPer = fld(add.targetPer || "monat"); f.phasing = fld(add.phasing || "monate"); }
+    return { id: d.id, name: d.name, topic: topics[d.group] || "", fields: f, bounds: [], status: "", first: metrics.months[0], last: metrics.months.at(-1) };
+  });
+  return { kosmos: k.id, name: k.data.name, company: "", problems: [], editable: meOf().editor, entries, topics: k.groups, terms: k.terms || [], tables: [...tables.values()] };
+}
 // When a Kosmos is read again by itself: the one written down, else the usual for its source (as on the server).
 const watchable = (d) => d.type === "duckdb" || d.type === "files";
 const planOf = (k) => k.plan ? { ...k.plan, watch: watchable(k.data) ? k.plan.watch : 0 } : watchable(k.data) ? { daily: [], watch: 5 } : { daily: ["06:00"], watch: 0 };
 // Open pages listening for new figures (GET /api/events); POST /__mock {"event": {...}} speaks to them.
 const listeners = new Set();
 const tell = (ev) => { for (const res of listeners) res.write(`event: refresh\ndata: ${JSON.stringify(ev)}\n\n`); };
-const figuresOf = (k) => ({ ...metrics, title: k.data.name, kpis: loaded(k), groups: k.groups });
+const figuresOf = (k) => ({ ...metrics, title: k.data.name, kpis: loaded(k), groups: k.groups, grain: k.grain || "monat" });
 function status(k) {
   const base = { ok: false, error: "", tables: 0, kpis: k.defs.length, kpisLoaded: 0, months: 0, first: "", last: "", refreshedAt: new Date(Date.now() - 120000).toISOString() };
   if (k.empty) return { ...base, error: `Die Datei ${k.data.path} gibt es nicht.` };
@@ -112,13 +153,14 @@ function status(k) {
 const info = (k) => ({ id: k.id, name: k.data.name, type: k.data.type, main: k.id === "main", status: status(k) });
 function settings(k) {
   const c = state.config, tok = secret("anthropicToken");
-  return { version: "0.6.0", configPath: "config/lumantic.json", configExists: state.saves > 0, locked: ["data.duckdb"], ui: c.ui,
+  return { me: meOf(), version: "0.10.0", configPath: "config/lumantic.json", configExists: state.saves > 0, locked: ["data.duckdb"], ui: c.ui,
     kosmos: { id: k.id, main: k.id === "main", count: state.kosmen.length },
     data: { ...k.data, windmill: { ...k.data.windmill, token: secret("windmillToken") },
       snowflake: { ...snowflake(), ...k.data.snowflake, token: secret("snowflakeToken", k.id) },
       databricks: { ...databricks(), ...k.data.databricks, token: secret("databricksToken", k.id), secret: secret("databricksSecret", k.id) } },
     metrics: k.metrics, status: status(k),
     refresh: { ...planOf(k), own: !!k.plan, watchable: watchable(k.data), token: k.token ? { set: true, hint: k.token.slice(-4), source: "datei" } : { set: false, hint: "", source: "" } },
+    grain: k.grain || "monat",
     ai: { ...c.ai, token: tok, models: MODELS, ready: c.ai.enabled && tok.set }, brand: c.brand };
 }
 const missing = (d) => {
@@ -200,6 +242,22 @@ async function api(req, res, url) {
   if (m === "GET" && path === "/api/workspace") return send(res, 200, k.workspace);
   if (m === "PUT" && path === "/api/workspace") { k.workspace = b; return send(res, 204); }
   if (m === "GET" && path === "/api/catalog") return send(res, 200, k.empty ? null : { source: k.data.name, dialect: "duckdb", tables: [...tables.values()] });
+  if (m === "GET" && path === "/api/katalog") return send(res, 200, katalogOf(k));
+  const kat = /^\/api\/katalog\/kennzahl\/([^/]+)$/.exec(path);
+  if (m === "PUT" && kat) {
+    if (!meOf().editor) return fail(res, 403, "Die Kennzahlen dieses Kosmos pflegen andere. Frag einen Administrator.");
+    const id = decodeURIComponent(kat[1]);
+    if (!k.defs.some((d) => d.id === id)) return fail(res, 404, `Die Kennzahl ${id} gibt es nicht.`);
+    k.adds = k.adds || {};
+    k.adds[id] = { ...(k.adds[id] || {}), ...b };
+    return send(res, 200, katalogOf(k));
+  }
+  if (m === "PUT" && path === "/api/katalog/begriffe") {
+    const bad = (b.terms || []).find((t) => t.term && !t.definition);
+    if (bad) return fail(res, 422, `Der Begriff «${bad.term}» braucht eine Erklärung.`);
+    k.terms = (b.terms || []).filter((t) => t.term).map((t) => ({ ...t, origin: "lumantic" }));
+    return send(res, 200, katalogOf(k));
+  }
   if (m === "GET" && path === "/api/settings") return send(res, 200, settings(k));
   if (m === "PUT" && path === "/api/settings") {
     if (b.data) {
@@ -214,7 +272,11 @@ async function api(req, res, url) {
       if (b.refresh && (b.refresh.daily || []).some((t) => !/^\d{1,2}:\d{2}$/.test(t))) return fail(res, 422, `«${b.refresh.daily.find((t) => !/^\d{1,2}:\d{2}$/.test(t))}» ist keine Uhrzeit. Zeiten im Format 06:30.`);
       k.plan = b.refresh ? { daily: (b.refresh.daily || []).map((t) => t.padStart(5, "0")).sort(), watch: b.refresh.watch || 0 } : null;
     }
-    const { data: _d, refresh: _r, ...rest } = b;
+    if ("grain" in b) {
+      if (!["monat", "quartal", "jahr"].includes(b.grain)) return fail(res, 422, `Unbekanntes Raster «${b.grain}». Möglich sind monat, quartal und jahr.`);
+      k.grain = b.grain;
+    }
+    const { data: _d, refresh: _r, grain: _g, ...rest } = b;
     merge(state.config, rest);
     state.saves++;
     return send(res, 200, settings(k));
@@ -289,6 +351,7 @@ createServer(async (req, res) => {
         const b = await body(req);
         if ("empty" in b) state.kosmen[0].empty = !!b.empty;
         if (b.fresh) state.saves = 0; // as before the first start: no config file yet
+        if ("me" in b) state.me = b.me;
         if (b.event) tell({ kosmos: "main", ok: true, changed: true, at: new Date().toISOString(), by: "zeitplan", ...b.event });
         if (b.brand) Object.assign(state.config.brand, b.brand);
       }

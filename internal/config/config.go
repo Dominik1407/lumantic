@@ -17,7 +17,7 @@ import (
 	"sync"
 )
 
-const Version = "0.6.0"
+const Version = "0.10.0"
 
 type Windmill struct {
 	URL       string `json:"url"`
@@ -112,12 +112,21 @@ type Kosmos struct {
 	Data    Data     `json:"data"`              // its data source; data.name is the name shown in the app
 	Metrics string   `json:"metrics"`           // key figure file; empty = none defined yet
 	Refresh *Refresh `json:"refresh,omitempty"` // when it is read again by itself; nil = the usual for its source
+	Access  []string `json:"access,omitempty"`  // groups that see it; empty = everyone signed in
+	Editors []string `json:"editors,omitempty"` // groups that look after its key figures; empty = the admins
+	Rights  string   `json:"rights,omitempty"`  // "lumantic" (default) or "source": ask the database in the person's name
+	Grain   string   `json:"grain,omitempty"`   // standard raster: "monat" (default), "quartal" or "jahr"
 }
 
 type Config struct {
 	Data    Data     `json:"data"`
 	Metrics string   `json:"metrics"`           // key figure file; empty = built-in ALCO definitions
 	Refresh *Refresh `json:"refresh,omitempty"` // when the first Kosmos is read again by itself; nil = the usual
+	Access  []string `json:"access,omitempty"`  // groups that see the first Kosmos; empty = everyone signed in
+	Editors []string `json:"editors,omitempty"` // groups that look after its key figures; empty = the admins
+	Rights  string   `json:"rights,omitempty"`  // "lumantic" (default) or "source" for the first Kosmos
+	Grain   string   `json:"grain,omitempty"`   // standard raster of the first Kosmos: "monat" (default), "quartal" or "jahr"
+	Auth    Auth     `json:"auth"`              // how people sign in; only in this file, never from the app
 	Kosmen  []Kosmos `json:"kosmen"`            // further rooms, each over its own data source
 	AI      AI       `json:"ai"`
 	UI      UI       `json:"ui"`
@@ -153,6 +162,7 @@ func Defaults() Config {
 			Windmill: Windmill{Workspace: "lumantic", Describe: "f/lumantic/describe", Query: "f/lumantic/query"}},
 		Kosmen: []Kosmos{},
 		AI:     AI{Enabled: true, Provider: "anthropic", Model: "claude-opus-5-5"},
+		Auth:   Auth{Kind: "none", Admins: []string{}},
 		UI:     UI{Design: "nebel", Motion: "voll", TextSize: "normal", Start: "heute", Lens: "1J", Hints: true},
 		Brand:  Brand{Designs: []Design{}},
 	}
@@ -198,6 +208,11 @@ var bindings = []binding{
 	{"data.windmill.workspace", []string{"WINDMILL_WORKSPACE"}, func(c *Config) string { return c.Data.Windmill.Workspace }, func(c *Config, v string) { c.Data.Windmill.Workspace = v }},
 	{"data.windmill.describe", []string{"WINDMILL_DESCRIBE"}, func(c *Config) string { return c.Data.Windmill.Describe }, func(c *Config, v string) { c.Data.Windmill.Describe = v }},
 	{"data.windmill.query", []string{"WINDMILL_QUERY"}, func(c *Config) string { return c.Data.Windmill.Query }, func(c *Config, v string) { c.Data.Windmill.Query = v }},
+	{"auth.kind", []string{"LUMANTIC_AUTH"}, func(c *Config) string { return c.Auth.Kind }, func(c *Config, v string) { c.Auth.Kind = strings.ToLower(v) }},
+	{"auth.admins", []string{"LUMANTIC_ADMINS"}, func(c *Config) string { return strings.Join(c.Auth.Admins, ",") }, func(c *Config, v string) { c.Auth.Admins = cleanList(strings.Split(v, ",")) }},
+	{"auth.oidc.issuer", []string{"OIDC_ISSUER"}, func(c *Config) string { return c.Auth.OIDC.Issuer }, func(c *Config, v string) { c.Auth.OIDC.Issuer = v }},
+	{"auth.oidc.clientId", []string{"OIDC_CLIENT_ID"}, func(c *Config) string { return c.Auth.OIDC.ClientID }, func(c *Config, v string) { c.Auth.OIDC.ClientID = v }},
+	{"auth.oidc.url", []string{"LUMANTIC_URL"}, func(c *Config) string { return c.Auth.OIDC.URL }, func(c *Config, v string) { c.Auth.OIDC.URL = v }},
 	{"metrics", []string{"LUMANTIC_METRICS"}, func(c *Config) string { return c.Metrics }, func(c *Config, v string) { c.Metrics = v }},
 	{"ai.enabled", []string{"LUMANTIC_LUMINA"}, func(c *Config) string { return boolText(c.AI.Enabled) }, func(c *Config, v string) { c.AI.Enabled = v == "true" }},
 	{"ai.model", []string{"LUMANTIC_MODEL"}, func(c *Config) string { return c.AI.Model }, func(c *Config, v string) { c.AI.Model = v }},
@@ -308,6 +323,9 @@ func (m *Manager) effective(file Config) Config {
 			b.set(&c, v)
 		}
 	}
+	// A kind chosen by a variable (LUMANTIC_AUTH=proxy, LUMANTIC_ADAPTER=snowflake)
+	// gets the defaults of that kind, as if it stood in the file.
+	normalize(&c)
 	return c
 }
 
@@ -360,6 +378,8 @@ func (m *Manager) Merge(req map[string]json.RawMessage) (Config, error) {
 			if err = json.Unmarshal(raw, &r); err == nil {
 				cand.Refresh = r
 			}
+		case "grain":
+			err = json.Unmarshal(raw, &cand.Grain)
 		}
 		if err != nil {
 			return Config{}, fmt.Errorf("Einstellung %s ist ungültig: %v", key, err)
@@ -486,6 +506,9 @@ func normalize(c *Config) {
 	}
 	NormalizeData(&c.Data)
 	normalizeRefresh(c.Refresh, c.Data)
+	NormalizeAuth(&c.Auth)
+	c.Access, c.Editors, c.Rights = cleanList(c.Access), cleanList(c.Editors), strings.ToLower(strings.TrimSpace(c.Rights))
+	normalizeGrain(&c.Grain)
 	if c.Kosmen == nil {
 		c.Kosmen = []Kosmos{}
 	}
@@ -494,6 +517,9 @@ func normalize(c *Config) {
 		trim(&c.Kosmen[i].Metrics)
 		NormalizeData(&c.Kosmen[i].Data)
 		normalizeRefresh(c.Kosmen[i].Refresh, c.Kosmen[i].Data)
+		k := &c.Kosmen[i]
+		k.Access, k.Editors, k.Rights = cleanList(k.Access), cleanList(k.Editors), strings.ToLower(strings.TrimSpace(k.Rights))
+		normalizeGrain(&k.Grain)
 	}
 	if c.AI.Provider == "" {
 		c.AI.Provider = "anthropic"
@@ -605,6 +631,15 @@ func Validate(c Config) error {
 			return err
 		}
 	}
+	if err := ValidateAuth(c.Auth); err != nil {
+		return err
+	}
+	if err := validateRights(c.Rights, c.Data, c.Auth); err != nil {
+		return err
+	}
+	if err := ValidateGrain(c.Grain); err != nil {
+		return err
+	}
 	seen := map[string]bool{}
 	for _, k := range c.Kosmen {
 		switch {
@@ -621,6 +656,12 @@ func Validate(c Config) error {
 			if err := ValidateRefresh(*k.Refresh); err != nil {
 				return fmt.Errorf("Kosmos %s: %w", k.ID, err)
 			}
+		}
+		if err := validateRights(k.Rights, k.Data, c.Auth); err != nil {
+			return fmt.Errorf("Kosmos %s: %w", k.ID, err)
+		}
+		if err := ValidateGrain(k.Grain); err != nil {
+			return fmt.Errorf("Kosmos %s: %w", k.ID, err)
 		}
 	}
 	if c.AI.Provider != "anthropic" {

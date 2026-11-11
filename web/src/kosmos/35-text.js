@@ -13,37 +13,38 @@ const TX = (s) => ["t", s], NUM = (key, s) => ["n", key, s], WORD = (key, s) => 
 function distance(k, d) {
   const a = Math.abs(d);
   if (k.unit === "%") { const s = a.toFixed(k.dec); return s + (Number(s) === 1 ? " Prozentpunkt" : " Prozentpunkte"); }
-  return a >= 1000 ? (a / 1000).toFixed(1) + " Mrd." : thousands(a) + " Mio.";
+  return amount(k, a);
 }
 
 // The part that moved most against the figure, named only when it clearly stands out (same rule as the engine).
 function driverOf(k, m) {
-  const r = stateOf(k, m);
-  if (!k.parts || m < 1 || (r.level !== "alert" && r.level !== "watch")) return null;
-  const names = Object.keys(k.parts);
+  const r = shownOf(k, m);
+  if (!k.parts || r.i < 1 || (r.level !== "alert" && r.level !== "watch")) return null;
+  const names = Object.keys(k.parts), pair = (name) => partPair(k, r, name);
+  if (names.some((nm) => !pair(nm))) return null;
   if (k.partsMode === "ratio") {
-    const [num, den] = names, dn = k.parts[num][m] / k.parts[num][m - 1] - 1, dd = k.parts[den][m] / k.parts[den][m - 1] - 1;
+    const [num, den] = names, [n1, n0] = pair(num), [d1, d0] = pair(den), dn = n1 / n0 - 1, dd = d1 / d0 - 1;
     const top = [{ name: num, s: -dn * k.dir, d: dn }, { name: den, s: dd * k.dir, d: dd }].sort((a, b) => b.s - a.s)[0];
     return top.s > 0 ? { name: top.name, text: (top.d > 0 ? "+" : "−") + pct(top.d), evd: "drivers" } : null;
   }
-  const ch = names.map((name) => { const d = k.parts[name][m] - k.parts[name][m - 1]; return { name, d, s: -d * (k.dir || 1) }; }).sort((a, b) => b.s - a.s);
+  const ch = names.map((name) => { const [a, b] = pair(name), d = a - b; return { name, d, s: -d * (k.dir || 1) }; }).sort((a, b) => b.s - a.s);
   if (!ch.length || ch[0].s <= 0 || (ch[1] && ch[0].s < 1.5 * Math.max(0, ch[1].s))) return null;
-  return { name: ch[0].name, text: (ch[0].d > 0 ? "+" : "−") + thousands(Math.abs(ch[0].d)) + " Mio.", evd: "parts" };
+  return { name: ch[0].name, text: (ch[0].d > 0 ? "+" : "−") + amount(k, ch[0].d), evd: "parts" };
 }
 
 function sentencesFor(k, m) {
-  const r = stateOf(k, m), cur = r.cur, flow = k.kind === "flow", out = [];
-  if (r.gap) return [{ id: "gap", segs: [TX(`Für ${PERIODS.monat[m].long} liegen keine Daten vor.`)] }];
+  const r = shownOf(k, m), cur = r.cur, flow = k.kind === "flow", out = [], [prevDat, prevTo] = prevOf(r);
+  if (r.gap) return [{ id: "gap", segs: [TX(`Für ${r.p.long} liegen keine Daten vor.`)] }];
   const V = ["v", "v", F(k, cur)], SP = ["s"];
-  const tgtWord = flow ? "dem Monatsziel" : k.dir < 0 ? "der Frühwarnschwelle" : "dem internen Ziel", evTgt = flow ? "cum" : "trend";
+  const tgtWord = targetWords(k, r.g).phrase, evTgt = flow ? "cum" : "trend";
   const side = (ref) => (cur < ref ? "unter" : "über");
   const hasTgt = r.tgt !== null && k.dir !== 0, hasLim = k.reg !== null && k.reg !== undefined && k.dir !== 0;
   const tgtFact = () => FACT("tgt", evTgt, [NUM("gap", distance(k, cur - r.tgt)), TX(` ${side(r.tgt)} ${tgtWord} von `), NUM("tgt", F(k, r.tgt))]);
-  const limFact = () => FACT("lim", "trend", [NUM("room", distance(k, cur - k.reg)), TX(` ${side(k.reg)} dem ${k.dir < 0 ? "Limit" : "regulatorischen Minimum"}`)]);
+  const limFact = () => FACT("lim", "trend", [NUM("room", distance(k, cur - k.reg)), TX(` ${side(k.reg)} ${limitWords(k).phrase}`)]);
   const tail = r.answer.replace(/^[^,]*, /, ""), extreme = /^(höchster|tiefster) Wert seit (.+)$/.exec(tail);
   const move = r.label === "Auffällige Bewegung" || r.label === "Gute Nachricht" || r.label === "Ungewöhnlich";
   let s1;
-  if (r.breach) s1 = [V, SP, TX(" liegt "), FACT("lim", "trend", [NUM("room", distance(k, cur - k.reg)), TX(k.dir > 0 ? " unter dem regulatorischen Minimum von " : " über dem Limit von "), NUM("reg", F(k, k.reg))]), TX(". Das hat Vorrang.")];
+  if (r.breach) s1 = [V, SP, TX(" liegt "), FACT("lim", "trend", [NUM("room", distance(k, cur - k.reg)), TX(` ${k.dir > 0 ? "unter" : "über"} ${limitWords(k).phrase} von `), NUM("reg", F(k, k.reg))]), TX(". Das hat Vorrang.")];
   else if (r.special === "recover") s1 = [V, SP, TX(" liegt wieder "), FACT("tgt", evTgt, [TX(`${side(r.tgt)} ${tgtWord} von `), NUM("tgt", F(k, r.tgt))]), TX(", aber noch ohne Sicherheitsabstand.")];
   else if (move) s1 = extreme ? [V, SP, TX(" ist der "), FACT("ext", "trend", [TX(`${extreme[1].slice(0, -1)} Wert seit ${extreme[2]}`)]), TX(".")] : [V, SP, TX(" liegt "), FACT("ext", "trend", [TX(tail)]), TX(".")];
   else if (hasTgt) {
@@ -53,10 +54,10 @@ function sentencesFor(k, m) {
   } else if (r.prev === null) s1 = [V, SP, TX(" ist der erste Wert der Reihe.")];
   else if (k.unit === "%") {
     const d = cur - r.prev, s = Math.abs(d).toFixed(k.dec);
-    s1 = Number(s) === 0 ? [V, SP, TX(" hat sich zum Vormonat nicht bewegt.")] : [V, SP, TX(" liegt "), NUM("dm", s + (Number(s) === 1 ? " Prozentpunkt" : " Prozentpunkte")), TX(d > 0 ? " über dem Vormonat." : " unter dem Vormonat.")];
+    s1 = Number(s) === 0 ? [V, SP, TX(` hat sich ${prevTo} nicht bewegt.`)] : [V, SP, TX(" liegt "), NUM("dm", s + (Number(s) === 1 ? " Prozentpunkt" : " Prozentpunkte")), TX(` ${d > 0 ? "über" : "unter"} ${prevDat}.`)];
   } else {
     const d = cur - r.prev, rel = d / Math.abs(r.prev);
-    s1 = Math.abs(rel) < 0.0005 ? [V, SP, TX(" hat sich zum Vormonat kaum bewegt.")] : [V, SP, TX(" liegt "), NUM("dm", pct(rel)), TX(d > 0 ? " über dem Vormonat." : " unter dem Vormonat.")];
+    s1 = Math.abs(rel) < 0.0005 ? [V, SP, TX(` hat sich ${prevTo} kaum bewegt.`)] : [V, SP, TX(" liegt "), NUM("dm", pct(rel)), TX(` ${d > 0 ? "über" : "unter"} ${prevDat}.`)];
   }
   out.push({ id: "pos", segs: s1 });
   if (move && hasTgt && !r.breach && parseFloat(distance(k, cur - r.tgt)) !== 0) out.push({ id: "tgt2", segs: [TX("Das sind "), tgtFact(), TX(".")] });
@@ -64,7 +65,7 @@ function sentencesFor(k, m) {
   if (d) {
     const g = k.funnel ? "s" : PART_GRAMMAR[d.name];
     const lead = g === "p" ? "Bewegt haben sich vor allem die " : g === "f" ? "Bewegt hat sich vor allem die " : g === "n" ? "Bewegt hat sich vor allem das " : g === "s" ? "Bewegt hat sich vor allem die Stufe " : "Am stärksten bewegt hat sich: ";
-    out.push({ id: "drv", segs: [TX(lead), FACT("drv", d.evd, [WORD("part", d.name)]), TX(" "), ["n", "drvd", d.text, "("], TX(" zum Vormonat).")] });
+    out.push({ id: "drv", segs: [TX(lead), FACT("drv", d.evd, [WORD("part", d.name)]), TX(" "), ["n", "drvd", d.text, "("], TX(` ${prevTo}).`)] });
   }
   if ((r.level === "alert" || r.level === "watch") && r.run >= 3) out.push({ id: "run", segs: [TX("Es ist der "), FACT("run", "run", [WORD("ord", ORDINAL[r.run] || r.run + "."), TX(k.dir > 0 ? " Rückgang in Folge" : " Anstieg in Folge")]), TX(".")] });
   return out;
@@ -73,10 +74,10 @@ const sigOf = (segs) => segs.map((s) => (s[0] === "t" ? "t" + s[1] : s[0] === "f
 
 // One mono line under a large figure: the distance to target and limit.
 function gapLine(k, r) {
-  if (r.gap) return "Keine Daten für diesen Monat";
-  const out = [], dist = (d) => (k.unit === "%" ? Math.abs(d).toFixed(k.dec) + " Pp." : Math.abs(d) >= 1000 ? (Math.abs(d) / 1000).toFixed(1) + " Mrd." : thousands(Math.abs(d)) + " Mio.");
-  if (r.tgt !== null && k.dir !== 0) out.push(`${dist(r.cur - r.tgt)} ${r.cur < r.tgt ? "unter" : "über"} ${k.kind === "flow" ? "Monatsziel" : k.dir < 0 ? "Frühwarnung" : "Ziel"} ${F(k, r.tgt)}`);
-  if (k.reg !== null && k.reg !== undefined && k.dir !== 0) out.push(`${dist(r.cur - k.reg)} ${r.cur < k.reg ? "unter" : "über"} ${k.dir < 0 ? "Limit" : "Minimum"} ${F(k, k.reg)}`);
+  if (r.gap) return `Keine Daten für ${THIS[r.g]}`;
+  const out = [], dist = (d) => amount(k, d);
+  if (r.tgt !== null && k.dir !== 0) out.push(`${dist(r.cur - r.tgt)} ${r.cur < r.tgt ? "unter" : "über"} ${targetWords(k, r.g).mark} ${F(k, r.tgt)}`);
+  if (k.reg !== null && k.reg !== undefined && k.dir !== 0) out.push(`${dist(r.cur - k.reg)} ${r.cur < k.reg ? "unter" : "über"} ${limitWords(k).mark} ${F(k, k.reg)}`);
   if (!out.length && r.delta) out.push(r.delta);
   return out.join(" · ") || "Erster Wert der Reihe";
 }
@@ -93,7 +94,7 @@ function viewsFor(k) {
   return v;
 }
 function whyFor(k, kind, m) {
-  if (kind === "run") { const r = stateOf(k, m); return r.run >= 2 ? `Der markierte Abschnitt zeigt die ${r.run} Monate, in denen ${k.name} jeweils ${k.dir > 0 ? "tiefer" : "höher"} lag als im Monat davor.` : `${k.name} hat sich zuletzt nicht mehrfach in dieselbe Richtung bewegt.`; }
+  if (kind === "run") { const r = shownOf(k, m); return r.run >= 2 ? `Der markierte Abschnitt zeigt die ${r.run} ${PLURAL[r.g]}, in denen ${k.name} jeweils ${k.dir > 0 ? "tiefer" : "höher"} lag als ${AT_THE[r.g]} davor.` : `${k.name} hat sich zuletzt nicht mehrfach in dieselbe Richtung bewegt.`; }
   if (kind === "daily") return `Die Tageswerte bis ${DAILY.lastLong}. Der Monatswert ist der Stand am Monatsende, der Tagesverlauf zeigt den Weg dorthin.`;
   if (kind === "parts" && k.funnel) return "Was in der Pipeline steht, nach Stufe. Zeigt Volumen, keine Abschlusswahrscheinlichkeit.";
   const id = kind === "compare" ? "compare:lcr-dep" : kind + ":" + k.id, c = candidatesFor(k.group, m).find((x) => x.id === id);

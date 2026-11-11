@@ -42,8 +42,17 @@ func (s *Server) Kosmen() []KosmosInfo {
 	return out
 }
 
+// getKosmen lists the Kosmen the person may see; the others do not appear in
+// their main menu at all.
 func (s *Server) getKosmen(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, 200, map[string]any{"kosmen": s.Kosmen()})
+	out := []KosmosInfo{}
+	u := userOf(r)
+	for _, rm := range s.rooms() {
+		if s.sees(u, rm) {
+			out = append(out, s.infoOf(rm))
+		}
+	}
+	writeJSON(w, 200, map[string]any{"kosmen": out})
 }
 
 // addKosmos connects one more data source as a Kosmos of its own. The source
@@ -105,7 +114,7 @@ func (s *Server) addKosmos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 90*time.Second)
-	l := load(ctx, ad, defs, nil, d.Name)
+	l := load(ctx, ad, defs, nil, d.Name, true)
 	cancel()
 	if l.err != nil {
 		fail(w, 422, "Die Datenquelle ist nicht erreichbar: "+source.Explain(l.err))

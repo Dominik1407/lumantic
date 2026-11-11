@@ -10,7 +10,7 @@ function setMotion(still) { reduced = still; invalidate(); }
 // The parked lens looks this many months back from the room's month.
 function setLensBack(n) {
   if (!lens.parked || diving) return;
-  lens.m = clamp(T.base - n, 0, N - 1);
+  lens.m = endOf(clamp(T.base - n, 0, N - 1));
   updateLens();
   invalidate();
 }
@@ -27,7 +27,7 @@ function setSheet(px) {
 // For the real-time tests: a read-only window into the room.
 const debug = {
   get cam() { return cam; }, get M() { return M; }, get T() { return T; }, get lens() { return lens; }, get activeId() { return activeId; },
-  get W() { return W; }, get H() { return H; }, get GUT() { return GUT; }, get PAGE_W() { return PAGE_W; }, get THEME() { return THEME; },
-  pages, blocks, STARS, VIEWS, MENU, K, KPIS, DATA, framePage, frameAll, flyPlace, dive, setBase, stateOf,
+  get G() { return G; }, get AT() { return AT; }, get W() { return W; }, get H() { return H; }, get GUT() { return GUT; }, get PAGE_W() { return PAGE_W; }, get THEME() { return THEME; },
+  pages, blocks, STARS, VIEWS, MENU, K, KPIS, DATA, framePage, frameAll, flyPlace, dive, setBase, setGrain, stateOf, shownOf, PERIODS, valueAt,
 };
-return { retheme, setMotion, setLensBack, setHints, setSheet, resetAll, debug };
+return { retheme, setMotion, setLensBack, setHints, setSheet, resetAll, home: (id) => { if (K[id]) flyHome(id); }, debug };

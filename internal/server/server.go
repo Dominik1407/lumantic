@@ -8,6 +8,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io/fs"
 	"log"
 	"net/http"
@@ -17,8 +18,10 @@ import (
 
 	"lumantic/internal/adapter"
 	"lumantic/internal/ai"
+	"lumantic/internal/auth"
 	"lumantic/internal/catalog"
 	"lumantic/internal/config"
+	"lumantic/internal/katalog"
 	"lumantic/internal/lumina"
 	"lumantic/internal/metrics"
 	"lumantic/internal/source"
@@ -34,6 +37,10 @@ type Server struct {
 	// BuildSource builds the data source; nil means source.Build. secret reads
 	// the secrets of the Kosmos at hand by key.
 	BuildSource func(d config.Data, secret func(key string) string) (adapter.Adapter, error)
+	// Auth signs people in; nil means nobody signs in (Lumantic on one machine).
+	Auth auth.Authenticator
+	// AccessLog is the file that notes who signed in and opened which Kosmos; "" = none.
+	AccessLog string
 
 	mu  sync.RWMutex
 	ks  map[string]*kosmos // every Kosmos by id; never changed in place, only replaced
@@ -47,6 +54,9 @@ type Server struct {
 	runs runs           // reads under way, schedules, looks at files (refresh.go)
 	hub  hub            // open pages waiting for new figures
 	bg   sync.WaitGroup // reads in the background
+
+	views views // figures read in a person's name (access.go)
+	noted noted // what the access log wrote down lately
 }
 
 // kosmos is what the server holds of one room: its source, its key figure
@@ -61,9 +71,13 @@ type kosmos struct {
 	figures     *metrics.Data
 	figuresErr  error
 	refreshedAt time.Time
-	by          string        // what started the last read: start, hand, anstoss, zeitplan, aenderung
-	took        time.Duration // how long it took
-	sum         string        // fingerprint of the figures, to tell whether a read brought news
+	by          string          // what started the last read: start, hand, anstoss, zeitplan, aenderung
+	took        time.Duration   // how long it took
+	sum         string          // fingerprint of the figures, to tell whether a read brought news
+	perPerson   bool            // figures are read in each person's name (Weg 2), none are shared
+	merged      *metrics.Config // defs together with the company catalog: what the figures are read with
+	company     string          // the company catalog's table, "" without one
+	problems    []string        // what of the catalog could not be used
 }
 
 // room is what the settings say about one Kosmos.
@@ -73,18 +87,24 @@ type room struct {
 	metrics string         // key figure file; "" = built-in ALCO (first Kosmos) or none yet (the others)
 	refresh config.Refresh // when it is read again by itself
 	ownPlan bool           // the schedule is written down, not the usual one for its source
+	access  []string       // groups that see it; empty = everyone signed in
+	editors []string       // groups that look after its key figures, besides the admins
+	rights  string         // "source": figures are read in each person's name
+	grain   string         // the standard raster: monat, quartal or jahr
 }
 
 // roomsOf lists the Kosmen of a config, the first one first. eff is that config
 // with the environment applied.
 func roomsOf(eff config.Config) []room {
-	out := []room{{id: config.MainID, data: eff.Data, metrics: eff.Metrics, refresh: config.RefreshOf(eff.Data, eff.Refresh), ownPlan: eff.Refresh != nil}}
+	out := []room{{id: config.MainID, data: eff.Data, metrics: eff.Metrics, refresh: config.RefreshOf(eff.Data, eff.Refresh), ownPlan: eff.Refresh != nil,
+		access: eff.Access, editors: eff.Editors, rights: eff.Rights, grain: config.GrainOf(eff.Grain)}}
 	for _, k := range eff.Kosmen {
 		d := k.Data
 		if d.DuckDB == "" {
 			d.DuckDB = eff.Data.DuckDB
 		}
-		out = append(out, room{id: k.ID, data: d, metrics: k.Metrics, refresh: config.RefreshOf(k.Data, k.Refresh), ownPlan: k.Refresh != nil})
+		out = append(out, room{id: k.ID, data: d, metrics: k.Metrics, refresh: config.RefreshOf(k.Data, k.Refresh), ownPlan: k.Refresh != nil,
+			access: k.Access, editors: k.Editors, rights: k.Rights, grain: config.GrainOf(k.Grain)})
 	}
 	return out
 }
@@ -169,6 +189,9 @@ func (s *Server) build(id string, d config.Data, given map[string]string) (adapt
 type loaded struct {
 	cat        *catalog.Catalog
 	weeks      []string
+	merged     *metrics.Config // the company catalog and Lumantic's own definitions together
+	company    string          // the company catalog's table, "" without one
+	problems   []string        // what of the catalog could not be used, in sentences
 	figures    *metrics.Data
 	figuresErr error
 	err        error // the source itself failed
@@ -179,7 +202,9 @@ func emptyCatalog(name string) *catalog.Catalog {
 	return &catalog.Catalog{Source: name, Dialect: "duckdb", Tables: []catalog.Table{}}
 }
 
-func load(ctx context.Context, ad adapter.Adapter, defs *metrics.Config, defsErr error, name string) loaded {
+// load reads a source: its catalog and, unless shared figures are not wanted
+// (Weg 2, where each person's are read in their name), its figures.
+func load(ctx context.Context, ad adapter.Adapter, defs *metrics.Config, defsErr error, name string, shared bool) loaded {
 	l := loaded{at: time.Now().UTC()}
 	cat, err := ad.Describe(ctx)
 	if err != nil {
@@ -207,14 +232,31 @@ func load(ctx context.Context, ad adapter.Adapter, defs *metrics.Config, defsErr
 			log.Printf("Zeitachse nicht lesbar: %v", err)
 		}
 	}
+	// The meaning: a company catalog in the source, if there is one, together
+	// with Lumantic's own definitions; with it alone a Kosmos builds itself.
+	own := defs
+	if own == nil {
+		own = &metrics.Config{Groups: []metrics.Group{}, KPIs: []metrics.Def{}}
+	}
+	company, err := katalog.Read(ctx, ad, cat)
+	if err != nil {
+		l.problems = append(l.problems, err.Error())
+	}
+	if company != nil {
+		l.company = company.Table
+	}
+	var problems []string
+	l.merged, problems = katalog.Merge(company, own, cat)
+	l.problems = append(l.problems, problems...)
 	switch {
-	case defsErr != nil:
+	case defsErr != nil && company == nil:
 		l.figuresErr = defsErr
-	case defs == nil:
+	case defs == nil && company == nil:
 		l.figuresErr = errNoFigures
+	case !shared:
 	default:
-		l.figures, l.figuresErr = metrics.Load(ctx, ad, cat, defs)
-		if l.figuresErr != nil && len(defs.KPIs) > 0 {
+		l.figures, l.figuresErr = metrics.Load(ctx, ad, cat, l.merged)
+		if l.figuresErr != nil && len(l.merged.KPIs) > 0 {
 			log.Printf("Kennzahlen nicht geladen: %v", l.figuresErr)
 		}
 	}
@@ -236,6 +278,7 @@ func (k *kosmos) with(ad adapter.Adapter, l loaded) *kosmos {
 	n := *k
 	n.ad, n.sourceErr = ad, l.err
 	n.cat, n.weeks, n.figures, n.figuresErr, n.refreshedAt = l.cat, l.weeks, l.figures, l.figuresErr, l.at
+	n.merged, n.company, n.problems = l.merged, l.company, l.problems
 	n.by, n.took, n.sum = byHand, 0, sumOf(l.figures)
 	return &n
 }
@@ -248,7 +291,9 @@ func (s *Server) read(ctx context.Context, rm room, defs *metrics.Config, defsEr
 	if err != nil {
 		return k.with(adapter.Unavailable{Err: err}, loaded{cat: emptyCatalog(rm.data.Name), err: err, figuresErr: err, at: time.Now().UTC()})
 	}
-	return k.with(ad, load(ctx, ad, defs, defsErr, rm.data.Name))
+	k = k.with(ad, load(ctx, ad, defs, defsErr, rm.data.Name, rm.rights != config.RightsSource))
+	k.perPerson = rm.rights == config.RightsSource
+	return k
 }
 
 // get returns a Kosmos by id, nil if there is none.
@@ -274,6 +319,10 @@ func (s *Server) pick(w http.ResponseWriter, r *http.Request) (string, *kosmos) 
 	k := s.get(id)
 	if k == nil {
 		fail(w, 404, errNoKosmos.Error())
+		return "", nil
+	}
+	if rm, ok := s.room(id); ok && !s.sees(userOf(r), rm) {
+		fail(w, 403, "Diesen Kosmos darfst du nicht sehen. Frag einen Administrator, wenn du ihn brauchst.")
 		return "", nil
 	}
 	return id, k
@@ -345,44 +394,51 @@ func (s *Server) catalog() (*catalog.Catalog, []string) {
 func (s *Server) Routes() http.Handler {
 	mux := http.NewServeMux()
 	// Kosmos. Everything about one Kosmos takes ?k=<id>; without it the first is meant.
+	mux.HandleFunc("GET /api/me", s.getMe)
 	mux.HandleFunc("GET /api/kosmen", s.getKosmen)
-	mux.HandleFunc("POST /api/kosmen", s.addKosmos)
-	mux.HandleFunc("DELETE /api/kosmen/{id}", s.deleteKosmos)
+	mux.HandleFunc("POST /api/kosmen", s.adminOnly(s.addKosmos))
+	mux.HandleFunc("DELETE /api/kosmen/{id}", s.adminOnly(s.deleteKosmos))
 	mux.HandleFunc("GET /api/metrics", s.getMetrics)
 	mux.HandleFunc("GET /api/workspace", s.getWorkspace)
 	mux.HandleFunc("PUT /api/workspace", s.putWorkspace)
 	mux.HandleFunc("GET /api/catalog", s.getCatalog)
+	mux.HandleFunc("GET /api/katalog", s.getKatalog)
+	mux.HandleFunc("GET /api/katalog/export", s.exportKatalog)
+	mux.HandleFunc("PUT /api/katalog/kennzahl/{id}", s.editorsOnly(s.putKatalogEntry))
+	mux.HandleFunc("PUT /api/katalog/begriffe", s.editorsOnly(s.putTerms))
 	mux.HandleFunc("POST /api/refresh", s.postRefresh)
 	mux.HandleFunc("GET /api/refresh", s.getRefresh)
-	mux.HandleFunc("POST /api/refresh/token", s.postRefreshToken)
-	mux.HandleFunc("DELETE /api/refresh/token", s.deleteRefreshToken)
+	mux.HandleFunc("POST /api/refresh/token", s.adminOnly(s.postRefreshToken))
+	mux.HandleFunc("DELETE /api/refresh/token", s.adminOnly(s.deleteRefreshToken))
 	mux.HandleFunc("GET /api/events", s.events)
 	mux.HandleFunc("GET /api/settings", s.getSettings)
-	mux.HandleFunc("PUT /api/settings", s.putSettings)
-	mux.HandleFunc("POST /api/settings/data/test", s.testData)
-	mux.HandleFunc("PUT /api/settings/secret", s.putSecret)
-	mux.HandleFunc("POST /api/settings/ai/test", s.testAI)
+	mux.HandleFunc("PUT /api/settings", s.adminOnly(s.putSettings))
+	mux.HandleFunc("POST /api/settings/data/test", s.adminOnly(s.testData))
+	mux.HandleFunc("PUT /api/settings/secret", s.adminOnly(s.putSecret))
+	mux.HandleFunc("POST /api/settings/ai/test", s.adminOnly(s.testAI))
 	mux.HandleFunc("GET /api/kpis", s.getKPIs)
-	mux.HandleFunc("POST /api/kpis", s.addKPI)
-	mux.HandleFunc("PUT /api/kpis/{id}", s.updateKPI)
-	mux.HandleFunc("DELETE /api/kpis/{id}", s.deleteKPI)
+	mux.HandleFunc("POST /api/kpis", s.editorsOnly(s.addKPI))
+	mux.HandleFunc("PUT /api/kpis/{id}", s.editorsOnly(s.updateKPI))
+	mux.HandleFunc("DELETE /api/kpis/{id}", s.editorsOnly(s.deleteKPI))
 	mux.HandleFunc("POST /api/lumina/ask", s.askLumina)
 	mux.Handle("GET /brand/", http.HandlerFunc(s.brandFile))
-	// The first board (cards and notes); kept for scripts that still use it.
-	mux.HandleFunc("GET /api/meta", s.meta)
-	mux.HandleFunc("POST /api/catalog/refresh", s.refreshCatalog)
-	mux.HandleFunc("GET /api/board", s.board)
-	mux.HandleFunc("GET /api/suggestions", s.suggestions)
-	mux.HandleFunc("POST /api/ask", s.ask)
-	mux.HandleFunc("POST /api/brief", s.brief)
-	mux.HandleFunc("POST /api/cards", s.addCard)
-	mux.HandleFunc("PATCH /api/cards/{id}", s.setRule)
-	mux.HandleFunc("DELETE /api/cards/{id}", s.removeCard)
-	mux.HandleFunc("POST /api/reset", s.reset)
+	// The first board (cards and notes); kept for scripts that still use it. Once
+	// people sign in, it is for admins only: it knows nothing of rights.
+	mux.HandleFunc("GET /api/meta", s.adminOnly(s.meta))
+	mux.HandleFunc("POST /api/catalog/refresh", s.adminOnly(s.refreshCatalog))
+	mux.HandleFunc("GET /api/board", s.adminOnly(s.board))
+	mux.HandleFunc("GET /api/suggestions", s.adminOnly(s.suggestions))
+	mux.HandleFunc("POST /api/ask", s.adminOnly(s.ask))
+	mux.HandleFunc("POST /api/brief", s.adminOnly(s.brief))
+	mux.HandleFunc("POST /api/cards", s.adminOnly(s.addCard))
+	mux.HandleFunc("PATCH /api/cards/{id}", s.adminOnly(s.setRule))
+	mux.HandleFunc("DELETE /api/cards/{id}", s.adminOnly(s.removeCard))
+	mux.HandleFunc("POST /api/reset", s.adminOnly(s.reset))
+	s.login().Routes(mux)
 	if s.UI != nil {
 		mux.Handle("/", http.FileServerFS(s.UI))
 	}
-	return logRequests(guard(mux))
+	return logRequests(guard(s.gate(mux)))
 }
 
 func logRequests(next http.Handler) http.Handler {
@@ -411,19 +467,26 @@ func readJSON(r *http.Request, v any) error {
 }
 
 func (s *Server) getMetrics(w http.ResponseWriter, r *http.Request) {
-	_, k := s.pick(w, r)
+	id, k := s.pick(w, r)
 	if k == nil {
 		return
 	}
-	if k.figures == nil {
-		msg := "Keine Kennzahlen definiert."
-		if k.figuresErr != nil {
-			msg = k.figuresErr.Error()
-		}
-		fail(w, 503, "Die Kennzahlen sind nicht verfügbar: "+msg)
+	figs, err := s.figuresFor(r, id, k)
+	if errors.Is(err, auth.ErrExpired) {
+		// Weg 2 needs a fresh login: the page goes to sign in again and comes back.
+		writeJSON(w, 401, map[string]string{"error": err.Error(), "login": s.login().LoginURL("/")})
 		return
 	}
-	writeJSON(w, 200, k.figures)
+	if figs == nil {
+		fail(w, 503, "Die Kennzahlen sind nicht verfügbar: "+err.Error())
+		return
+	}
+	s.note("kosmos", userOf(r), id)
+	// The standard raster comes from the settings, so changing it needs no new read.
+	rm, _ := s.room(id)
+	out := *figs
+	out.Grain = rm.grain
+	writeJSON(w, 200, &out)
 }
 
 // The first Kosmos keeps the workspace document it always had (its pages and
@@ -434,12 +497,23 @@ func (s *Server) getWorkspace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	// Once people sign in, each keeps pages of their own; they start from the
+	// shared ones, the Kosmos as it was before.
+	if !s.open() {
+		if key := personal(id, userOf(r)); s.Store.HasWorkspace(key) {
+			w.Write(s.Store.WorkspaceOf(key))
+			return
+		}
+	}
 	if id == config.MainID {
 		w.Write(s.Store.Workspace())
 		return
 	}
 	w.Write(s.Store.WorkspaceOf(id))
 }
+
+// personal is where a person's own workspace of a Kosmos is kept.
+func personal(id string, u auth.User) string { return id + "|" + strings.ReplaceAll(u.ID, "|", "_") }
 
 func (s *Server) putWorkspace(w http.ResponseWriter, r *http.Request) {
 	id, k := s.pick(w, r)
@@ -452,9 +526,12 @@ func (s *Server) putWorkspace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var err error
-	if id == config.MainID {
+	switch {
+	case !s.open():
+		err = s.Store.SetWorkspaceOf(personal(id, userOf(r)), raw)
+	case id == config.MainID:
 		err = s.Store.SetWorkspace(raw)
-	} else {
+	default:
 		err = s.Store.SetWorkspaceOf(id, raw)
 	}
 	if err != nil {
@@ -464,10 +541,23 @@ func (s *Server) putWorkspace(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(204)
 }
 
+// getCatalog is the technical catalog: the tables a figure can be read from.
+// The company catalog's own tables are meaning, not data, and stay out.
 func (s *Server) getCatalog(w http.ResponseWriter, r *http.Request) {
 	_, k := s.pick(w, r)
 	if k == nil {
 		return
 	}
-	writeJSON(w, 200, k.cat)
+	if k.cat == nil || k.company == "" {
+		writeJSON(w, 200, k.cat)
+		return
+	}
+	out := *k.cat
+	out.Tables = nil
+	for _, t := range k.cat.Tables {
+		if !katalog.IsContract(t.Name) {
+			out.Tables = append(out.Tables, t)
+		}
+	}
+	writeJSON(w, 200, out)
 }

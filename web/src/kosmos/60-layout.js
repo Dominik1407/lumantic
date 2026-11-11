@@ -98,13 +98,13 @@ function refreshStar(st) {
   let kind = "lead", name = "", value = "", say = "";
   if (st.type === "lead") say = `Seite ${pageName(st.pg)}` + (st.pg.sys ? "" : ": ziehen verschiebt die Seite");
   else if (st.type === "chip") {
-    const k = K[st.k], m = st.under ? lens.m : effM(st.b), r = stateOf(k, m);
+    const k = K[st.k], m = st.under ? lens.m : effM(st.b), r = shownOf(k, m);
     kind = r.level === "calm" ? "calm" : r.kind; name = SHORT[k.id]; value = compact(k, r.cur);
     say = `${k.name}, ${r.label}: ziehen nimmt eine Kopie mit, Klick macht einen eigenen Baustein`;
   } else {
     const b = st.b;
     if (b.kind === "kpi") {
-      const k = K[b.k], r = stateOf(k, effM(b));
+      const k = K[b.k], r = shownOf(k, effM(b));
       kind = r.level !== "calm" ? r.kind : b.form === "diagramm" ? "chart" : "calm"; name = SHORT[k.id]; value = compact(k, r.cur);
       say = `${k.name}, ${r.label}: ziehen bewegt den Baustein, Klick öffnet sein Menü`;
     } else { kind = b.kind; name = b.kind === "note" ? "Notiz" : b.kind === "answer" ? "Antwort" : ""; say = b.kind === "note" ? "Notiz: ziehen bewegt sie, Klick öffnet ihr Menü" : b.kind === "answer" ? "Antwort von Lumina: ziehen bewegt sie, Klick öffnet ihr Menü" : b.kind === "ghost" ? "Vorschlag von Lumina: Klick übernimmt ihn" : "Ruhige Kennzahlen"; }
@@ -287,8 +287,9 @@ function draw() {
   M.p = p; M.e = e; M.kz = 1 / clamp(z, 0.16, Z_FAR);
   const far = clamp(1 - p / 0.5, 0, 1); // the far names are gone before any text shows
   if (far !== M.far) { M.far = far; stage.style.setProperty("--far", far.toFixed(3)); stage.classList.toggle("is-far", far > 0.5); }
-  // 1 · read the layout where it changed
+  // 1 · read the layout where it changed, and keep the pages clear of each other
   for (const pg of pages.values()) if (pg.dirty) measure(pg);
+  keepRingClear();
   // 2 · where every star stands in this frame
   for (const pg of pages.values()) { const [ox, oy] = toScreen(pg.x - PAGE_W / 2, pg.y); pg.ox = ox; pg.oy = oy; }
   spread(z);

@@ -9,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"lumantic/internal/ai"
+	"lumantic/internal/config"
 )
 
 // askLumina answers a question about the month the page shows. The app sends
@@ -35,6 +36,7 @@ func (s *Server) askLumina(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "Zu viele Kennzahlen auf einmal (höchstens 300).")
 		return
 	}
+	s.withMeaning(r, &q)
 	s.mu.RLock()
 	lum := s.lum
 	s.mu.RUnlock()
@@ -60,4 +62,42 @@ func (s *Server) askLumina(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, 200, ans)
+}
+
+// withMeaning adds what the catalog of the Kosmos named with ?k= says: the
+// definition of each figure asked about, and the words of the business with
+// their synonyms. Only figures the page sent get a definition, so Lumina never
+// learns of figures the person may not see.
+func (s *Server) withMeaning(r *http.Request, q *ai.Question) {
+	id := r.URL.Query().Get("k")
+	if id == "" {
+		id = config.MainID
+	}
+	k := s.get(id)
+	rm, ok := s.room(id)
+	if !ok || k == nil || k.merged == nil || !s.sees(userOf(r), rm) {
+		return
+	}
+	desc := map[string]string{}
+	for _, d := range k.merged.KPIs {
+		desc[d.ID] = d.Desc
+	}
+	sent := map[string]bool{}
+	for i := range q.Facts.Figures {
+		f := &q.Facts.Figures[i]
+		sent[f.ID] = true
+		if f.Definition == "" {
+			f.Definition = desc[f.ID]
+		}
+	}
+	q.Words = nil
+	for _, t := range k.merged.Terms {
+		if t.KPI != "" && !sent[t.KPI] {
+			continue
+		}
+		if len(q.Words) == 100 {
+			break
+		}
+		q.Words = append(q.Words, ai.Word{Term: t.Term, Definition: t.Definition, Synonyms: t.Synonyms, Figure: t.KPI})
+	}
 }

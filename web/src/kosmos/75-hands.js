@@ -94,7 +94,7 @@ stage.addEventListener("wheel", (e) => {
   if (lens.k > 0.5 && !diving && Math.hypot(sx - lens.x, sy - lens.y) <= lens.vr + 18) {
     wheelAcc += d;
     const steps = Math.trunc(wheelAcc / 100);
-    if (steps) { wheelAcc -= steps * 100; setLensMonth(lens.m - steps * (e.shiftKey ? 12 : 1)); }
+    if (steps) { wheelAcc -= steps * 100; setLensMonth(e.shiftKey ? lens.m - 12 * steps : shiftBy(lens.m, -steps)); }
     return;
   }
   closeMenu();
@@ -247,13 +247,16 @@ function flyPlace(id) {
 }
 function renderPlaces() {
   const mk = (id, name, key) => {
-    const pg = pages.get(id), c = pg && pg.sys && pg.sys !== "heute" ? levelCounts(T.base, scopeOf(pg)) : null;
+    const pg = pages.get(id), c = pg && pg.sys && pg.sys !== "heute" ? levelCounts(T.base, scopeOf(pg), true) : null;
     return h("button", { type: "button", "data-place": id, "aria-current": String(id === activeId), title: key ? `${name} (Taste ${key})` : name }, c && c.alert ? h("i", { class: "pl-al", title: "braucht dich" }) : null, name);
   };
   // The last item is not a place: the settings. A gear and the word, on a phone the gear alone.
   const gear = h("button", { type: "button", class: "pl-set", "data-settings": "1", "aria-label": "Einstellungen", title: "Einstellungen (Taste ,)", "aria-expanded": String(HOST.settingsOpen()) },
     sv("svg", { class: "gear", viewBox: "-8 -8 16 16", "aria-hidden": "true" }, sv("path", { d: GEAR_D }), sv("circle", { r: 2.2 })), h("span", { class: "pl-word", text: "Einstellungen" }));
-  $("places").replaceChildren(mk("heute", "Heute", "H"), ...GROUP_ORDER.map((g, i) => mk("g:" + g, GROUPS[g], i < 9 ? String(i + 1) : "")), ...[...pages.values()].filter((pg) => !pg.sys && pg.title).map((pg) => mk(pg.id, pg.title, "")), mk("all", "Überblick", "0"), gear);
+  // Before the gear: the Sternkatalog, where every star of the room has its entry.
+  const kat = h("button", { type: "button", class: "pl-set pl-kat", "data-katalog": "1", "aria-label": "Sternkatalog", title: "Sternkatalog (Taste C)" },
+    sv("svg", { class: "gear", viewBox: "-8 -8 16 16", "aria-hidden": "true" }, sv("path", { d: "M0,-6.5 L1.6,-1.6 L6.5,0 L1.6,1.6 L0,6.5 L-1.6,1.6 L-6.5,0 L-1.6,-1.6 Z" })), h("span", { class: "pl-word", text: "Katalog" }));
+  $("places").replaceChildren(mk("heute", "Heute", "H"), ...GROUP_ORDER.map((g, i) => mk("g:" + g, GROUPS[g], i < 9 ? String(i + 1) : "")), ...[...pages.values()].filter((pg) => !pg.sys && pg.title).map((pg) => mk(pg.id, pg.title, "")), mk("all", "Überblick", "0"), kat, gear);
 }
 // A gear of eight teeth, drawn once: an outer ring of teeth around a hole.
 const GEAR_D = (() => {
@@ -263,17 +266,21 @@ const GEAR_D = (() => {
 })();
 $("places").addEventListener("click", (e) => {
   if (e.target.closest("[data-settings]")) { userInput(); closeMenu(); if (!HOST.closeSettings()) HOST.openSettings(); return; }
+  if (e.target.closest("[data-katalog]")) { userInput(); closeMenu(); HOST.closeSettings(); HOST.openCatalog(); return; }
   const b = e.target.closest("[data-place]");
   if (b) { userInput(); flyPlace(b.dataset.place); }
 });
 
 // ───────────── Time: the month of the room ─────────────
-const STEP_PX = 8; // pixels of drag per month on the month word
+const STEP_PX = 8; // pixels of drag per month on the month word; a quarter takes twice as far, a year four times
+const DRAG = { tag: 1, woche: 1, monat: 1, quartal: 2, jahr: 4 };
+// Today: the last month, or in days and weeks the last one there is.
+const atToday = () => (fine(G) ? AT >= PERIODS[G].length - 1 : T.base === TODAY);
 let memoTimer = 0, playTimer = 0, rulerTimer = 0, rulerPinned = false, scrub = false;
 function syncBack() {
   const back = $("back");
-  back.hidden = T.base === TODAY;
-  if (!back.hidden) back.replaceChildren(`Rückblick · ${PERIODS.monat[T.base][narrow() ? "label" : "long"]}`, h("span", { text: "Zurück zu heute" }));
+  back.hidden = atToday();
+  if (!back.hidden) back.replaceChildren(`Rückblick · ${periodOf(T.base)[narrow() ? "label" : "long"]}`, h("span", { text: "Zurück zu heute" }));
 }
 function baseChanged(mode) {
   renderAll(mode);
@@ -281,36 +288,76 @@ function baseChanged(mode) {
 }
 function setBase(m, mode) {
   m = clamp(Math.round(m), 0, TODAY);
+  if (fine(G)) return setAt(lastIn(m), mode);
+  m = endOf(m);
   if (m === T.base || diving) return;
   T.base = m;
   clearTimeout(memoTimer);
   if (m < TODAY) memoTimer = setTimeout(() => { T.memo = m; }, 450);
   baseChanged(mode);
 }
-function step(d) {
+// In days and weeks the room stands on one of them; its month follows, and with it the status.
+function setAt(i, mode) {
+  const P = PERIODS[G];
+  i = clamp(Math.round(i), 0, P.length - 1);
+  if (diving || (i === AT && P[i].mi === T.base)) return;
+  AT = i;
+  T.base = P[i].mi;
+  clearTimeout(memoTimer);
+  if (!atToday()) memoTimer = setTimeout(() => { T.memo = T.base; T.memoAt = AT; }, 450);
+  baseChanged(mode);
+}
+// One period in the room's raster, or with Shift one year, as always.
+function step(d, year) {
   stopPlay();
-  setBase(T.base + d, "step");
+  if (fine(G)) setAt(AT + (year ? d * (G === "woche" ? 52 : DAYS.length) : d), "step");
+  else setBase(year ? T.base + 12 * d : shiftBy(T.base, d), "step");
   showRuler(2200);
+}
+// The raster the pages are read in: Monat, Quartal, Jahr. The room then stands on the last month of its period.
+function setGrain(g) {
+  if (!AVAILABLE.includes(g) || g === G || diving) return;
+  stopPlay();
+  // From a week to its last day and back to the week of a day; from months to the last day or week of the month.
+  const from = fine(G) && AT >= 0 ? PERIODS[G][AT] : null;
+  G = g;
+  if (fine(g)) { AT = from ? atDate(g, from.end || from.to) : lastIn(T.base); T.base = PERIODS[g][AT].mi; } else { AT = -1; T.base = endOf(T.base); }
+  if (T.memo !== null) T.memo = endOf(T.memo);
+  lens.m = endOf(lens.m);
+  syncGrain();
+  save();
+  baseChanged("step");
+}
+function syncGrain() {
+  const pg = pages.get("heute");
+  pg.grain.querySelectorAll("[data-grain]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.grain === G)));
+  pg.grain.dataset.fine = String(fine(G));
+  pg.when.title = `Ziehen reist durch die ${PLURAL[G]}`;
 }
 // Z: today ↔ the last moment visited, with the lens' circle sweeping the room.
 function toggleZ() {
   stopPlay();
+  if (fine(G)) {
+    const last = PERIODS[G].length - 1;
+    if (!atToday()) { T.memoAt = AT; setAt(last, "step"); } else setAt(T.memoAt !== undefined && T.memoAt < last ? T.memoAt : Math.max(0, last - 5), "step");
+    return;
+  }
   if (T.base !== TODAY) { T.memo = T.base; dive(TODAY); }
   else dive(T.memo !== null && T.memo !== TODAY ? T.memo : lens.m !== TODAY ? lens.m : Math.max(0, TODAY - 12));
 }
 function play() {
   if (T.playing || diving) return;
-  if (T.base >= TODAY) setBase(0, "step");
+  if (atToday()) { if (fine(G)) setAt(0, "step"); else setBase(0, "step"); }
   T.playing = true;
   syncPlay();
   showRuler();
-  playTimer = setInterval(() => { if (T.base >= TODAY) stopPlay(); else setBase(T.base + 1, "scrub"); }, 280);
+  playTimer = setInterval(() => { if (atToday()) stopPlay(); else if (fine(G)) setAt(AT + 1, "scrub"); else setBase(shiftBy(T.base, 1), "scrub"); }, 280);
 }
 function stopPlay() {
   if (!T.playing) return;
   T.playing = false;
   clearInterval(playTimer);
-  if (T.base < TODAY) T.memo = T.base;
+  if (!atToday()) T.memo = T.base;
   syncPlay();
   showRuler(2200);
 }
@@ -339,7 +386,7 @@ function showTip(anchor, head, text) {
   tip.style.top = r.bottom - off.top + 10 + "px";
 }
 const hideTip = () => { $("tip").hidden = true; };
-const scrubbing = (on) => { scrub = on; stage.classList.toggle("scrubbing", on); if (!on && T.base < TODAY) T.memo = T.base; };
+const scrubbing = (on) => { scrub = on; stage.classList.toggle("scrubbing", on); if (!on && !atToday()) T.memo = T.base; };
 // The ruler under the dateline of «Heute»: years, quarters, the months that needed attention, events.
 function buildRuler() {
   const pg = pages.get("heute"), r = pg.ruler, kids = [h("div", { class: "base" })];
@@ -384,14 +431,15 @@ function wireTime() {
     e.stopPropagation();
     userInput();
     stopPlay();
-    const x0 = e.clientX, m0 = T.base;
+    const x0 = e.clientX, m0 = T.base, at0 = AT;
     let moved = false;
     w.setPointerCapture(e.pointerId);
     const move = (ev) => {
       const dx = ev.clientX - x0;
       if (!moved && Math.abs(dx) < 4) return;
       if (!moved) { moved = true; scrubbing(true); showRuler(); }
-      setBase(m0 + Math.round(dx / STEP_PX), "scrub");
+      if (fine(G)) setAt(at0 + Math.round(dx / STEP_PX), "scrub");
+      else setBase(shiftBy(m0, Math.round(dx / (STEP_PX * DRAG[G]))), "scrub");
     };
     const up = () => {
       w.removeEventListener("pointermove", move); w.removeEventListener("pointerup", up); w.removeEventListener("pointercancel", up);
@@ -401,17 +449,21 @@ function wireTime() {
     w.addEventListener("pointermove", move); w.addEventListener("pointerup", up); w.addEventListener("pointercancel", up);
   });
   w.addEventListener("click", (e) => { if (e.detail === 0) pin(); });
-  w.addEventListener("keydown", (e) => { if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); e.stopPropagation(); step((e.key === "ArrowRight" ? 1 : -1) * (e.shiftKey ? 12 : 1)); } });
+  w.addEventListener("keydown", (e) => { if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); e.stopPropagation(); step(e.key === "ArrowRight" ? 1 : -1, e.shiftKey); } });
   w.addEventListener("pointerenter", () => showRuler(1600));
   pg.rr.addEventListener("pointerenter", () => showRuler(1600));
   pg.play.addEventListener("pointerdown", (e) => e.stopPropagation());
   pg.play.addEventListener("click", () => (T.playing ? stopPlay() : play()));
+  pg.grain.addEventListener("pointerdown", (e) => e.stopPropagation());
+  pg.grain.addEventListener("click", (e) => { const b = e.target.closest("[data-grain]"); if (b && b.getAttribute("aria-disabled") !== "true") { userInput(); setGrain(b.dataset.grain); } });
+  syncGrain();
   $("back").addEventListener("click", () => { userInput(); stopPlay(); T.memo = T.base; dive(TODAY); });
 }
 
 // ───────────── Keys ─────────────
 // Esc closes what is open, one thing at a time.
 function escapeKey() {
+  if (HOST.closeCatalog()) return true;
   if (HOST.closeSettings()) return true;
   if (starDrag && starDrag.moved) { const d = starDrag; starDrag = null; cancelStarDrag(d); return true; }
   if (closeMenu()) return true;
@@ -428,15 +480,16 @@ document.addEventListener("keydown", (e) => {
   const t = e.target, k = e.key, typing = t.isContentEditable || t.tagName === "INPUT" || t.tagName === "TEXTAREA";
   if (k === "Escape") { if (escapeKey()) e.preventDefault(); return; }
   if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
-  // While the settings are open, the room does not move under them.
-  if (HOST.settingsOpen()) return;
+  // While the settings or the Sternkatalog are open, the room does not move under them.
+  if (HOST.settingsOpen() || HOST.catalogOpen()) return;
   if (MENU.open && menuKey(e)) return;
   userInput();
   const onButton = t.tagName === "BUTTON" || (t.getAttribute && t.getAttribute("role") === "button"), pg = pages.get(activeId);
-  if (k === "ArrowLeft" || k === "ArrowRight") { e.preventDefault(); step((k === "ArrowRight" ? 1 : -1) * (e.shiftKey ? 12 : 1)); }
+  if (k === "ArrowLeft" || k === "ArrowRight") { e.preventDefault(); step(k === "ArrowRight" ? 1 : -1, e.shiftKey); }
   else if (k === "ArrowUp" || k === "ArrowDown") { e.preventDefault(); panBy(0, ((k === "ArrowDown" ? 1 : -1) * 120) / cam.z); }
   else if (k === "PageUp" || k === "PageDown") { e.preventDefault(); panBy(0, ((k === "PageDown" ? 1 : -1) * 0.7 * H) / cam.z); }
   else if (k === "z" || k === "Z") toggleZ();
+  else if (k === "g" || k === "G") setGrain(AVAILABLE[(AVAILABLE.indexOf(G) + 1) % AVAILABLE.length]);
   else if (k === " " && !onButton) { e.preventDefault(); if (T.playing) stopPlay(); else play(); }
   else if (k === "?") toggleIdee();
   else if (k === "/" && pg) { e.preventDefault(); focusInsert(pg, "/"); }
@@ -445,6 +498,7 @@ document.addEventListener("keydown", (e) => {
   else if (/^[1-9]$/.test(k) && GROUP_ORDER[k - 1]) flyPlace("g:" + GROUP_ORDER[k - 1]);
   else if (k === ",") { e.preventDefault(); closeMenu(); HOST.openSettings(); }
   else if (k === "k" || k === "K") HOST.leave();
+  else if (k === "c" || k === "C") { closeMenu(); HOST.openCatalog(); }
   else if ((k === "Delete" || k === "Backspace") && selId && blocks.has(selId)) removeBlock(selId);
   else if (k === "Tab" && !e.shiftKey && (t === document.body || t === stage) && pg && acceptGhost(pg)) e.preventDefault();
   else if ((k === "Enter" || k === " ") && t.matches && t.matches(".fact, .spk")) { e.preventDefault(); t.click(); }

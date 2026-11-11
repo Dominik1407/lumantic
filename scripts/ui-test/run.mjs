@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // Runs the scenarios against a fresh mock server each: the app with one Kosmos (app.mjs) on a desktop, a phone and
-// with reduced motion, then the main menu with three Kosmen (kosmen.mjs) on a desktop and a phone.
+// with reduced motion, then the main menu with three Kosmen (kosmen.mjs) on a desktop and a phone, and the room on a
+// short window, where pages must keep clear of each other (layout.mjs), and the rasters (raster.mjs).
 // Build first: cd web; npm run build. Screenshots land in scripts/ui-test/shots/.
 //
-//   node scripts/ui-test/run.mjs [desktop|phone|reduced|kosmen|kosmen-phone …]
+//   node scripts/ui-test/run.mjs [desktop|phone|reduced|kosmen|kosmen-phone|short|raster …]
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
@@ -14,6 +15,8 @@ const RUNS = {
   reduced: { script: "app.mjs", browser: ["--reduced"] },
   kosmen: { script: "kosmen.mjs", server: ["--kosmen"] },
   "kosmen-phone": { script: "kosmen.mjs", server: ["--kosmen"], browser: ["--phone"] },
+  short: { script: "layout.mjs", browser: ["--w", "1026", "--h", "520"] },
+  raster: { script: "raster.mjs" },
 };
 const pick = process.argv.slice(2).filter((a) => a in RUNS);
 let failed = 0, port = 9451;

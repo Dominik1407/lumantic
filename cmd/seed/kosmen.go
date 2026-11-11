@@ -15,7 +15,7 @@ type folderLayer struct {
 }
 
 func folderLayers() []folderLayer {
-	return []folderLayer{{"firmenkunden", firmenkundenTables()}, {"privatkunden", privatkundenTables()}}
+	return []folderLayer{{"firmenkunden", firmenkundenTables()}, {"privatkunden", privatkundenTables()}, {"industrie", industrieTables()}}
 }
 
 // drift splits a total into parts whose weights move slowly, so the parts

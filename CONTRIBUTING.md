@@ -12,9 +12,10 @@ how it should look and feel. Contributions are welcome, in a curated way:
 
 | Area | Where | Notes |
 |---|---|---|
-| Data source adapters | `internal/adapter/` | One file or package per source, behind the interface in `adapter.go`; SQL differences go into `dialect.go`. Existing: DuckDB, files, Windmill, Snowflake, Databricks. |
+| Data source adapters | `internal/adapter/` | One file or package per source, behind the interface in `adapter.go`; SQL differences go into `dialect.go`. Existing: DuckDB, files, Windmill (in `internal/adapter/`), Snowflake and Databricks (packages `internal/adapter/snowflake`, `internal/adapter/databricks`, which can also ask in a person's name). |
+| Catalog readers | `internal/katalog/` | Today the company catalog is read from three views with fixed names. Readers for catalog tools (such as Unity Catalog tags or Snowflake semantic views) are welcome. |
 | Corporate designs | `config/brand/`, `brand` in `config/lumantic.example.json` | Templates that show how a company brings its own logo, fonts and colours. |
-| Key figure templates | `config/beispiele/` | Ready-made key figures for a domain, such as retail banking or insurance. |
+| Key figure templates | `config/beispiele/` | Ready-made key figures for a domain, such as retail banking, industry or insurance. |
 | Translations | `web/src/` | The interface is German today. Making it translatable is a welcome first step; please open an issue before starting. |
 
 ## What stays with the maintainer
