@@ -430,9 +430,11 @@ func TestBrandSettingsAndFiles(t *testing.T) {
 		req := httptest.NewRequest("GET", "http://127.0.0.1:8080"+path, nil)
 		rec := httptest.NewRecorder()
 		e.h.ServeHTTP(rec, req)
-		// The mux answers paths with ".." by redirecting to the cleaned path,
-		// which lies outside /brand/; either way nothing from config/ is served.
-		if rec.Code != want && !(want == 404 && rec.Code == 307 && !strings.HasPrefix(rec.Header().Get("Location"), "/brand/")) {
+		// The mux answers paths with ".." by redirecting to the cleaned path (301 or 307,
+		// depending on the Go version), which lies outside /brand/; either way nothing
+		// from config/ is served.
+		redirected := rec.Code == 301 || rec.Code == 307
+		if rec.Code != want && !(want == 404 && redirected && !strings.HasPrefix(rec.Header().Get("Location"), "/brand/")) {
 			t.Errorf("%s: %d, want %d", path, rec.Code, want)
 		}
 		if want == 200 && path == "/brand/fonts/haus.woff2" && rec.Header().Get("Content-Type") != "font/woff2" {
