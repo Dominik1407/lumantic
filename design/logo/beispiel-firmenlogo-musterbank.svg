@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 186 44" role="img" aria-label="Musterbank">
+  <!-- Beispiel-Logo für die Vorlage «Musterbank» in lumantic.example.json. Ersetze es durch euer eigenes. -->
+  <rect x="2" y="4" width="36" height="36" rx="8" fill="#00539f"/>
+  <path d="M11 31V13h4.6l4.4 9.4 4.4-9.4H29v18h-4V20.6L21.4 28h-2.8L15 20.6V31z" fill="#ffffff"/>
+  <text x="50" y="30" font-family="'Source Sans 3', 'Segoe UI', Arial, Helvetica, sans-serif" font-size="25" font-weight="600" letter-spacing="-.3" fill="#0b1f3a">Musterbank</text>
+</svg>

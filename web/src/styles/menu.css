@@ -1,0 +1,94 @@
+/* The main menu (every Kosmos as a small sky) and the logo. Like everything else, drawn from the design's tokens. */
+
+/* ── Logo ── */
+.logo { display: inline-flex; align-items: center; color: var(--ink); }
+.logo svg { display: block; flex: none; width: auto; }
+.logo-corp { display: block; height: 26px; width: auto; max-width: 190px; object-fit: contain; }
+/* The corner of the app: the logo and, inside a Kosmos, its name. With more than one Kosmos it leads to the main menu. */
+.brand { align-items: center; }
+.brand-home { display: inline-flex; align-items: center; gap: 12px; border: 0; border-radius: 8px; background: none; margin: -4px 0; padding: 4px 8px 4px 0; color: inherit; text-decoration: none; }
+span.brand-home { cursor: default; }
+.kname { padding-left: 12px; border-left: 1px solid var(--line-2); font: 500 12.5px/1.25 var(--f-ui); color: var(--ink-2); transition: color .15s; }
+button.brand-home:hover .kname { color: var(--ink); }
+/* «powered by lumantic»: only where a company logo stands in the corner */
+.powered { position: absolute; z-index: 6; top: 22px; right: max(20px, env(safe-area-inset-right, 0px)); pointer-events: none; }
+.logo-by { display: inline-flex; align-items: center; gap: 7px; font: 400 9px/1 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.logo-by .logo { color: var(--ink-2); }
+@media (max-width: 700px) { .powered { top: 17px; } .logo-by { font-size: 0; gap: 0; } .logo-by .logo { opacity: .8; } }
+
+/* ── Main menu ── */
+.kmenu { position: absolute; inset: 0; z-index: 4; overflow: hidden auto; overscroll-behavior: contain; display: grid; align-items: center;
+  padding: 92px max(24px, env(safe-area-inset-left, 0px)) 88px; }
+.km-in { width: min(1160px, 100%); margin: 0 auto; display: grid; gap: clamp(22px, 5vh, 54px); justify-items: center; }
+.km-head { display: grid; gap: 12px; justify-items: center; text-align: center; animation: km-rise .7s cubic-bezier(.2, .8, .2, 1) backwards; }
+.km-eye { margin: 0; font: 500 9.5px/1.5 var(--f-mono); letter-spacing: .2em; text-transform: uppercase; color: var(--ink-2); }
+.km-hl { margin: 0; font: var(--w-hl) var(--fs-hl)/1.08 var(--f-text); letter-spacing: -.015em; text-wrap: balance; color: var(--ink); }
+.km-note { margin: 0; font: 400 13px/1.45 var(--f-ui); color: var(--ink-2); }
+.km-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; }
+.km-list li { width: 258px; }
+.km-k { width: 100%; display: grid; justify-items: center; gap: 3px; border: 0; border-radius: 20px; background: none; padding: 2px 10px 18px; color: var(--ink); text-align: center;
+  animation: km-rise .75s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--n) * 90ms + 120ms); }
+.km-sky { width: 100%; height: auto; overflow: visible; transition: transform .55s cubic-bezier(.2, .8, .2, 1); }
+.km-k:hover .km-sky, .km-k:focus-visible .km-sky { transform: scale(1.07); }
+.km-k:focus-visible { outline-offset: -2px; }
+.km-name { font: 600 19px/1.25 var(--f-ui); letter-spacing: -.012em; }
+.km-say { font: var(--italic) var(--w-voice) 15.5px/1.3 var(--f-text); color: var(--ink-2); }
+.km-k[data-tone="alert"] .km-say { color: var(--alert); }
+.km-k[data-tone="watch"] .km-say { color: var(--watch); }
+.km-k[data-tone="off"] .km-say { color: var(--dim); }
+.km-meta { margin-top: 5px; max-width: 100%; font: 400 9px/1.5 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); overflow-wrap: anywhere; }
+.km-k[data-tone="off"] .km-meta { letter-spacing: .02em; text-transform: none; font-size: 10.5px; }
+.km-new .km-name { font-weight: 500; font-size: 15px; color: var(--accent); }
+.km-new .km-sky { opacity: .85; }
+
+/* The sky of a Kosmos: threads, then one star per key figure in the shape of its status */
+.km-lines line { stroke: var(--thread); stroke-width: 1; opacity: .34; vector-effect: non-scaling-stroke; }
+.km-lines .km-far { stroke-dasharray: 1.5 4.5; opacity: .3; }
+.km-star { transform-box: fill-box; transform-origin: center; animation: km-pop .5s cubic-bezier(.2, .9, .3, 1.35) backwards; animation-delay: calc(var(--i) * 34ms + 320ms); }
+.km-calm { fill: var(--ink-2); }
+.km-none { fill: none; stroke: var(--dim); stroke-width: 1; }
+.km-al { fill: var(--alert); }
+.km-halo { fill: var(--alert); opacity: .13; transform-box: fill-box; transform-origin: center; animation: km-pulse 3.4s ease-in-out infinite; }
+.km-wa { fill: var(--watch); }
+.km-go { fill: var(--good); }
+.km-go-ring { fill: none; stroke: var(--good); stroke-width: 1.4; }
+.km-hub { fill: var(--bg); stroke: var(--ink-2); stroke-width: 1.1; }
+.km-home-ring { fill: var(--bg); stroke: var(--accent); stroke-width: 1.4; }
+.km-home { fill: var(--accent); }
+.km-orbit { fill: none; stroke: var(--line-2); stroke-width: 1; stroke-dasharray: 2 5; }
+.km-plus { fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; }
+.km-new .km-home-ring, .km-new .km-home { display: none; }
+
+/* The settings sheet takes the right edge: the Kosmen move over, as a page does in its room */
+@media (min-width: 1000px) {
+  .kmenu { transition: padding-right .42s cubic-bezier(.2, .8, .2, 1); }
+  .sheet-open .kmenu { padding-right: 468px; }
+}
+
+/* Into a Kosmos: its sky grows towards you, the others fall away */
+.kmenu.is-leaving .km-head { opacity: 0; transition: opacity .2s; }
+.kmenu.is-leaving .km-k:not(.is-chosen) { opacity: 0; transition: opacity .2s; }
+.kmenu.is-leaving .km-k.is-chosen > :not(.km-sky) { opacity: 0; transition: opacity .16s; }
+.kmenu.is-leaving .km-list { transform: scale(4.4); opacity: 0; transition: transform .5s cubic-bezier(.55, 0, .9, .45), opacity .32s ease-in .16s; }
+/* Out of a Kosmos: the room dims before the menu takes over */
+.app.is-away > .stage, .app.is-away > .chrome { opacity: 0; transition: opacity .2s ease-out; }
+
+@keyframes km-rise { from { opacity: 0; transform: translateY(14px); } }
+@keyframes km-pop { from { opacity: 0; transform: scale(0); } }
+@keyframes km-pulse { 50% { opacity: .26; transform: scale(1.3); } }
+.still .km-head, .still .km-k, .still .km-star, .still .km-halo { animation: none; }
+.still .km-sky, .still .km-list, .still .km-k, .still .kmenu, .still .app > * { transition: none; }
+
+@media (max-width: 700px) {
+  .kmenu { align-items: start; padding: 78px 14px 84px; }
+  .km-in { gap: 18px; justify-items: stretch; }
+  .km-head { justify-items: start; text-align: left; padding: 0 6px; }
+  .km-list { display: grid; gap: 2px; }
+  .km-list li { width: auto; }
+  .km-k { grid-template-columns: 112px minmax(0, 1fr); column-gap: 12px; justify-items: start; align-content: center; text-align: left; padding: 4px 6px; }
+  .km-sky { grid-row: 1 / span 3; width: 112px; align-self: center; }
+  .km-name { align-self: end; font-size: 17px; }
+  .km-meta { align-self: start; }
+  .km-new { grid-template-rows: auto auto; }
+  .km-new .km-sky { grid-row: 1 / span 2; }
+}

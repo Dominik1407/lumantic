@@ -1,0 +1,112 @@
+/*
+  Lumen design tokens.
+
+  Layer 1, brand inputs: the only values a corporate design sets (theme.ts
+  writes them onto :root). Layer 2, semantic tokens: everything components
+  use, derived from the inputs with color-mix(), for light and dark.
+  Status colours are fixed on purpose: red always means "needs you".
+*/
+:root {
+  /* Layer 1: brand inputs */
+  --lm-brand: #c9971c;
+  --lm-font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --lm-font-body: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --lm-font-mono: "Geist Mono", ui-monospace, Consolas, monospace;
+  --lm-radius: 16px;
+  --lm-density: 1;
+  --lm-tint: 2%;
+
+  /* Layer 2: surfaces and ink, light */
+  --lm-bg: color-mix(in oklch, var(--lm-brand) var(--lm-tint), #f5f6f8);
+  --lm-surface: color-mix(in oklch, var(--lm-brand) calc(var(--lm-tint) / 3), #ffffff);
+  --lm-surface-2: color-mix(in oklch, var(--lm-brand) var(--lm-tint), #eef0f3);
+  --lm-ink: color-mix(in oklch, var(--lm-brand) 6%, #0f141c);
+  --lm-ink-2: color-mix(in oklch, var(--lm-brand) 6%, #4a5263);
+  --lm-muted: color-mix(in oklch, var(--lm-brand) 6%, #687082);
+  --lm-line: color-mix(in oklch, var(--lm-brand) 6%, #e1e4ea);
+  --lm-line-2: color-mix(in oklch, var(--lm-brand) 8%, #ccd1d9);
+
+  /* Accent: the brand, plus a text-safe ink and soft fills */
+  --lm-accent: var(--lm-brand);
+  --lm-accent-ink: color-mix(in oklch, var(--lm-brand) 68%, #000000);
+  --lm-accent-soft: color-mix(in oklch, var(--lm-brand) 12%, var(--lm-surface));
+  --lm-accent-glow: color-mix(in oklch, var(--lm-brand) 34%, transparent);
+
+  /* Status: fixed, never themed */
+  --lm-crit: #d03b3b;
+  --lm-warn: #fab219;
+  --lm-good: #0ca30c;
+  --lm-crit-soft: color-mix(in oklch, var(--lm-crit) 11%, var(--lm-surface));
+  --lm-warn-soft: color-mix(in oklch, var(--lm-warn) 16%, var(--lm-surface));
+  --lm-good-soft: color-mix(in oklch, var(--lm-good) 11%, var(--lm-surface));
+
+  /* Data marks */
+  --lm-spark: color-mix(in oklch, var(--lm-brand) 8%, #5b6475);
+  --lm-spark-wash: color-mix(in oklch, var(--lm-spark) 11%, transparent);
+  --lm-ref: color-mix(in oklch, var(--lm-brand) 6%, #a9b0bd);
+
+  --lm-shadow: 0 1px 2px rgb(15 20 28 / .05), 0 12px 32px rgb(15 20 28 / .08);
+  --lm-scrim: rgb(10 14 20 / .42);
+
+  /* Shape and rhythm, scaled by the inputs */
+  --lm-r-lg: var(--lm-radius);
+  --lm-r-md: calc(var(--lm-radius) * .75);
+  --lm-r-sm: calc(var(--lm-radius) * .5);
+  --lm-s1: calc(4px * var(--lm-density));
+  --lm-s2: calc(8px * var(--lm-density));
+  --lm-s3: calc(12px * var(--lm-density));
+  --lm-s4: calc(16px * var(--lm-density));
+  --lm-s5: calc(24px * var(--lm-density));
+  --lm-s6: calc(32px * var(--lm-density));
+
+  /* Type scale */
+  --lm-t-xs: 12px;
+  --lm-t-sm: 13px;
+  --lm-t-md: 15px;
+  --lm-t-lg: 18px;
+  --lm-t-xl: clamp(20px, 3.2vw, 24px);
+  --lm-t-hero: clamp(28px, 4.8vw, 40px);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --lm-bg: color-mix(in oklch, var(--lm-brand) var(--lm-tint), #0c0f14);
+    --lm-surface: color-mix(in oklch, var(--lm-brand) var(--lm-tint), #141820);
+    --lm-surface-2: color-mix(in oklch, var(--lm-brand) calc(var(--lm-tint) * 1.5), #1b2029);
+    --lm-ink: color-mix(in oklch, var(--lm-brand) 4%, #eef0f4);
+    --lm-ink-2: color-mix(in oklch, var(--lm-brand) 6%, #b2b8c4);
+    --lm-muted: color-mix(in oklch, var(--lm-brand) 6%, #8a92a2);
+    --lm-line: color-mix(in oklch, var(--lm-brand) 6%, #252b36);
+    --lm-line-2: color-mix(in oklch, var(--lm-brand) 8%, #353c49);
+    --lm-accent-ink: color-mix(in oklch, var(--lm-brand) 72%, #ffffff);
+    --lm-accent-soft: color-mix(in oklch, var(--lm-brand) 16%, var(--lm-surface));
+    --lm-accent-glow: color-mix(in oklch, var(--lm-brand) 30%, transparent);
+    --lm-crit: #e05252;
+    --lm-spark: color-mix(in oklch, var(--lm-brand) 8%, #9aa3b3);
+    --lm-ref: color-mix(in oklch, var(--lm-brand) 6%, #5c6472);
+    --lm-shadow: 0 1px 2px rgb(0 0 0 / .3), 0 12px 32px rgb(0 0 0 / .38);
+    --lm-scrim: rgb(0 0 0 / .55);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --lm-bg: color-mix(in oklch, var(--lm-brand) var(--lm-tint), #0c0f14);
+  --lm-surface: color-mix(in oklch, var(--lm-brand) var(--lm-tint), #141820);
+  --lm-surface-2: color-mix(in oklch, var(--lm-brand) calc(var(--lm-tint) * 1.5), #1b2029);
+  --lm-ink: color-mix(in oklch, var(--lm-brand) 4%, #eef0f4);
+  --lm-ink-2: color-mix(in oklch, var(--lm-brand) 6%, #b2b8c4);
+  --lm-muted: color-mix(in oklch, var(--lm-brand) 6%, #8a92a2);
+  --lm-line: color-mix(in oklch, var(--lm-brand) 6%, #252b36);
+  --lm-line-2: color-mix(in oklch, var(--lm-brand) 8%, #353c49);
+  --lm-accent-ink: color-mix(in oklch, var(--lm-brand) 72%, #ffffff);
+  --lm-accent-soft: color-mix(in oklch, var(--lm-brand) 16%, var(--lm-surface));
+  --lm-accent-glow: color-mix(in oklch, var(--lm-brand) 30%, transparent);
+  --lm-crit: #e05252;
+  --lm-spark: color-mix(in oklch, var(--lm-brand) 8%, #9aa3b3);
+  --lm-ref: color-mix(in oklch, var(--lm-brand) 6%, #5c6472);
+  --lm-shadow: 0 1px 2px rgb(0 0 0 / .3), 0 12px 32px rgb(0 0 0 / .38);
+  --lm-scrim: rgb(0 0 0 / .55);
+  color-scheme: dark;
+}

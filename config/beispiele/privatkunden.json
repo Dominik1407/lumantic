@@ -1,0 +1,59 @@
+{
+  "title": "Privatkunden",
+  "source": "Goldlayer · Privatkunden",
+  "groups": [
+    { "id": "hypo", "name": "Hypotheken" },
+    { "id": "anlegen", "name": "Anlegen und Zahlen" },
+    { "id": "kunden", "name": "Kundenbeziehung" }
+  ],
+  "kpis": [
+    {
+      "id": "hypo", "group": "hypo", "name": "Hypothekarbestand", "long": "Hypotheken an Privatkunden", "short": "Hypotheken",
+      "unit": "Mrd", "dec": 1, "kind": "stock", "dir": 1, "target": 20500,
+      "desc": "Hypothekarforderungen gegenüber Privatkunden per Monatsende.",
+      "monthly": { "table": "gold.hypotheken_monat", "value": "bestand_mio_chf" },
+      "parts": { "mode": "sum", "split": "laufzeit", "order": ["Fest bis 5 Jahre", "Fest über 5 Jahre", "SARON"] }
+    },
+    {
+      "id": "neuhypo", "group": "hypo", "name": "Neuhypotheken", "long": "Neu ausbezahlte Hypotheken", "short": "Neuhypotheken",
+      "unit": "Mio", "dec": 0, "kind": "flow", "dir": 1, "target": 150, "targetName": "Monatsziel", "season": true,
+      "desc": "Neu ausbezahlte Hypotheken im Monat. Der Frühling ist stärker als der Herbst.",
+      "monthly": { "table": "gold.hypotheken_monat", "value": "neugeschaeft_mio_chf" },
+      "parts": { "mode": "sum", "split": "laufzeit", "order": ["Fest bis 5 Jahre", "Fest über 5 Jahre", "SARON"] }
+    },
+    {
+      "id": "vorsorge", "group": "anlegen", "name": "Vorsorgegelder", "long": "Vorsorgegelder der Säule 3a", "short": "Vorsorge 3a",
+      "unit": "Mrd", "dec": 1, "kind": "stock", "dir": 1,
+      "desc": "Guthaben der Säule 3a per Monatsende.",
+      "monthly": { "table": "gold.anlagen_monat", "value": "vorsorge_mio_chf" }
+    },
+    {
+      "id": "karten", "group": "anlegen", "name": "Kartenumsatz", "long": "Umsatz mit Debit- und Kreditkarten", "short": "Karten",
+      "unit": "Mio", "dec": 0, "kind": "flow", "dir": 1, "season": true,
+      "desc": "Umsatz mit Karten im Monat. Der Dezember liegt jedes Jahr deutlich höher.",
+      "monthly": { "table": "gold.anlagen_monat", "value": "kartenumsatz_mio_chf" }
+    },
+    {
+      "id": "digital", "group": "kunden", "name": "Digitalquote", "long": "Aufträge über App und E-Banking", "short": "Digital",
+      "unit": "%", "dec": 0, "kind": "stock", "dir": 1, "target": 65,
+      "desc": "Anteil der Aufträge, die Kundinnen und Kunden selbst über App und E-Banking erteilen.",
+      "monthly": { "table": "gold.kunden_monat", "value": "digitalquote_pct" }
+    },
+    {
+      "id": "churn", "group": "kunden", "name": "Kündigungsquote", "long": "Aufgelöste Kundenbeziehungen", "short": "Kündigungen",
+      "unit": "%", "dec": 2, "kind": "stock", "dir": -1, "target": 0.6, "targetName": "Frühwarnung",
+      "desc": "Aufgelöste Kundenbeziehungen in Prozent des Bestands, pro Monat.",
+      "monthly": { "table": "gold.kunden_monat", "value": "kuendigungsquote_pct" }
+    },
+    {
+      "id": "cir", "group": "kunden", "name": "Cost-Income-Ratio", "long": "Aufwand im Verhältnis zum Ertrag", "short": "Cost/Income",
+      "unit": "%", "dec": 1, "kind": "stock", "dir": -1, "target": 62, "targetName": "Frühwarnung",
+      "desc": "Geschäftsaufwand in Prozent des Geschäftsertrags, rollierend über zwölf Monate.",
+      "monthly": { "table": "gold.kunden_monat", "value": "cost_income_pct" }
+    }
+  ],
+  "events": [
+    { "month": "2020-04", "title": "Läden geschlossen", "text": "Der Kartenumsatz bricht für zwei Monate ein, die Digitalquote steigt." },
+    { "month": "2026-10", "title": "Neue App", "text": "Die neue App geht live. Deutlich mehr Aufträge kommen digital." }
+  ]
+}

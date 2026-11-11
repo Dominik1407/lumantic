@@ -1,0 +1,1619 @@
+<title>Lumantic Tiefe</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+/* Layout: one stage. The board is the front pane; every earlier month stands behind it in real perspective and dissolves into bright fog. */
+:root {
+  --bg: #dfe5eb; --bg-hi: #fbfcfd; --fogc: #eef2f6; --sheet: #ffffff;
+  --ink: #0f1728; --ink-2: #465166; --dim: #8a94a6; --line: rgba(15, 23, 40, .16); --calm: #bcc5d1;
+  --accent: #2141c6; --alert: #d8392b; --watch: #c98c0c; --good: #16895a;
+  --c1: #2141c6; --c2: #3fb5c5; --c3: #93377f;
+  --f-display: "Big Shoulders Display", "Big Shoulders", "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+  --f-ui: "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-data: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --f-voice: "Instrument Serif", Georgia, "Times New Roman", serif;
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 400 14px/1.45 var(--f-ui); -webkit-font-smoothing: antialiased; overflow: hidden; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.app { position: relative; height: 100%; overflow: hidden; user-select: none; -webkit-user-select: none;
+  background: radial-gradient(ellipse 58% 40% at 50% 15%, var(--bg-hi) 0%, var(--fogc) 36%, var(--bg) 84%); }
+
+/* The stage: perspective lives here, the world is the board's rectangle, panes stand behind each other on the z axis. */
+.stage { position: absolute; inset: 0; perspective: 1000px; perspective-origin: 50% 14%; overflow: hidden; touch-action: none; }
+.stage.is-flying { cursor: grabbing; }
+.world { position: absolute; transform-style: preserve-3d; }
+.pane { position: absolute; inset: 0; --f: 0; pointer-events: none; transform-origin: 50% 0; will-change: transform, opacity; }
+.pane.is-front { pointer-events: auto; }
+.grid { display: grid; height: 100%; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); grid-auto-rows: var(--rowh); gap: var(--gap); grid-auto-flow: dense; }
+.size-M, .size-L { grid-column: span 2; }
+.size-L { grid-row: span 2; }
+/* An earlier month, folded flat: same columns, one thin cell per module. */
+.slab { position: absolute; left: 0; right: 0; top: 0; display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); grid-auto-rows: var(--srow, 20px); gap: 2px var(--gap); grid-auto-flow: dense; }
+.cell { --kc: var(--calm); --wash: 0; min-width: 0; min-height: 0; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 11px;
+  background: linear-gradient(color-mix(in srgb, var(--kc) calc(var(--wash) * (100 - var(--f)) * .012%), transparent), color-mix(in srgb, var(--kc) calc(var(--wash) * (100 - var(--f)) * .012%), transparent)), color-mix(in srgb, var(--sheet), var(--fogc) calc(var(--f) * 1%));
+  border-top: 2px solid color-mix(in srgb, var(--kc), var(--fogc) calc(var(--f) * .74%));
+  box-shadow: inset 1px 0 0 color-mix(in srgb, var(--line), transparent calc(var(--f) * .6%)), inset -1px 0 0 color-mix(in srgb, var(--line), transparent calc(var(--f) * .6%));
+  color: color-mix(in srgb, var(--ink), var(--fogc) calc(var(--f) * .8%)); font: 600 11px/1 var(--f-ui); transition: opacity .3s; }
+.cell.size-L { align-items: flex-start; padding-top: 4px; }
+.cell[data-kind="alert"] { --kc: var(--alert); --wash: 15; }
+.cell[data-kind="watch"] { --kc: var(--watch); --wash: 15; }
+.cell[data-kind="good"] { --kc: var(--good); --wash: 12; }
+.cell[data-kind="info"] { --kc: var(--accent); --wash: 6; }
+.cell span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.cell-val { font: 500 10.5px/1 var(--f-data); flex: none; opacity: .86; }
+.cell.extrude { animation: extrude .55s cubic-bezier(.2, .8, .2, 1) backwards; }
+
+/* A module is a white sheet. Its top edge carries the status; fog (--f, 0 to 100) mixes every colour towards the light. */
+.mod { --kc: var(--calm); --wash: 0; position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; text-align: left; container-type: size;
+  background: linear-gradient(color-mix(in srgb, var(--kc) calc(var(--wash) * (100 - var(--f)) * .01%), transparent), transparent 46px), color-mix(in srgb, var(--sheet), var(--fogc) calc(var(--f) * 1%));
+  border: 1px solid color-mix(in srgb, var(--line), transparent calc(var(--f) * .55%));
+  border-top: 3px solid color-mix(in srgb, var(--kc), var(--fogc) calc(var(--f) * .78%));
+  border-radius: 2px; color: color-mix(in srgb, var(--ink), var(--fogc) calc(var(--f) * .8%)); transition: opacity .3s; }
+.mod[data-kind="alert"] { --kc: var(--alert); --wash: 15; }
+.mod[data-kind="watch"] { --kc: var(--watch); --wash: 15; }
+.mod[data-kind="good"] { --kc: var(--good); --wash: 12; }
+.mod[data-kind="info"] { --kc: var(--accent); --wash: 6; }
+.mod { box-shadow: 0 18px 26px -22px rgba(15, 23, 40, .55); }
+.is-front .mod { cursor: pointer; }
+.is-front .mod:hover { border-color: color-mix(in srgb, var(--ink) 34%, transparent); border-top-color: var(--kc); }
+.world.has-focus .mod:not(.is-lit), .world.has-focus .cell:not(.is-lit) { opacity: .2; }
+.mod.is-dragging { z-index: 5; box-shadow: 0 30px 50px -24px rgba(15, 23, 40, .6); cursor: grabbing; transition: none; }
+.mod.extrude { animation: extrude .55s cubic-bezier(.2, .8, .2, 1) backwards; }
+@keyframes extrude { from { opacity: 0; transform: translateY(18px) scale(.92); } }
+
+.mod-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 6px 11px 0; min-height: 25px; flex: none; }
+.mod-name { font: 600 12.5px/1.25 var(--f-ui); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.mod-right { font: 500 9.5px/1.25 var(--f-data); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; flex: none; opacity: .86; }
+.mod-right i, .focus-status i { width: 7px; height: 7px; border-radius: 50%; background: var(--kc); flex: none; }
+[data-kind="alert"] .mod-right i, .focus[data-kind="alert"] .focus-status i { border-radius: 1px; }
+[data-kind="watch"] .mod-right i, .focus[data-kind="watch"] .focus-status i { border-radius: 1px; transform: rotate(45deg); }
+[data-kind="calm"] .mod-right i, .focus[data-kind="calm"] .focus-status i { background: none; box-shadow: inset 0 0 0 1.5px var(--ink-2); }
+@container (max-width: 205px) { .mod-word { display: none; } }
+.mod-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 3px; padding: 3px 11px 9px; }
+.mod-val { font: 500 30px/1 var(--f-data); letter-spacing: -.045em; white-space: nowrap; }
+.mod-val small { font: 500 10px/1 var(--f-data); letter-spacing: .08em; color: var(--ink-2); margin-left: 6px; }
+.mod-delta, .mod-now { font: 400 10.5px/1.3 var(--f-data); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mod-now { color: var(--accent); }
+.spark { flex: 1; min-height: 0; width: 100%; display: block; margin-top: 5px; overflow: visible; }
+.size-M .mod-body { flex-direction: row; align-items: stretch; gap: 18px; }
+.mod-col { display: flex; flex-direction: column; gap: 3px; flex: none; min-width: 0; max-width: 62%; }
+.size-M .spark { margin-top: 0; }
+.size-L .mod-val { font-size: 46px; }
+.mod-top { display: flex; align-items: flex-end; gap: 6px 18px; flex-wrap: wrap; }
+.mod-side { display: grid; gap: 2px; padding-bottom: 5px; min-width: 0; }
+.mod-say { margin: 5px 0 4px; font: italic 400 17px/1.22 var(--f-voice); color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tile-plot { flex: 1; min-height: 0; margin: 4px 0 2px; }
+@container (max-height: 240px) { .mod-say { display: none; } .size-L .mod-val { font-size: 34px; } }
+@container (max-height: 106px) { .size-S .spark { display: none; } .size-M .mod-now { display: none; } }
+@container (max-height: 86px) { .mod-delta, .mod-now { display: none; } .mod-val { font-size: 24px; } }
+
+/* Hover tools on a front module: size and remove. */
+.mod-tools { position: absolute; top: 5px; right: 6px; display: none; gap: 1px; padding: 2px; background: var(--sheet); border: 1px solid var(--line); border-radius: 3px; z-index: 2; }
+.mod-tools button { border: 0; background: none; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 2px; font: 500 10px/1 var(--f-data); color: var(--ink-2); }
+.mod-tools button:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); }
+.mod-tools button[aria-pressed="true"] { background: var(--ink); color: var(--sheet); }
+@media (hover: hover) { .is-front .mod:hover .mod-tools, .is-front .mod:focus-within .mod-tools { display: flex; } }
+.empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 20px; font: italic 400 22px/1.3 var(--f-voice); color: var(--ink-2); border: 1px dashed var(--line); }
+
+/* Labels that live in the depth: months, quarters, events, and the giant year numerals. */
+.tag { position: absolute; top: -6px; font: 500 11px/1 var(--f-data); letter-spacing: .14em; white-space: nowrap; color: color-mix(in srgb, var(--ink-2), var(--fogc) calc(var(--f) * .7%)); pointer-events: none; }
+.tag-m { right: 100%; margin-right: 16px; }
+.tag-q { left: 100%; margin-left: 12px; display: inline-flex; align-items: center; gap: 8px; }
+.tag-q:not(:empty)::before { content: ""; width: 22px; height: 1px; background: currentColor; }
+.tag-e { left: 100%; top: 15px; margin-left: 42px; font: italic 400 17px/1.1 var(--f-voice); letter-spacing: 0; color: color-mix(in srgb, var(--ink), var(--fogc) calc(var(--f) * .7%)); }
+.yr { position: absolute; right: 100%; bottom: 100%; margin: 0 64px -.035em 0; font: 800 214px/.8 var(--f-display); letter-spacing: -.012em; color: var(--ink); white-space: nowrap; pointer-events: none; will-change: transform, opacity; }
+
+/* Quiet chrome around the stage. */
+.brand { position: absolute; z-index: 5; left: max(20px, env(safe-area-inset-left, 0px)); top: 18px; display: grid; gap: 6px; pointer-events: none; }
+.brand-row { display: flex; align-items: baseline; gap: 9px; }
+.mark { width: 8px; height: 8px; border-radius: 50%; background: var(--ink); align-self: center; }
+.word { font: 600 17px/1 var(--f-ui); letter-spacing: -.01em; }
+.word-sub { font: 500 10px/1 var(--f-data); letter-spacing: .22em; text-transform: uppercase; color: var(--ink-2); }
+.study { font: 500 9.5px/1 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.head { position: absolute; z-index: 4; left: 0; right: 0; top: max(14px, 2.4%); display: grid; justify-items: center; gap: 8px; pointer-events: none; padding-inline: 16px; text-align: center; }
+.head-month { margin: 0; font: 800 clamp(44px, 6.6vw, 98px)/.84 var(--f-display); letter-spacing: .012em; text-transform: uppercase; }
+.head-sub { font: 500 11px/1 var(--f-data); letter-spacing: .24em; text-transform: uppercase; color: var(--ink-2); }
+.hint { font: 500 10px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin-top: 4px; }
+.hint::before { content: "↓"; display: inline-block; margin-right: 8px; animation: nudge 1.6s ease-in-out infinite; }
+@keyframes nudge { 50% { transform: translateY(3px); } }
+.brief { position: absolute; z-index: 4; margin: 0; font: italic 400 clamp(17px, 1.65vw, 23px)/1.24 var(--f-voice); text-align: center; text-wrap: balance; pointer-events: none; transition: opacity .25s; }
+.brief.is-stale { opacity: .3; }
+.name { display: inline; border: 0; background: none; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; pointer-events: auto; }
+.name--alert { color: var(--alert); }
+.nowrap { white-space: nowrap; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: color-mix(in srgb, var(--sheet) 72%, transparent); border-radius: 2px; padding: 9px 13px; font: 500 10.5px/1 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); white-space: nowrap; transition: color .2s, border-color .2s, background .2s; }
+.btn:hover { color: var(--ink); border-color: var(--ink-2); background: var(--sheet); }
+.btn--solid { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn--solid:hover { background: var(--ink); border-color: var(--ink); color: #fff; }
+kbd { font: 500 9.5px/1 var(--f-data); border: 1px solid currentColor; border-radius: 3px; padding: 2px 4px; opacity: .7; }
+.dock { position: absolute; z-index: 6; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(14px, env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 10px; pointer-events: none; }
+.dock > * { pointer-events: auto; }
+.dock .gap { flex: 1; pointer-events: none; }
+
+/* The rail: today at the bottom, 2019 at the top. On a phone it lies flat. */
+.rail { position: absolute; z-index: 6; right: max(16px, env(safe-area-inset-right, 0px)); top: 20%; height: 58%; width: 64px; touch-action: none; cursor: ns-resize; }
+.rail > * { position: absolute; top: calc(var(--p, 0) * 1%); }
+.rail-track { right: 9px; top: 0; bottom: 0; width: 1px; background: var(--line); }
+.rail-tick { right: 6px; width: 7px; height: 1px; background: var(--dim); }
+.rail-tick--y { right: 2px; width: 15px; background: var(--ink-2); }
+.rail-year { right: 24px; transform: translateY(-50%); font: 500 10px/1 var(--f-data); letter-spacing: .06em; color: var(--dim); }
+.rail-heat { right: 8px; width: 3px; height: 1.12%; background: var(--watch); opacity: .55; }
+.rail-heat.is-alert { background: var(--alert); opacity: 1; }
+.rail-ev { right: 6px; width: 7px; height: 7px; margin-top: -3.5px; transform: rotate(45deg); border: 1px solid var(--ink-2); background: var(--bg-hi); }
+.rail-handle { right: -2px; width: 23px; height: 2px; margin-top: -1px; background: var(--accent); pointer-events: none; }
+.rail-handle span { position: absolute; right: 29px; top: 50%; transform: translateY(-50%); font: 500 10px/1 var(--f-data); letter-spacing: .04em; background: var(--accent); color: #fff; padding: 4px 6px; border-radius: 2px; white-space: nowrap; }
+.rail-play { position: absolute; z-index: 6; right: max(14px, env(safe-area-inset-right, 0px)); top: calc(20% - 46px); width: 26px; height: 26px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: color-mix(in srgb, var(--sheet) 72%, transparent); color: var(--ink-2); padding: 0; font: 500 9px/1 var(--f-data); }
+.rail-play:hover, .rail-play[aria-pressed="true"] { color: var(--sheet); background: var(--ink); border-color: var(--ink); }
+
+/* Focus: the flat chart for reading. */
+.focus { --kc: var(--calm); position: absolute; z-index: 20; background: var(--sheet); border: 1px solid var(--line); border-top: 3px solid var(--kc); border-radius: 2px; box-shadow: 0 34px 60px -34px rgba(15, 23, 40, .55); display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 8px; padding: 13px 18px 12px; transform-origin: 0 0; user-select: none; }
+.focus-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px 14px; flex-wrap: wrap; }
+.focus-title { margin: 0; font: 600 19px/1.15 var(--f-ui); }
+.focus-title small { font: 400 13px/1 var(--f-ui); color: var(--ink-2); margin-left: 8px; }
+.label { font: 500 9.5px/1.3 var(--f-data); letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+.focus-tools { display: flex; align-items: center; gap: 6px; flex: none; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 2px; overflow: hidden; }
+.seg button { border: 0; background: none; padding: 6px 9px; font: 500 10px/1 var(--f-data); color: var(--ink-2); }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--sheet); }
+.icon-btn { border: 1px solid var(--line); background: none; border-radius: 2px; padding: 6px 9px; font: 500 10px/1 var(--f-data); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+.icon-btn:hover { color: var(--ink); border-color: var(--ink-2); }
+.focus-read { display: flex; align-items: baseline; gap: 6px 16px; flex-wrap: wrap; }
+.focus-val { font: 500 30px/1 var(--f-data); letter-spacing: -.04em; }
+.focus-val small { font-size: 10px; letter-spacing: .08em; color: var(--ink-2); margin-left: 6px; }
+.focus-status { display: inline-flex; align-items: center; gap: 6px; font: 500 9.5px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; }
+.focus-why { flex: 1 1 260px; margin: 0; font: italic 400 17px/1.22 var(--f-voice); color: var(--ink-2); min-width: 0; }
+.focus-plot { min-height: 0; margin: 20px 0 4px; }
+.focus-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { border: 1px solid var(--line); background: none; border-radius: 20px; padding: 6px 11px; font: 500 12px/1 var(--f-ui); color: var(--ink-2); }
+.chip:hover { border-color: var(--ink-2); color: var(--ink); }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--sheet); }
+.legend { display: flex; gap: 4px 14px; flex-wrap: wrap; font: 500 10px/1.3 var(--f-data); color: var(--ink-2); }
+.legend i { display: inline-block; width: 10px; height: 4px; margin-right: 6px; vertical-align: middle; }
+
+/* Plot: an SVG stretched to the box, labels as HTML so they keep their shape. */
+.plot { position: relative; }
+.plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.pl { position: absolute; font: 500 9.5px/1.2 var(--f-data); letter-spacing: .03em; color: var(--ink-2); white-space: nowrap; pointer-events: none; }
+.pl-x { color: var(--dim); margin-top: 4px; }
+.pl-strong { color: var(--ink); font-size: 10.5px; }
+.pl-in { background: var(--sheet); color: var(--ink); padding: 2px 6px; border-radius: 2px; }
+.pl-cat { white-space: normal; text-align: center; overflow-wrap: anywhere; hyphens: auto; margin-top: 4px; }
+.pl-dot { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--kc); box-shadow: 0 0 0 2px var(--sheet); transform: translate(-50%, -50%); pointer-events: none; }
+.pl-cur { top: -19px; transform: translateX(-50%); color: #fff; background: var(--accent); padding: 3px 6px; border-radius: 2px; }
+.plot-empty { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; font: italic 400 18px/1.3 var(--f-voice); color: var(--ink-2); }
+
+/* Tray, note, toast. */
+.tray { position: absolute; z-index: 30; left: 0; right: 0; bottom: 0; display: grid; gap: 9px; max-height: 62%; overflow-y: auto; background: color-mix(in srgb, var(--sheet) 95%, transparent); backdrop-filter: blur(12px); border-top: 1px solid var(--line); box-shadow: 0 -30px 50px -40px rgba(15, 23, 40, .5);
+  padding: 11px max(20px, env(safe-area-inset-right, 0px)) calc(13px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px)); transform: translateY(104%); transition: transform .38s cubic-bezier(.2, .8, .2, 1); user-select: none; }
+.tray.is-open { transform: none; }
+.tray-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.tray-sugg { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.sugg { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: start; border: 1px solid var(--line); border-top: 3px solid var(--kc, var(--calm)); padding: 7px 10px 8px 12px; background: var(--sheet); }
+.sugg b { font: 600 14px/1.2 var(--f-ui); }
+.sugg b::before { content: "✦ "; color: var(--accent); }
+.sugg p { grid-column: 1; margin: 0; font: italic 400 15.5px/1.2 var(--f-voice); color: var(--ink-2); }
+.sugg-act { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: 4px; align-items: center; }
+.tray-all { display: flex; gap: 8px; flex-wrap: wrap; }
+.pick { display: inline-flex; align-items: center; gap: 8px; border: 1px dashed var(--line); background: none; border-radius: 2px; padding: 8px 11px; font: 500 12.5px/1 var(--f-ui); color: var(--ink-2); }
+.pick:hover { border-style: solid; border-color: var(--ink-2); color: var(--ink); background: var(--sheet); }
+.pick i { width: 6px; height: 6px; border-radius: 50%; background: var(--kc, var(--calm)); }
+.pick span { font: 500 10.5px/1 var(--f-data); color: var(--dim); }
+.note { position: absolute; z-index: 40; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(max(14px, env(safe-area-inset-bottom, 0px)) + 46px); width: min(430px, calc(100% - 32px)); max-height: 78%; overflow-y: auto; background: var(--sheet); border: 1px solid var(--line); border-top: 3px solid var(--ink); padding: 18px 20px 16px; box-shadow: 0 34px 60px -30px rgba(15, 23, 40, .55); display: grid; gap: 12px; user-select: text; }
+.note h2 { margin: 0; font: 800 34px/.9 var(--f-display); letter-spacing: .01em; text-transform: uppercase; }
+.note p { margin: 0; }
+.note .voice { font: italic 400 19px/1.25 var(--f-voice); }
+.note ol, .note ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; color: var(--ink-2); }
+.note a { color: var(--accent); }
+.note li b { color: var(--ink); font-weight: 600; }
+.toast { position: absolute; z-index: 50; left: 50%; bottom: calc(max(14px, env(safe-area-inset-bottom, 0px)) + 52px); transform: translateX(-50%); max-width: calc(100% - 32px); margin: 0; background: var(--ink); color: var(--sheet); padding: 9px 14px; border-radius: 2px; font: italic 400 17px/1.25 var(--f-voice); text-align: center; pointer-events: none; }
+
+@media (max-width: 719px) {
+  .brand { top: 12px; left: max(16px, env(safe-area-inset-left, 0px)); gap: 4px; }
+  .head { top: 60px; gap: 6px; }
+  .head-month { font-size: 44px; }
+  .yr { font-size: 120px; margin: 0 12px -.035em 0; }
+  .tag-m, .tag-q, .tag-e { display: none; }
+  .rail { left: max(16px, env(safe-area-inset-left, 0px)); right: max(54px, env(safe-area-inset-right, 0px)); top: auto; bottom: calc(max(14px, env(safe-area-inset-bottom, 0px)) + 46px); width: auto; height: 30px; cursor: ew-resize; }
+  .rail > * { top: auto; left: calc(var(--p, 0) * 1%); }
+  .rail-track { left: 0; right: 0; top: 9px; bottom: auto; width: auto; height: 1px; }
+  .rail-tick { top: 6px; right: auto; width: 1px; height: 7px; }
+  .rail-tick--y { top: 2px; height: 15px; }
+  .rail-year { top: 20px; right: auto; transform: translateX(-50%); font-size: 9px; }
+  .rail-year:nth-of-type(even) { display: none; }
+  .rail-heat { top: 8px; right: auto; height: 3px; width: 1.12%; }
+  .rail-ev { top: 6px; right: auto; margin: 0 0 0 -3.5px; }
+  .rail-handle { top: -2px; right: auto; margin: 0 0 0 -1px; width: 2px; height: 23px; }
+  .rail-handle span { right: auto; left: 50%; top: -15px; transform: translateX(-50%); }
+  .rail-play { top: auto; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(max(14px, env(safe-area-inset-bottom, 0px)) + 50px); }
+  .brief { font-size: 16.5px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .mod-val { font-size: 25px; }
+  .size-L .mod-val { font-size: 32px; }
+  .focus { padding: 12px 13px 10px; }
+  .focus-title small, .hint { display: none; }
+  .tray-sugg { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<div class="app" id="app" lang="de">
+  <div class="stage" id="stage" aria-label="Board in der Tiefe der Zeit"><div class="world" id="world"></div></div>
+
+  <div class="brand">
+    <div class="brand-row"><span class="mark" aria-hidden="true"></span><span class="word">lumantic</span><span class="word-sub">Tiefe</span></div>
+    <span class="study">Studie · erfundene Zahlen</span>
+  </div>
+  <div class="head">
+    <h1 class="head-month" id="head-month">Oktober 2026</h1>
+    <span class="head-sub" id="head-sub">Heute</span>
+    <span class="hint" id="hint">Scroll oder zieh: Du fliegst in die Vergangenheit</span>
+  </div>
+  <p class="brief" id="brief"></p>
+
+  <button class="rail-play" id="play" type="button" aria-pressed="false" aria-label="Zeitraffer abspielen" title="Zeitraffer (Leertaste)">▶</button>
+  <div class="rail" id="rail" role="slider" tabindex="0" aria-label="Monat wählen" aria-valuemin="0"></div>
+
+  <section class="focus" id="focus" hidden aria-label="Diagramm"></section>
+
+  <div class="dock">
+    <button class="btn" id="btn-note" type="button" aria-expanded="false">Idee</button>
+    <button class="btn" id="btn-tray" type="button" aria-expanded="false">+ Baustein</button>
+    <span class="gap"></span>
+    <button class="btn btn--solid" id="btn-today" type="button" hidden>Zurück zu heute <kbd>Z</kbd></button>
+  </div>
+
+  <aside class="tray" id="tray" aria-label="Bausteine" inert></aside>
+
+  <aside class="note" id="note" hidden aria-label="Die Idee hinter Tiefe">
+    <h2>Tiefe</h2>
+    <p class="voice">Heute liegt vorn. Dahinter liegt jeder Monat davor.</p>
+    <p>Dein Board steht vorn. Dahinter liegt dasselbe Board für jeden früheren Monat, flach gefaltet, Stufe um Stufe bis in den Nebel. Jeder Baustein behält seine Spalte. Die farbigen Streifen hinter ihm zeigen auf einen Blick, wie lange etwas schon rot ist.</p>
+    <span class="label">Probier das</span>
+    <ol>
+      <li><b>Scroll oder zieh nach unten.</b> Du fliegst in die Vergangenheit, die Scheiben kommen auf dich zu.</li>
+      <li><b>Klick auf einen Baustein.</b> Das flache Diagramm öffnet sich. Flieg weiter: Der Zeiger folgt dir.</li>
+      <li><b>«+ Baustein».</b> Lumina schlägt vor und begründet. Ein neuer Baustein wächst durch alle Monate nach hinten.</li>
+      <li><b>Z</b> springt zwischen heute und dem letzten Moment. Die <b>Leertaste</b> spielt den Zeitraffer.</li>
+    </ol>
+    <span class="label">Worauf es sich stützt</span>
+    <ul>
+      <li><a href="https://www.ifs.tuwien.ac.at/~mlanzenberger/teaching/ps/ws06/stuff/p173-mackinlay.pdf" target="_blank" rel="noopener">Mackinlay, Robertson, Card 1991: The Perspective Wall</a>. Detail vorn, Zusammenhang in der Perspektive.</li>
+      <li><a href="https://faculty.cc.gatech.edu/~stasko/papers/infovis08-anim.pdf" target="_blank" rel="noopener">Robertson et al. 2008: Effectiveness of Animation in Trend Visualization</a>. Mehrere Momente gleichzeitig zu sehen hilft der Analyse mehr als reine Animation.</li>
+      <li><a href="https://arxiv.org/abs/1907.13534" target="_blank" rel="noopener">Waldner et al. 2019</a>. Gerade Achsen liest man genauer. Darum fliegst du in der Tiefe und liest Werte vorn auf der flachen Scheibe.</li>
+    </ul>
+    <p class="study">Studie · alle Zahlen erfunden · Tasten: ← → Monat, Shift ein Jahr, Pos1 und Ende, Esc schliesst</p>
+  </aside>
+  <p class="toast" id="toast" role="status" hidden></p>
+</div>
+<script>
+"use strict";
+// ═════ Lumantic core: invented ALCO data, rules engine, Lumina, small helpers. Shared by all concept studies. ═════
+// ───────────── Helpers ─────────────
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const sum = (xs) => xs.reduce((a, b) => a + b, 0);
+const mean = (xs) => (xs.length ? sum(xs) / xs.length : 0);
+function rng(seed) {
+  return () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+const R = rng(1914);
+
+// ───────────── Time: monthly from January 2019 to October 2026 ─────────────
+const N = 94;
+const MON = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+const MONTH = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+const ym = (y, m) => (y - 2019) * 12 + (m - 1);
+const mOf = (t) => ((t % 12) + 12) % 12;
+
+// Smooth keyframe series with seeded noise; the last months (quietFrom on) are exact.
+function keys(points, noise = 0, quietFrom = N) {
+  const out = new Array(N);
+  for (let t = 0; t < N; t++) {
+    let k = 0;
+    while (k < points.length - 2 && t > points[k + 1][0]) k++;
+    const [t0, v0] = points[k], [t1, v1] = points[k + 1];
+    const f = t1 === t0 ? 0 : clamp((t - t0) / (t1 - t0), 0, 1);
+    const n = (R() * 2 - 1) * noise;
+    out[t] = v0 + (v1 - v0) * f * f * (3 - 2 * f) + (t < quietFrom ? n : 0);
+  }
+  return out;
+}
+function flows(base, amp, overrides) {
+  const out = Array.from({ length: N }, () => base + (R() * 2 - 1) * amp);
+  for (const [y, m, v] of overrides) out[ym(y, m)] = v;
+  return out;
+}
+
+// ───────────── The demo ALCO gold layer (all figures invented) ─────────────
+const LCR = keys([[0, 142], [ym(2019, 12), 144], [ym(2020, 2), 143], [ym(2020, 6), 162], [ym(2021, 1), 168], [ym(2021, 6), 158], [ym(2021, 12), 150],
+  [ym(2022, 6), 146], [ym(2022, 12), 140], [ym(2023, 2), 141], [ym(2023, 3), 155], [ym(2023, 6), 147], [ym(2023, 12), 144], [ym(2024, 12), 141],
+  [ym(2025, 12), 135], [ym(2026, 6), 130], [ym(2026, 7), 127], [ym(2026, 8), 124], [ym(2026, 9), 121], [ym(2026, 10), 118]], 1.6, ym(2026, 6));
+const OUTFLOW = keys([[0, 2600], [ym(2026, 6), 3020], [ym(2026, 10), 3210]], 18, ym(2026, 6));
+const HQLA = LCR.map((v, t) => (v * OUTFLOW[t]) / 100);
+const NSFR = keys([[0, 121], [ym(2020, 6), 128], [ym(2021, 6), 126], [ym(2022, 12), 120], [ym(2023, 6), 122], [ym(2024, 12), 123], [ym(2025, 12), 120], [ym(2026, 10), 117]], 0.7, ym(2026, 9));
+const CET1 = keys([[0, 15.1], [ym(2024, 12), 16.6], [ym(2025, 1), 16.1], [ym(2026, 10), 16.3]], 0.07);
+const LEV = keys([[0, 6.3], [ym(2020, 3), 6.35], [ym(2020, 6), 6.0], [ym(2021, 6), 6.4], [ym(2026, 10), 6.9]], 0.04);
+const EVE = keys([[0, 9.0], [ym(2021, 6), 10.5], [ym(2022, 9), 8.2], [ym(2024, 6), 10.8], [ym(2025, 12), 12.1], [ym(2026, 6), 12.6],
+  [ym(2026, 7), 12.7], [ym(2026, 8), 12.8], [ym(2026, 9), 12.9], [ym(2026, 10), 13.2]], 0.18, ym(2026, 6));
+const NIM = keys([[0, 1.08], [ym(2021, 12), 1.02], [ym(2022, 9), 1.1], [ym(2023, 9), 1.38], [ym(2024, 6), 1.3], [ym(2025, 6), 1.12], [ym(2026, 10), 1.05]], 0.008);
+const BAL = keys([[0, 27800], [ym(2020, 3), 28400], [ym(2020, 5), 29300], [ym(2023, 2), 31000], [ym(2023, 4), 31700], [ym(2026, 7), 34150], [ym(2026, 10), 33900]], 55, ym(2026, 7));
+const SAVE = keys([[0, 11200], [ym(2020, 5), 11800], [ym(2022, 6), 12300], [ym(2023, 12), 11000], [ym(2026, 7), 11300], [ym(2026, 8), 11160], [ym(2026, 9), 10900], [ym(2026, 10), 10660]], 40, ym(2026, 7));
+const CURR = keys([[0, 7200], [ym(2020, 5), 7700], [ym(2022, 6), 8000], [ym(2023, 12), 7200], [ym(2026, 10), 7350]], 35);
+const TERM = keys([[0, 2000], [ym(2022, 6), 1900], [ym(2023, 3), 2900], [ym(2023, 12), 4300], [ym(2025, 6), 4900], [ym(2026, 10), 5200]], 25);
+const DEP = SAVE.map((v, t) => v + CURR[t] + TERM[t]);
+const MORT = keys([[0, 18100], [ym(2022, 6), 20900], [ym(2023, 6), 21300], [ym(2026, 10), 23500]], 30);
+const NNM_P = flows(24, 10, [[2020, 3, 70], [2020, 4, 50], [2023, 3, 150], [2023, 4, 90], [2026, 8, 8], [2026, 9, 2], [2026, 10, -6]]);
+const NNM_V = flows(22, 14, [[2020, 3, 80], [2023, 3, 210], [2023, 4, 130], [2023, 5, 60], [2026, 6, 8], [2026, 7, 0], [2026, 8, -12], [2026, 9, -40], [2026, 10, -58]]);
+const NNM_F = flows(9, 9, [[2023, 3, 60], [2026, 9, 3], [2026, 10, 2]]);
+const NNM = NNM_P.map((v, t) => v + NNM_V[t] + NNM_F[t]);
+const PIPE = keys([[0, 620], [ym(2021, 12), 700], [ym(2022, 9), 600], [ym(2023, 6), 520], [ym(2024, 12), 690], [ym(2025, 12), 760],
+  [ym(2026, 5), 820], [ym(2026, 6), 900], [ym(2026, 7), 980], [ym(2026, 8), 1050], [ym(2026, 9), 1100], [ym(2026, 10), 1150]], 22, ym(2026, 5))
+  .map((v, t) => (t < ym(2026, 5) ? v + 35 * Math.sin((2 * Math.PI * (mOf(t) - 2)) / 12) : v));
+const PIPE_A = PIPE.map((v, t) => v * (0.42 + 0.03 * Math.sin(t / 7)));
+const PIPE_O = PIPE.map((v) => v * 0.33);
+const PIPE_Z = PIPE.map((v, t) => v - PIPE_A[t] - PIPE_O[t]);
+
+const GROUPS = { liq: "Liquidität", kap: "Kapital", zins: "Zinsrisiko", bil: "Bilanz", wachs: "Wachstum" };
+const KPIS = [
+  { id: "lcr", group: "liq", name: "LCR", long: "Liquidity Coverage Ratio", unit: "%", dec: 0, kind: "stock", dir: 1, reg: 100, target: 125,
+    series: LCR, parts: { "HQLA": HQLA, "Nettomittelabflüsse": OUTFLOW }, partsMode: "ratio", table: "liquiditaet_monat",
+    desc: "Hochliquide Aktiva im Verhältnis zu den Nettomittelabflüssen der nächsten 30 Tage." },
+  { id: "nsfr", group: "liq", name: "NSFR", long: "Net Stable Funding Ratio", unit: "%", dec: 0, kind: "stock", dir: 1, reg: 100, target: 110,
+    series: NSFR, table: "liquiditaet_monat", desc: "Verfügbare stabile Refinanzierung im Verhältnis zur erforderlichen." },
+  { id: "cet1", group: "kap", name: "CET1-Quote", long: "Hartes Kernkapital", unit: "%", dec: 1, kind: "stock", dir: 1, reg: 10.5, target: 14,
+    series: CET1, table: "eigenmittel_monat", desc: "Hartes Kernkapital in Prozent der risikogewichteten Positionen." },
+  { id: "lev", group: "kap", name: "Leverage Ratio", long: "Ungewichtete Eigenmittelquote", unit: "%", dec: 1, kind: "stock", dir: 1, reg: 3, target: 5,
+    series: LEV, table: "eigenmittel_monat", desc: "Kernkapital im Verhältnis zum Gesamtengagement.", hidden: true },
+  { id: "eve", group: "zins", name: "Zinsrisiko ΔEVE", long: "Barwertsensitivität", unit: "%", dec: 1, kind: "stock", dir: -1, reg: 15, target: 13,
+    regName: "FINMA-Ausreissertest", targetName: "Frühwarnung", series: EVE, table: "zinsrisiko_monat",
+    desc: "Verlust des Barwerts bei einem Zinsschock, in Prozent des Kernkapitals." },
+  { id: "nim", group: "zins", name: "Zinsmarge", long: "Nettozinsmarge", unit: "%", dec: 2, kind: "stock", dir: 1, reg: null, target: null,
+    series: NIM, table: "erfolg_monat", desc: "Zinserfolg im Verhältnis zu den zinstragenden Aktiven, annualisiert." },
+  { id: "bal", group: "bil", name: "Bilanzsumme", long: "Total Aktiven", unit: "Mrd", kind: "stock", dir: 0, reg: null, target: null,
+    series: BAL, table: "bilanz_monat", desc: "Total der Aktiven per Monatsende." },
+  { id: "dep", group: "bil", name: "Kundeneinlagen", long: "Verpflichtungen aus Kundeneinlagen", unit: "Mrd", kind: "stock", dir: 1, reg: null, target: null,
+    series: DEP, parts: { "Sparkonten": SAVE, "Kontokorrente": CURR, "Festgeld": TERM }, table: "bilanz_monat", desc: "Einlagen von Kundinnen und Kunden per Monatsende." },
+  { id: "mort", group: "bil", name: "Hypotheken", long: "Hypothekarforderungen", unit: "Mrd", kind: "stock", dir: 0, reg: null, target: null,
+    series: MORT, table: "bilanz_monat", desc: "Ausstehende Hypotheken per Monatsende.", hidden: true },
+  { id: "nnm", group: "wachs", name: "Netto-Neugeld", long: "Zuflüsse minus Abflüsse", unit: "Mio", kind: "flow", dir: 1, reg: null, target: 30,
+    series: NNM, parts: { "Privatkunden": NNM_P, "Vermögensverwaltung": NNM_V, "Firmenkunden": NNM_F }, table: "neugeld_monat",
+    desc: "Neu zugeflossene minus abgeflossene Kundenvermögen. Ziel: 30 Mio. CHF pro Monat." },
+  { id: "pipe", group: "wachs", name: "Hypotheken-Pipeline", long: "Anfragen, Offerten und Zusagen", unit: "Mio", kind: "stock", dir: 1, reg: null, target: 500,
+    series: PIPE, parts: { "Anfrage": PIPE_A, "Offerte": PIPE_O, "Zusage": PIPE_Z }, funnel: true, table: "pipeline_monat",
+    desc: "Volumen der Hypotheken, die angefragt, offeriert oder zugesagt, aber noch nicht ausbezahlt sind." },
+];
+const K = Object.fromEntries(KPIS.map((k) => [k.id, k]));
+const EVENTS = [
+  { t: ym(2020, 3), title: "Pandemie", text: "Die Bank baut Liquiditätsreserven auf, Kundengelder fliessen zu." },
+  { t: ym(2022, 9), title: "SNB beendet Negativzinsen", text: "Der Leitzins steigt auf 0.5 %. Die Zinsmarge beginnt zu steigen." },
+  { t: ym(2023, 3), title: "Marktturbulenzen", text: "Innert weniger Wochen fliessen ungewöhnlich viele Kundengelder zu." },
+  { t: ym(2023, 6), title: "Leitzins 1.75 %", text: "Höhepunkt der Zinswende. Festgeld wird attraktiv, Sparkonten verlieren." },
+  { t: ym(2025, 1), title: "Basel III final", text: "Neue Eigenmittelvorschriften gelten. Die CET1-Quote sinkt einmalig." },
+  { t: ym(2025, 6), title: "Leitzins 0 %", text: "Die SNB senkt auf null. Druck auf die Zinsmarge." },
+  { t: ym(2026, 8), title: "Mandate gekündigt", text: "Zwei grosse Vermögensverwaltungs-Mandate gehen. Das wirkt auf Netto-Neugeld und LCR." },
+];
+
+// ───────────── Periods ─────────────
+const PERIODS = { jahr: [], quartal: [], monat: [] };
+for (let y = 2019; y <= 2026; y++) {
+  const from = ym(y, 1), to = Math.min(ym(y, 12), N - 1), partial = to < ym(y, 12);
+  PERIODS.jahr.push({ g: "jahr", y, from, to, partial, label: String(y), long: partial ? `${y} bis ${MONTH[mOf(to)]}` : `${y}` });
+  for (let q = 1; q <= 4; q++) {
+    const f = ym(y, 3 * q - 2);
+    if (f > N - 1) break;
+    const tt = Math.min(ym(y, 3 * q), N - 1), part = tt < ym(y, 3 * q);
+    PERIODS.quartal.push({ g: "quartal", y, q, from: f, to: tt, partial: part, label: `Q${q} ${y}`, short: `Q${q}`, long: part ? `Q${q} ${y} bis ${MONTH[mOf(tt)]}` : `Q${q} ${y}` });
+  }
+}
+for (let t = 0; t < N; t++) {
+  const y = 2019 + Math.floor(t / 12), m = mOf(t);
+  PERIODS.monat.push({ g: "monat", y, m, q: Math.floor(m / 3) + 1, from: t, to: t, partial: false, label: `${MON[m]} ${y}`, short: MON[m], long: `${MONTH[m]} ${y}` });
+}
+for (const g of Object.keys(PERIODS)) PERIODS[g].forEach((p, i) => (p.i = i));
+const NOUN = { jahr: "Vorjahr", quartal: "Vorquartal", monat: "Vormonat" };
+const G_NAME = { jahr: "Jahr", quartal: "Quartal", monat: "Monat" };
+const indexOfMonth = (g, t) => PERIODS[g].findIndex((p) => p.from <= t && t <= p.to);
+const monthsIn = (p) => p.to - p.from + 1;
+const valueAt = (k, p, s = k.series) => (k.kind === "flow" ? sum(s.slice(p.from, p.to + 1)) : s[p.to]);
+const targetAt = (k, p) => (k.target == null ? null : k.kind === "flow" ? k.target * monthsIn(p) : k.target);
+function endDate(p) { const y = 2019 + Math.floor(p.to / 12), m = mOf(p.to); const d = new Date(Date.UTC(y, m + 1, 0)); return `${d.getUTCDate()}.${m + 1}.${y}`; }
+
+// ───────────── Format (Swiss) ─────────────
+const thousands = (v) => Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "’");
+const pct = (d) => { const p = Math.abs(d * 100); return (p < 10 ? String(Number(p.toFixed(1))) : String(Math.round(p))) + " %"; };
+function split(k, v) {
+  if (k.unit === "%") return [v.toFixed(k.dec), "%"];
+  if (k.unit === "Mrd") return [(v / 1000).toFixed(1), "Mrd. CHF"];
+  return [(v < 0 ? "−" : "") + thousands(Math.abs(v)), "Mio. CHF"];
+}
+const F = (k, v) => split(k, v).join(" ");
+const compact = (k, v) => (k.unit === "%" ? v.toFixed(k.dec) + "%" : k.unit === "Mrd" ? (v / 1000).toFixed(1) + " Mrd" : thousands(v) + " Mio");
+const arrow = (d) => (d > 0 ? "↑" : d < 0 ? "↓" : "→");
+function fdelta(k, d, base) {
+  if (k.unit === "%") {
+    const p = Math.abs(d), min = Math.pow(10, -(k.dec || 0)) / 2;
+    return p < min ? "unverändert" : `${arrow(d)} ${p.toFixed(k.dec)} Pp.`;
+  }
+  if (k.kind === "flow") return `${arrow(d)} ${thousands(Math.abs(d))} Mio. CHF`;
+  const rel = d / Math.abs(base);
+  return Math.abs(rel) < 0.0005 ? "unverändert" : `${arrow(d)} ${pct(rel)}`;
+}
+
+// ───────────── Engine: same rules as the Go server, plus regulatory minimums ─────────────
+const evalCache = new Map();
+function evaluate(k, g, i) {
+  const key = k.id + "|" + g + "|" + i;
+  if (evalCache.has(key)) return evalCache.get(key);
+  const P = PERIODS[g], p = P[i];
+  const series = P.slice(0, i + 1).map((pp) => valueAt(k, pp));
+  const cur = series[i];
+  let prev = i > 0 ? series[i - 1] : null, prevNoun = NOUN[g];
+  const yi = g === "quartal" ? i - 4 : g === "monat" ? i - 12 : -1;
+  let yoy = yi >= 0 ? series[yi] : null;
+  // A period still running (2026 until October) is compared with the same months a year earlier.
+  const ytd = k.kind === "flow" && p.partial && p.from >= 12;
+  if (ytd) { prev = sum(k.series.slice(p.from - 12, p.to - 11)); prevNoun = "Vorjahr, gleiche Monate"; yoy = null; }
+  const past = series.slice(Math.max(0, i - 8), i);
+  const mu = mean(past), sd = Math.sqrt(mean(past.map((x) => (x - mu) ** 2)));
+  let z = 0;
+  if (past.length >= 4 && sd > 1e-9 && !(k.kind === "flow" && p.partial) && Math.abs(cur - mu) / Math.max(Math.abs(mu), 2 * sd) >= 0.05) z = (cur - mu) / sd;
+  const tgt = targetAt(k, p), reg = k.reg;
+  const mT = tgt != null && k.dir ? ((cur - tgt) / Math.abs(tgt)) * k.dir : null;
+  const mR = reg != null && k.dir ? ((cur - reg) / Math.abs(reg)) * k.dir : null;
+  let level = "calm", label = "Ruhig", tone = "neutral", move = false, breach = false;
+  if (mR !== null && mR < 0) { level = "alert"; tone = "bad"; label = "Regulatorisch verletzt"; breach = true; }
+  else if (mT !== null && mT < -0.03) { level = "alert"; tone = "bad"; label = k.dir > 0 ? "Unter internem Ziel" : "Über Frühwarnung"; }
+  else if (mT !== null && mT < 0) { level = "watch"; tone = "bad"; label = "Knapp verfehlt"; }
+  else if (Math.abs(z) >= 2 && k.dir && Math.sign(z) !== k.dir) { level = "watch"; tone = "bad"; label = "Auffällige Bewegung"; move = true; }
+  else if (Math.abs(z) >= 2) { level = "notable"; move = true; tone = k.dir ? "good" : "neutral"; label = k.dir ? "Gute Nachricht" : "Ungewöhnlich"; }
+  // SPC run rule: six or more consecutive moves in the adverse direction are a signal, even inside the limits.
+  let run = 0, special = null;
+  if (k.dir) for (let x = i; x > 0 && run < 36; x--) { if ((series[x] - series[x - 1]) * k.dir < 0) run++; else break; }
+  if ((level === "calm" || (level === "notable" && tone !== "good")) && run >= 6) { level = "watch"; tone = "bad"; label = "Anhaltender Trend"; special = "trend"; move = false; }
+  // Hysteresis: after an alert, the all-clear needs a 2 % recovery margin, so status does not flicker.
+  if (level === "calm" && i > 0 && mT !== null && mT < 0.02 && evaluate(k, g, i - 1).level === "alert") { level = "watch"; tone = "bad"; label = "Erholung, noch knapp"; special = "recover"; }
+  const kind = level === "notable" ? (tone === "good" ? "good" : "info") : level;
+  const m = Math.abs(mR !== null && mR < 0 ? mR : mT || 0);
+  const score = (breach ? 1600 : 0) + (level === "alert" ? 1000 + m * 100 : level === "watch" ? 600 + (m * 100 || Math.abs(z)) : level === "notable" ? 500 + Math.abs(z) : 100);
+  const mag = level === "alert" ? Math.min(1, 0.86 + m * 0.3) : level === "watch" ? 0.6 : level === "notable" ? 0.52 : 0.2;
+  const r = { k, g, i, p, series, cur, prev, yoy, tgt, reg, mT, mR, z, level, label, tone, kind, score: score + (special ? run : 0), mag, breach, ytd, prevNoun, run, special };
+  r.delta = prev !== null ? `${fdelta(k, cur - prev, prev)} ggü. ${prevNoun}` : "";
+  r.yoyText = yoy !== null ? `${fdelta(k, cur - yoy, yoy)} ggü. Vorjahr` : "";
+  r.answer = answerFor(r, move);
+  r.why = (level === "alert" || level === "watch") && i > 0 ? driverFor(r) : "";
+  if ((level === "alert" || level === "watch") && run >= 4 && special !== "trend") r.why = (r.why ? r.why + ". " : "") + `Seit ${run} ${RUN_NOUN[g]} in Folge ${k.dir > 0 ? "rückläufig" : "steigend"}`;
+  evalCache.set(key, r);
+  return r;
+}
+const RUN_NOUN = { monat: "Monaten", quartal: "Quartalen", jahr: "Jahren" };
+function answerFor(r, move) {
+  const { k, cur, tgt, reg, level, g, i } = r, v = F(k, cur);
+  if (r.special === "trend") return `${v}, seit ${r.run} ${RUN_NOUN[g]} in Folge ${k.dir > 0 ? "rückläufig" : "steigend"}`;
+  if (r.special === "recover") return `${v}, wieder im Ziel, aber noch ohne Sicherheitsabstand`;
+  if (r.breach) return k.dir > 0 ? `${v}, unter dem regulatorischen Minimum von ${F(k, reg)}` : `${v}, über dem Limit von ${F(k, reg)}`;
+  if ((level === "alert" || level === "watch") && !move) return k.dir > 0 ? `${v}, unter dem internen Ziel von ${F(k, tgt)}` : `${v}, über der Frühwarnschwelle von ${F(k, tgt)}`;
+  if (move) {
+    const before = r.series.slice(0, -1), up = r.z > 0;
+    let j = -1;
+    for (let x = before.length - 1; x >= 0; x--) if (up ? before[x] >= cur : before[x] <= cur) { j = x; break; }
+    if (j < 0 && before.length >= 4) return `${v}, ${up ? "höchster" : "tiefster"} Wert seit Beginn der Reihe 2019`;
+    if (j >= 0 && i - j >= 4) return `${v}, ${up ? "höchster" : "tiefster"} Wert seit ${PERIODS[g][j].long}`;
+    return `${v}, deutlich ${up ? "höher" : "tiefer"} als üblich`;
+  }
+  if (tgt != null) return k.dir > 0 ? `${v}, über dem Ziel von ${F(k, tgt)}` : `${v}, unter der Frühwarnschwelle von ${F(k, tgt)}`;
+  return r.delta ? `${v}, ${r.delta}` : v;
+}
+// Names a part only when it clearly explains the deviation.
+function driverFor(r) {
+  const { k, g, i } = r;
+  if (!k.parts) return "";
+  const p = PERIODS[g][i], q = r.ytd ? { from: p.from - 12, to: p.to - 12 } : PERIODS[g][i - 1];
+  if (k.partsMode === "ratio") {
+    const [num, den] = Object.keys(k.parts);
+    const dn = valueAt(k, p, k.parts[num]) / valueAt(k, q, k.parts[num]) - 1, dd = valueAt(k, p, k.parts[den]) / valueAt(k, q, k.parts[den]) - 1;
+    const top = [{ name: num, s: -dn * k.dir, d: dn }, { name: den, s: dd * k.dir, d: dd }].sort((a, b) => b.s - a.s)[0];
+    return top.s > 0 ? `Grund: ${top.name} ${top.d > 0 ? "+" : "−"}${pct(top.d)}` : "";
+  }
+  const ch = Object.entries(k.parts).map(([name, s]) => { const d = valueAt(k, p, s) - valueAt(k, q, s); return { name, d, s: -d * (k.dir || 1) }; }).sort((a, b) => b.s - a.s);
+  if (!ch.length || ch[0].s <= 0 || (ch[1] && ch[0].s < 1.5 * Math.max(0, ch[1].s))) return "";
+  return `Grund: ${ch[0].name} ${ch[0].d > 0 ? "+" : "−"}${thousands(Math.abs(ch[0].d))} Mio. CHF ggü. ${r.prevNoun}`;
+}
+const evalAll = (g, i) => KPIS.map((k) => evaluate(k, g, i)).sort((a, b) => b.score - a.score);
+
+// ───────────── DOM helpers ─────────────
+function h(tag, attrs = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k.startsWith("on") && typeof v === "function") el.addEventListener(k.slice(2), v);
+    else if (k === "text") el.textContent = v;
+    else if (k === "style") el.style.cssText = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) if (c !== null && c !== undefined && c !== false && c !== "") el.append(c instanceof Node ? c : String(c));
+  return el;
+}
+const SVGNS = "http://www.w3.org/2000/svg";
+function sv(tag, attrs = {}, ...kids) {
+  const el = document.createElementNS(SVGNS, tag);
+  for (const [k, v] of Object.entries(attrs)) if (v !== null && v !== undefined) el.setAttribute(k, v);
+  for (const c of kids) if (c) el.append(typeof c === "string" ? document.createTextNode(c) : c);
+  return el;
+}
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+function animate(dur, fn, ease = easeOut) {
+  if (reduced) { fn(1); return () => {}; }
+  const t0 = performance.now();
+  let stop = false;
+  const step = () => { if (stop) return; const k = clamp((performance.now() - t0) / dur, 0, 1); fn(ease(k)); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+  return () => { stop = true; };
+}
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const KIND_VAR = { alert: "--alert", watch: "--watch", good: "--good", info: "--accent", calm: "--ink-2" };
+const kindVar = (kind) => `var(${KIND_VAR[kind] || "--ink-2"})`;
+
+// ───────────── Scopes and Lumina ─────────────
+const GROUP_ORDER = ["liq", "kap", "zins", "bil", "wachs"];
+const SCOPES = { all: "ALCO gesamt", liq: "Liquidität", kap: "Kapital", zins: "Zinsrisiko", bil: "Bilanz", wachs: "Wachstum" };
+const SLUG = { all: "alco-gesamt", liq: "liquiditaet", kap: "kapital", zins: "zinsrisiko", bil: "bilanz", wachs: "wachstum" };
+const valAt = (k, t, s) => { const src = s || k.series, a = clamp(Math.floor(t), 0, N - 1), b = Math.min(N - 1, a + 1); return lerp(src[a], src[b], clamp(t - a, 0, 1)); };
+const scopeKpis = (scope) => (scope === "all" ? KPIS : KPIS.filter((k) => k.group === scope));
+const levelCounts = (m, scope = "all") => {
+  const ev = scopeKpis(scope).map((k) => evaluate(k, "monat", m));
+  return { alert: ev.filter((r) => r.level === "alert").length, watch: ev.filter((r) => r.level === "watch").length, good: ev.filter((r) => r.kind === "good").length };
+};
+function dots(c) {
+  return h("span", { class: "dots" }, ...Array.from({ length: c.alert }, () => h("i", { class: "dot", "data-level": "alert" })),
+    ...Array.from({ length: c.watch }, () => h("i", { class: "dot", "data-level": "watch" })), ...Array.from({ length: c.good }, () => h("i", { class: "dot", "data-level": "good" })));
+}
+
+// Lumina's sentence for a month and scope.
+function briefParts(m, scope, onName) {
+  const ev = scopeKpis(scope).map((k) => evaluate(k, "monat", m)).sort((a, b) => b.score - a.score);
+  const alerts = ev.filter((r) => r.level === "alert"), watches = ev.filter((r) => r.level === "watch"), goods = ev.filter((r) => r.kind === "good");
+  const breach = alerts.filter((r) => r.breach);
+  const name = (r) => h("button", { class: "name" + (r.level === "alert" ? " name--alert" : ""), type: "button", onclick: () => onName(r.k) }, r.k.name);
+  const join = (rs) => rs.flatMap((r, n) => (n === 0 ? [name(r)] : [n === rs.length - 1 ? " und " : ", ", name(r)]));
+  const words = ["", "Eine", "Zwei", "Drei", "Vier", "Fünf", "Sechs"];
+  let p;
+  if (breach.length) p = ["Regulatorische Grenze verletzt: ", ...join(breach), ". Das hat Vorrang."];
+  else if (!alerts.length && !watches.length) p = ["Alles ruhig. ", ...(goods.length ? ["Gute Nachricht: ", ...join(goods), "."] : ["Nichts braucht dich."])];
+  else if (!alerts.length) p = ["Fast alles ruhig. Behalte ", ...join(watches), " im Auge."];
+  else if (alerts.length === 1 && !watches.length) p = ["Ruhige Lage. Nur eine Sache braucht dich: ", name(alerts[0]), "."];
+  else if (alerts.length === 1) p = ["Eine Sache braucht dich: ", name(alerts[0]), ". Im Auge behalten: ", ...join(watches), "."];
+  else p = [`${words[alerts.length] || alerts.length} Dinge brauchen dich: `, ...join(alerts), ".", ...(watches.length ? [" Im Auge behalten: ", ...join(watches), "."] : [])];
+  if (!breach.length && (alerts.length || watches.length) && goods.length) p.push(" Gute Nachricht: ", ...join(goods), ".");
+  return p;
+}
+
+// ───────────── Lumina's chart recommendations ─────────────
+// Every candidate is generated from the data; the score ranks urgency and explanatory value.
+function candidatesFor(scope, m) {
+  const out = [], ks = scopeKpis(scope);
+  const ev = Object.fromEntries(KPIS.map((k) => [k.id, evaluate(k, "monat", m)]));
+  const heat = (r) => (r.level === "alert" ? 3 : r.level === "watch" ? 2 : r.kind === "good" ? 1.6 : 1);
+  for (const k of ks) {
+    const r = ev[k.id];
+    out.push({ id: "trend:" + k.id, kind: "trend", k: k.id, title: `${k.name}: Verlauf${k.reg !== null || k.target !== null ? " gegen " + (k.reg !== null ? "Grenzen" : "Ziel") : ""}`,
+      why: r.kind === "good" ? `${k.name}: ${r.label}, ${r.answer.replace(/^[^,]*, /, "")}. Der Verlauf zeigt, wie sich der Wert vom Ziel absetzt.`
+        : r.level !== "calm" ? `${k.name}: ${r.label} seit ${PERIODS.monat[streakStart(k, m)].long}. Darum der Verlauf mit Grenzbändern; er zeigt, wann es kippte, nicht warum.`
+        : k.reg !== null ? `${k.name} ist ruhig, ${headroom(k, r)} Puffer zum Minimum. Der Verlauf zeigt, ob dieser Abstand schrumpft.`
+        : k.target !== null ? `${k.name} ist ruhig und im Ziel. Der Verlauf zeigt, wie stabil das ist.` : `Für ${k.name} ist kein Ziel hinterlegt. Der Verlauf zeigt die Bewegung über die Zeit.`,
+      score: 20 * heat(r) + (k.reg !== null ? 6 : 0), types: k.kind === "flow" ? ["balken", "linie"] : ["flaeche", "linie", "balken"], ranges: ["1J", "3J", "Alles"], range: "3J", type: k.kind === "flow" ? "balken" : "flaeche" });
+    if (k.kind === "flow") out.push({ id: "cum:" + k.id, kind: "cum", k: k.id, title: `${k.name}: kumuliert im Jahr`, why: "Monatsflüsse schwanken. Kumuliert gegen das Jahresziel sieht man, ob das Jahr noch aufgeht.", score: 23 * heat(r), types: [], ranges: [] });
+    if (k.parts && !k.funnel && k.partsMode !== "ratio") {
+      out.push({ id: "parts:" + k.id, kind: "parts", k: k.id, title: `${k.name}: Zusammensetzung`, why: `${r.why ? r.why + ". " : ""}Die Zusammensetzung zeigt, welcher Teil die Bewegung trägt, nicht die Ursache dahinter.`,
+        score: (r.why ? 25 : 9) * heat(r), types: k.kind === "flow" ? ["balken"] : ["flaeche", "anteile"], ranges: ["1J", "3J", "Alles"], range: "3J", type: k.kind === "flow" ? "balken" : "flaeche" });
+      out.push({ id: "bridge:" + k.id, kind: "bridge", k: k.id, title: `${k.name}: Brücke über zwölf Monate`, why: m >= 12 ? `Zerlegt die Veränderung seit ${PERIODS.monat[m - 12].long} in ihre Teile.` : "Zerlegt die Veränderung über zwölf Monate in ihre Teile.", score: (r.level !== "calm" ? 21 : 6) * heat(r), types: [], ranges: [] });
+    }
+    if (k.partsMode === "ratio") out.push({ id: "drivers:" + k.id, kind: "drivers", k: k.id, title: `${k.name}: Zähler und Nenner`, why: `${k.name} ist ein Verhältnis. Getrennt sieht man, ob die Reserve sinkt oder die Abflüsse steigen.`, score: (r.level !== "calm" ? 24 : 8) * heat(r), types: [], ranges: ["1J", "3J", "Alles"], range: "3J" });
+    if (k.funnel) out.push({ id: "funnel:" + k.id, kind: "funnel", k: k.id, title: `${k.name}: nach Stufe`, why: "Was in der Pipeline steht, nach Stufe. Zeigt Volumen, keine Abschlusswahrscheinlichkeit.", score: 17 * heat(r), types: [], ranges: [] });
+    if (k.kind === "flow" || k.funnel || k.id === "nim") out.push({ id: "season:" + k.id, kind: "season", k: k.id, title: `${k.name}: Saisonmuster`, why: "Jedes Jahr eine Zeile. So sieht man, ob ein Monat typisch ist oder heraussticht.", score: 9 * heat(r), types: [], ranges: [] });
+  }
+  const regKs = ks.filter((k) => k.reg !== null && k.reg !== undefined);
+  if (regKs.length) out.push({ id: "buffer:" + scope, kind: "buffer", ks: regKs.map((k) => k.id), title: "Puffer zu den Grenzen", why: `Abstand jeder Quote zu Minimum und Ziel. Am wenigsten Puffer hat gerade ${[...regKs].sort((a, b) => ((ev[a.id].cur - a.reg) * a.dir) / Math.abs(a.reg) - ((ev[b.id].cur - b.reg) * b.dir) / Math.abs(b.reg))[0].name}.`, score: 26 + 12 * Math.max(...regKs.map((k) => heat(ev[k.id]))), types: [], ranges: [] });
+  if (["all", "liq", "bil"].includes(scope)) out.push({ id: "compare:lcr-dep", kind: "compare", ks: ["lcr", "dep"], title: "LCR und Kundeneinlagen", why: "Beide Reihen auf 100 indexiert. Gleichlauf zeigt einen Zusammenhang, keine Ursache.", score: ev.lcr.level !== "calm" ? 44 : 11, types: [], ranges: ["3J", "Alles"], range: "Alles" });
+  return out.sort((a, b) => b.score - a.score);
+}
+const SIZES_BY_RANK = ["L", "S", "M", "M", "S", "S", "S", "M"];
+function streakStart(k, m) { let x = m; while (x > 0 && evaluate(k, "monat", x - 1).level !== "calm") x--; return x; }
+function headroom(k, r) { const b = (r.cur - k.reg) * k.dir; return k.unit === "%" ? `${b.toFixed(k.dec)} Pp.` : F(k, b); }
+
+
+// ═════ Tiefe: state, geometry and the flight ═════
+const $ = (id) => document.getElementById(id);
+const app = $("app"), stage = $("stage"), world = $("world"), briefEl = $("brief"), hintEl = $("hint");
+const headMonth = $("head-month"), headSub = $("head-sub"), btnToday = $("btn-today"), btnPlay = $("play"), rail = $("rail");
+const POOL = 16;      // panes kept in the DOM and recycled while flying
+const GAP = 160;      // distance between two months on the z axis, in px
+const PERSP = 1000;   // perspective distance of the stage, in px
+const VPY = 14;       // vanishing point, percent from the top of the stage
+const SPAN = { S: [1, 1], M: [2, 1], L: [2, 2] };
+const STORE = "lumantic.tiefe.board.v1";
+// Lumina's board for today: the two alerts large, the watch and the good news small.
+const DEFAULT_BOARD = [{ id: "nnm", size: "L" }, { id: "lcr", size: "M" }, { id: "eve", size: "S" }, { id: "pipe", size: "S" }];
+
+function loadBoard() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORE) || "null");
+    if (Array.isArray(raw)) {
+      const seen = new Set(), out = [];
+      for (const b of raw) if (b && K[b.id] && SPAN[b.size] && !seen.has(b.id)) { seen.add(b.id); out.push({ id: b.id, size: b.size }); }
+      if (out.length) return out;
+    }
+  } catch { /* storage is a convenience only */ }
+  return DEFAULT_BOARD.map((b) => ({ ...b }));
+}
+function saveBoard() { try { localStorage.setItem(STORE, JSON.stringify(BOARD)); } catch { /* storage is a convenience only */ } }
+
+let BOARD = loadBoard(), layoutV = 1, FOCUS = null, shownMonth = -1, briefMonth = -1, trayOpen = false;
+// t is a fractional month. target is where the flight is heading. A tween is a programmed flight (jump, intro).
+const T = { t: N - 1, target: N - 1, tween: null, playing: false, dragging: false, intro: false, memo: null, lastWheel: -1e9, speed: 0 };
+const G = { W: 0, H: 0, x: 0, y: 0, D: 280, rows: 2, srow: 20, sw: 0, sh: 0, cols: 4, rowH: 150, gap: 14, phone: false };
+const PX = { x: 0, y: 0, tx: 0, ty: 0 };
+const month = () => clamp(Math.round(T.t), 0, N - 1);
+const isSettled = () => !T.tween && !T.playing && !T.dragging && Math.abs(T.t - Math.round(T.t)) < 0.004 && Math.abs(T.target - T.t) < 0.004;
+const short = (k, v) => (k.unit === "Mio" ? (v < 0 ? "−" : "") + thousands(Math.abs(v)) + " Mio." : compact(k, v));
+const onBoard = (id) => BOARD.some((b) => b.id === id);
+
+// Rows the board needs: the same first-fit placement the CSS grid uses with dense flow.
+function pack(cols) {
+  const occ = [];
+  let rows = 0;
+  for (const b of BOARD) {
+    const w = Math.min(cols, SPAN[b.size][0]), hgt = SPAN[b.size][1];
+    search: for (let r = 0; ; r++) for (let c = 0; c + w <= cols; c++) {
+      let free = true;
+      for (let rr = r; rr < r + hgt && free; rr++) for (let cc = c; cc < c + w; cc++) if (occ[rr] && occ[rr][cc]) { free = false; break; }
+      if (!free) continue;
+      for (let rr = r; rr < r + hgt; rr++) { occ[rr] = occ[rr] || []; for (let cc = c; cc < c + w; cc++) occ[rr][cc] = true; }
+      rows = Math.max(rows, r + hgt);
+      break search;
+    }
+  }
+  return Math.max(1, rows);
+}
+
+// The board's rectangle. Rows shrink before the board would leave the screen.
+function measure() {
+  const sw = app.clientWidth, sh = app.clientHeight;
+  G.sw = sw; G.sh = sh;
+  G.phone = sw < 720;
+  G.cols = G.phone ? 2 : 4;
+  G.gap = G.phone ? 10 : 14;
+  const side = G.phone ? 16 : Math.max(170, sw * 0.15);
+  G.W = Math.round(Math.min(1040, sw - 2 * side));
+  const rows = pack(G.cols);
+  const top = Math.round(G.phone ? Math.max(236, sh * 0.335) : Math.max(320, sh * 0.445));
+  const avail = Math.max(180, sh - (G.phone ? 186 : 148) - top);
+  G.rowH = Math.floor(clamp((avail - (rows - 1) * G.gap) / rows, 58, G.phone ? 108 : 158));
+  G.H = rows * G.rowH + (rows - 1) * G.gap;
+  G.x = Math.round((sw - G.W) / 2);
+  G.y = top;
+  G.rows = rows;
+  G.D = top - (sh * VPY) / 100;   // from the vanishing point down to the board's top edge
+  // A folded month is exactly as tall as the first stair behind the board, minus a breath of fog between stairs.
+  G.srow = Math.max(2, (((G.D * GAP) / PERSP) * 0.95 - (rows - 1) * 2) / rows);
+  stage.style.perspective = PERSP + "px";
+  world.style.cssText = `left:${G.x}px;top:${G.y}px;width:${G.W}px;height:${G.H}px;--cols:${G.cols};--rowh:${G.rowH}px;--gap:${G.gap}px;--srow:${G.srow.toFixed(2)}px`;
+  briefEl.style.left = G.x + "px";
+  briefEl.style.width = G.W + "px";
+  briefEl.style.top = G.y + G.H + (G.phone ? 12 : 20) + "px";
+  placeFocus();
+  applyParallax();
+}
+function applyParallax() { stage.style.perspectiveOrigin = `${(50 + PX.x * 2.4).toFixed(2)}% ${(VPY + PX.y * 1.5).toFixed(2)}%`; }
+
+// ───────────── The flight ─────────────
+let raf = 0, lastNow = 0;
+function kick() { if (!raf) { lastNow = performance.now(); raf = requestAnimationFrame(tick); } }
+function tick(now) {
+  raf = 0;
+  const dt = Math.min(0.05, Math.max(0.001, (now - lastNow) / 1000)), before = T.t;
+  lastNow = now;
+  let moving;
+  if (T.tween) {
+    const w = T.tween, p = clamp((now - w.t0) / w.dur, 0, 1);
+    T.t = lerp(w.from, w.to, w.ease(p));
+    if (p >= 1) { T.t = T.target = w.to; T.tween = null; if (w.done) w.done(); }
+    moving = true;
+  } else {
+    const idle = now - T.lastWheel > 170;
+    if (T.playing) { T.target = Math.min(N - 1, T.target + dt * (reduced ? 2 : 8)); if (T.target >= N - 1) setPlaying(false); }
+    else if (!T.dragging && idle) T.target = Math.round(T.target);   // every flight settles on a month
+    const d = T.target - T.t;
+    if (reduced) T.t = T.playing ? Math.floor(T.target) : T.target;
+    else if (Math.abs(d) > 0.002) T.t += d * (1 - Math.exp(-dt * (T.playing ? 16 : 10)));
+    else T.t = T.target;
+    moving = T.playing || T.dragging || !idle || T.t !== T.target;
+  }
+  T.speed = Math.abs(T.t - before) / dt;
+  if (Math.abs(PX.tx - PX.x) > 0.004 || Math.abs(PX.ty - PX.y) > 0.004) { PX.x += (PX.tx - PX.x) * 0.1; PX.y += (PX.ty - PX.y) * 0.1; applyParallax(); moving = true; }
+  place();
+  if (moving) raf = requestAnimationFrame(tick); else settle();
+}
+function settle() {
+  T.speed = 0;
+  if (month() < N - 1) T.memo = month();
+  stage.classList.remove("is-flying");
+  refreshBrief();
+}
+function flyTo(m, dur, ease, done) {
+  m = clamp(m, 0, N - 1);
+  setPlaying(false);
+  if (reduced) { T.tween = null; T.t = T.target = m; place(); settle(); if (done) done(); return; }
+  T.tween = { from: T.t, to: m, t0: performance.now(), dur: dur || clamp(420 + Math.abs(m - T.t) * 24, 420, 1700), ease: ease || easeInOut, done: done || null };
+  T.target = m;
+  kick();
+}
+// Arrow keys chase a moving target, so holding a key keeps flying.
+function stepBy(n) {
+  if (T.tween) { T.tween = null; T.target = T.t; }
+  setPlaying(false);
+  T.target = clamp(Math.round(T.target) + n, 0, N - 1);
+  kick();
+}
+function setPlaying(on) {
+  if (T.playing === on) return;
+  T.playing = on;
+  btnPlay.setAttribute("aria-pressed", String(on));
+  btnPlay.setAttribute("aria-label", on ? "Zeitraffer anhalten" : "Zeitraffer abspielen");
+  btnPlay.textContent = on ? "❚❚" : "▶";
+  if (on) {
+    T.tween = null;
+    if (T.target >= N - 1.01) T.t = T.target = 0;   // at today the time-lapse starts over in 2019
+    else T.target = T.t;
+    kick();
+  }
+}
+// Z: today ↔ the last moment visited.
+function jumpZ() {
+  if (month() === N - 1 && T.target >= N - 1.01) flyTo(T.memo !== null ? T.memo : N - 13);
+  else { T.memo = month(); flyTo(N - 1); }
+}
+// Any input ends the opening flight. A flight gesture also retires the hint.
+function userInput(flight) {
+  if (T.intro) { T.intro = false; T.tween = null; T.t = T.target = N - 1; }
+  if (flight && !hintEl.hidden) hintEl.hidden = true;
+}
+function intro() {
+  if (reduced) return;
+  T.intro = true;
+  T.t = 0;
+  T.target = N - 1;
+  T.tween = { from: 0, to: N - 1, t0: performance.now() + 380, dur: 2700, ease: (p) => 1 - Math.pow(1 - p, 3.4), done: () => { T.intro = false; } };
+  kick();
+}
+
+// Keeps a name and the punctuation after it on one line.
+function glue(parts) {
+  const out = [];
+  for (let i = 0; i < parts.length; i++) {
+    const cur = parts[i], next = parts[i + 1], m = typeof next === "string" ? /^[.,:;]+/.exec(next) : null;
+    if (cur instanceof Node && m) { out.push(h("span", { class: "nowrap" }, cur, m[0])); if (next.length > m[0].length) out.push(next.slice(m[0].length)); i++; }
+    else out.push(cur);
+  }
+  return out;
+}
+function refreshBrief() {
+  const m = month();
+  if (briefMonth === m && !briefEl.classList.contains("is-stale")) return;
+  briefMonth = m;
+  briefEl.classList.remove("is-stale");
+  briefEl.replaceChildren(...glue(briefParts(m, "all", (k) => {
+    if (onBoard(k.id)) openFocus(k.id);
+    else { addModule(k.id); toast(`${k.name} liegt jetzt auf deinem Board.`); }
+  })));
+}
+function monthUI(m) {
+  shownMonth = m;
+  const per = PERIODS.monat[m], ago = N - 1 - m;
+  headMonth.textContent = per.long;
+  headSub.textContent = ago === 0 ? "Heute" : ago % 12 === 0 ? `vor ${ago / 12} Jahr${ago > 12 ? "en" : ""}` : `vor ${ago} Monat${ago > 1 ? "en" : ""}`;
+  btnToday.hidden = ago === 0 || T.intro;
+  railLab.textContent = per.label;
+  rail.setAttribute("aria-valuenow", String(m));
+  rail.setAttribute("aria-valuetext", per.long);
+  if (T.speed < 5) refreshBrief(); else briefEl.classList.add("is-stale");
+  if (FOCUS) focusMonth(m);
+  if (trayOpen) renderTray();
+}
+
+// ═════ Panes: a pool of sixteen, recycled while flying ═════
+// Only the pane at the front stands upright as the full board. Every earlier month lies behind it folded flat:
+// a slab with the same columns and one thin cell per module. So every module, in whatever row it sits, shows its
+// status for every visible month, and the slabs stack into a staircase without hiding each other.
+const pool = [], years = [];
+let emptyEl = null, addedId = null, addedAt = 0, railHandle = null, railLab = null;
+const zAt = (d) => (d >= 0 ? -d * GAP : -d * GAP * 3);   // a pane in front of today's plane rushes towards the camera
+// Fog is plain opacity. Slabs lie side by side on the stairs and never cover each other, so nothing shows through.
+const fogAt = (d) => (d < 0 ? clamp(1 + d * 3, 0, 1) : d <= 1 ? 1 : Math.pow(clamp(1 - (d - 1) / (POOL - 2.4), 0, 1), 1.15));
+
+function buildWorld() {
+  for (let i = 0; i < POOL; i++) {
+    const grid = h("div", { class: "grid", hidden: true }), slab = h("div", { class: "slab", hidden: true });
+    const tagM = h("span", { class: "tag tag-m" }), tagQ = h("span", { class: "tag tag-q" }), tagE = h("span", { class: "tag tag-e" });
+    const el = h("div", { class: "pane", hidden: true }, grid, slab, tagM, tagQ, tagE);
+    world.append(el);
+    pool.push({ el, grid, slab, tagM, tagQ, tagE, mods: {}, cells: {}, m: -1, v: 0, di: -1, cls: "", fullFor: "", slabFor: "", fullOn: false, slabOn: false, fade: false, used: false });
+  }
+  for (let y = PERIODS.monat[0].y; y <= PERIODS.monat[N - 1].y; y++) {
+    const el = h("div", { class: "yr", "aria-hidden": "true", text: String(y) });
+    world.append(el);
+    years.push({ m: ym(y, 1), el, shown: true });
+  }
+  emptyEl = h("div", { class: "empty", hidden: true, text: "Dein Board ist leer. «+ Baustein» holt die ersten Kennzahlen." });
+  world.append(emptyEl);
+}
+
+function toolsFor(id) {
+  const tb = (label, title, fn) => h("button", { type: "button", title, "aria-label": title, onclick: (e) => { e.stopPropagation(); fn(); } }, label);
+  return h("div", { class: "mod-tools" },
+    ...["S", "M", "L"].map((s) => { const bt = tb(s, "Grösse " + s, () => resizeModule(id, s)); bt.dataset.size = s; return bt; }),
+    tb("×", "Entfernen", () => removeModule(id)));
+}
+function makeMod(id) {
+  const name = h("span", { class: "mod-name" }), right = h("span", { class: "mod-right" }), body = h("div", { class: "mod-body" }), tools = toolsFor(id);
+  const el = h("div", { class: "mod", "data-id": id, role: "button", tabindex: "0" }, h("div", { class: "mod-head" }, name, right), body, tools);
+  return { el, name, right, body, tools, size: "" };
+}
+function makeCell(id) {
+  const name = h("span", { class: "cell-name" }), val = h("span", { class: "cell-val" });
+  return { el: h("div", { class: "cell", "data-id": id }, name, val), name, val, size: "" };
+}
+// Where space is tight (small tiles, folded slabs) a figure goes by its short name and Lumina's own status words.
+const SHORT_NAME = { pipe: "Pipeline", eve: "ΔEVE", dep: "Einlagen", lev: "Leverage", cet1: "CET1" };
+const nameFor = (k, tight) => (tight && SHORT_NAME[k.id]) || k.name;
+const STATUS_WORD = { alert: "Braucht dich", watch: "Im Auge", good: "Gute Nachricht", info: "Ungewöhnlich", calm: "Ruhig" };
+// Lumina names the part that moved. She does not claim a cause.
+const moved = (why) => why.replace(/^Grund: /, "Am stärksten bewegt: ");
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+function sayFor(r) {
+  const rest = r.answer.includes(", ") ? cap(r.answer.slice(r.answer.indexOf(", ") + 2)) : "";
+  return [rest, r.why ? moved(r.why) : ""].filter(Boolean).join(". ") + ".";
+}
+// light: while the flight is very fast a pane is in front for a frame or two, so it carries figures only.
+function frontBody(k, b, m, r, light) {
+  const [num, unit] = split(k, r.cur);
+  const val = h("div", { class: "mod-val" }, num, h("small", { text: unit }));
+  const delta = h("div", { class: "mod-delta", text: r.delta || "Erster Monat der Reihe" });
+  const now = m < N - 1 ? h("div", { class: "mod-now", text: "heute " + F(k, k.series[N - 1]) }) : null;
+  if (light) return b.size === "L" ? [h("div", { class: "mod-top" }, val, h("div", { class: "mod-side" }, delta, now))] : [val, delta];
+  if (b.size === "L") {
+    const plot = h("div", { class: "plot tile-plot" });
+    tileChart(plot, k, m, r);
+    return [h("div", { class: "mod-top" }, val, h("div", { class: "mod-side" }, delta, now)), h("p", { class: "mod-say", text: sayFor(r) }), plot];
+  }
+  const spark = sparkSVG(k, m, r);
+  return b.size === "M" ? [h("div", { class: "mod-col" }, val, delta, now), spark] : [val, delta, now, spark].filter(Boolean);
+}
+function common(item, b, r, di) {
+  const el = item.el;
+  if (item.size !== b.size) { if (item.size) el.classList.remove("size-" + item.size); el.classList.add("size-" + b.size); item.size = b.size; }
+  el.classList.toggle("is-lit", !!FOCUS && FOCUS.id === b.id);
+  el.dataset.kind = r.kind;
+  // A new module extrudes through time: pane after pane, front to back.
+  if (addedId === b.id && performance.now() - addedAt < 160 && !reduced) {
+    el.style.animationDelay = di * 62 + "ms";
+    el.classList.remove("extrude");
+    void el.offsetWidth;
+    el.classList.add("extrude");
+    el.addEventListener("animationend", () => el.classList.remove("extrude"), { once: true });
+  }
+}
+function fillMod(mod, b, m, di, light) {
+  const k = K[b.id], r = evaluate(k, "monat", m);
+  common(mod, b, r, di);
+  mod.name.textContent = nameFor(k, b.size === "S");
+  mod.right.replaceChildren(h("i"), h("span", { class: "mod-word", text: b.size === "S" ? STATUS_WORD[r.kind] : r.label }));
+  mod.right.title = r.label;
+  mod.body.replaceChildren(...frontBody(k, b, m, r, light));
+  mod.tools.querySelectorAll("[data-size]").forEach((bt) => bt.setAttribute("aria-pressed", String(bt.dataset.size === b.size)));
+  mod.el.setAttribute("aria-label", `${k.name}: ${r.answer}. Diagramm öffnen`);
+}
+function fillCell(cell, b, m, di, text) {
+  const k = K[b.id], r = evaluate(k, "monat", m);
+  common(cell, b, r, di);
+  cell.name.textContent = text ? nameFor(k, b.size === "S") : "";
+  cell.val.textContent = text ? short(k, r.cur) : "";
+}
+// Keeps a pane's children in board order, creating and dropping them as the board changes.
+function sync(host, items, make, fill) {
+  for (const id of Object.keys(items)) if (!onBoard(id)) { items[id].el.remove(); delete items[id]; }
+  BOARD.forEach((b, i) => {
+    const it = items[b.id] || (items[b.id] = make(b.id));
+    if (host.children[i] !== it.el) host.insertBefore(it.el, host.children[i] || null);
+    fill(it, b);
+  });
+}
+const setText = (el, text) => { if (el.textContent !== text) el.textContent = text; };
+function updateTags(p) {
+  const m = p.m, di = p.di, mm = mOf(m), per = PERIODS.monat[m], ev = EVENTS.find((e) => e.t === m);
+  setText(p.tagM, di <= 7 ? MON[mm].toUpperCase() : "");
+  setText(p.tagQ, mm % 3 === 0 && di <= 12 ? `Q${per.q}` + (di <= 4 ? " " + per.y : "") : "");
+  setText(p.tagE, ev && di <= 10 ? "◆ " + ev.title : "");
+}
+
+// One frame: every pane goes to its depth. Per frame only transform and opacity change, which the compositor
+// does alone. Content is touched when a pane gets a new month, changes its level of detail, or the board changes.
+function place() {
+  const t = T.t, mHi = Math.min(N - 1, Math.floor(t + 1)), mLo = Math.max(0, mHi - (POOL - 1)), light = T.speed > 16;
+  for (const p of pool) p.used = false;
+  for (let m = mLo; m <= mHi; m++) {
+    const p = pool[m % POOL], d = t - m;
+    if (d <= -1) continue;
+    p.used = true;
+    const di = Math.max(0, Math.round(d)), wantFull = d < 1.02, wantSlab = d > 0.74, text = d < 3.5 && G.srow >= 12.5;
+    if (p.m !== m || p.v !== layoutV) { p.m = m; p.v = layoutV; p.fullFor = ""; p.slabFor = ""; p.di = -1; }
+    const fullKey = m + (light ? "l" : ""), slabKey = m + (text ? "t" : "");
+    if (wantFull && p.fullFor !== fullKey) { p.fullFor = fullKey; sync(p.grid, p.mods, makeMod, (mod, b) => fillMod(mod, b, m, di, light)); }
+    if (wantSlab && p.slabFor !== slabKey) { p.slabFor = slabKey; sync(p.slab, p.cells, makeCell, (cell, b) => fillCell(cell, b, m, di, text)); }
+    if (p.di !== di) { p.di = di; updateTags(p); }
+    if (p.fullOn !== wantFull) { p.fullOn = wantFull; p.grid.hidden = !wantFull; }
+    if (p.slabOn !== wantSlab) { p.slabOn = wantSlab; p.slab.hidden = !wantSlab; }
+    // Between 0.78 and 0.98 the upright board gives way to its folded slab. It happens behind the front pane.
+    if (wantFull && wantSlab) { const a = clamp((d - 0.78) / 0.2, 0, 1); p.grid.style.opacity = (1 - a).toFixed(3); p.slab.style.opacity = a.toFixed(3); p.fade = true; }
+    else if (p.fade) { p.fade = false; p.grid.style.opacity = ""; p.slab.style.opacity = ""; }
+    const cls = "pane" + (Math.abs(d) < 0.5 ? " is-front" : "");
+    if (p.cls !== cls) p.el.className = p.cls = cls;
+    // Every slab is laid out once, as tall as the first stair. Deeper stairs are lower, so the slab is pressed flat to fit.
+    const fit = d >= 1 ? PERSP / (PERSP + (d - 1) * GAP) : 1;
+    p.el.style.transform = `translate3d(0,0,${zAt(d).toFixed(1)}px) scaleY(${fit.toFixed(4)})`;
+    p.el.style.opacity = fogAt(d).toFixed(3);
+    if (p.el.hidden) p.el.hidden = false;
+  }
+  for (const p of pool) if (!p.used && !p.el.hidden) p.el.hidden = true;
+  for (const y of years) {
+    const d = t - y.m, vis = d > -1 && d < 50;
+    if (vis) {
+      y.el.style.transform = `translate3d(0,0,${zAt(d).toFixed(1)}px)`;
+      y.el.style.opacity = (d < 0 ? clamp(1 + d * 1.6, 0, 1) : Math.pow(clamp(1 - d / 40, 0, 1), 1.6)).toFixed(3);
+    }
+    if (y.shown !== vis) { y.shown = vis; y.el.hidden = !vis; }
+  }
+  railHandle.style.setProperty("--p", ((t / (N - 1)) * 100).toFixed(2));
+  const m = month();
+  if (m !== shownMonth) monthUI(m);
+  if (FOCUS) focusFrame(t);
+  if (emptyEl.hidden !== BOARD.length > 0) emptyEl.hidden = BOARD.length > 0;
+}
+const frontPane = () => pool.find((p) => p.used && p.cls.includes("is-front")) || null;
+
+// ───────────── Changing the board: every pane follows ─────────────
+// FLIP on the front pane, so a module visibly travels to its new place.
+function relayout(mutate) {
+  const front = isSettled() ? frontPane() : null, before = new Map();
+  if (front && !reduced) for (const [id, mod] of Object.entries(front.mods)) before.set(id, mod.el.getBoundingClientRect());
+  mutate();
+  layoutV++;
+  measure();
+  place();
+  if (front && !reduced) for (const [id, mod] of Object.entries(front.mods)) {
+    const b = before.get(id);
+    if (!b || mod.el.classList.contains("is-dragging")) continue;
+    const a = mod.el.getBoundingClientRect(), dx = b.left - a.left, dy = b.top - a.top, sx = b.width / a.width, sy = b.height / a.height;
+    if (Math.abs(dx) + Math.abs(dy) > 1 || Math.abs(sx - 1) > 0.01 || Math.abs(sy - 1) > 0.01)
+      mod.el.animate([{ transformOrigin: "0 0", transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` }, { transformOrigin: "0 0", transform: "none" }], { duration: 440, easing: "cubic-bezier(.2,.8,.2,1)" });
+  }
+  saveBoard();
+  if (trayOpen) renderTray();
+}
+function addModule(id, size = "S") {
+  if (onBoard(id) || !K[id]) return;
+  addedId = id;
+  addedAt = performance.now();
+  relayout(() => BOARD.push({ id, size }));
+}
+function removeModule(id) {
+  if (FOCUS && FOCUS.id === id) closeFocus();
+  relayout(() => { BOARD = BOARD.filter((b) => b.id !== id); });
+}
+function resizeModule(id, size) {
+  const b = BOARD.find((x) => x.id === id);
+  if (!b || b.size === size) return;
+  relayout(() => { b.size = size; });
+  if (FOCUS && FOCUS.id === id) syncFocusTools();
+}
+
+// ═════ Charts: flat and linear. One axis, thin marks, limit and target labelled at the line. ═════
+const NSS = { "vector-effect": "non-scaling-stroke" };
+const PART = ["var(--c1)", "var(--c2)", "var(--c3)"];
+const kcol = (kind) => (kind === "alert" || kind === "watch" || kind === "good" ? `var(--${kind})` : "var(--ink-2)");
+const hasNum = (v) => v !== null && v !== undefined;
+let uidN = 0;
+function plotBox(host, H) {
+  const svg = sv("svg", { viewBox: `0 0 640 ${H}`, preserveAspectRatio: "none", "aria-hidden": "true" });
+  host.replaceChildren(svg);
+  return { svg, lab: (text, css, cls) => { const s = h("span", { class: "pl" + (cls ? " " + cls : ""), text, style: css }); host.append(s); return s; } };
+}
+const rule = (y, o = 0.2) => sv("line", { x1: 0, x2: 640, y1: y, y2: y, stroke: "var(--ink)", "stroke-opacity": o, ...NSS });
+
+// Limit: red line with a faint band on its bad side. Target: dashed accent line. Each label sits at its line,
+// on the end where the series is farther away and on the side of the line the series is not on.
+function refLines(svg, lab, k, Y, H, top, base, ends) {
+  const marks = [];
+  if (hasNum(k.reg)) {
+    const y = Y(k.reg);
+    if (y >= top - 1 && y <= base + 1) {
+      svg.append(k.dir > 0 ? sv("rect", { x: 0, y, width: 640, height: Math.max(0, base - y), fill: "var(--alert)", "fill-opacity": 0.07 }) : sv("rect", { x: 0, y: top, width: 640, height: Math.max(0, y - top), fill: "var(--alert)", "fill-opacity": 0.07 }),
+        sv("line", { x1: 0, x2: 640, y1: y, y2: y, stroke: "var(--alert)", "stroke-width": 1.4, ...NSS }));
+      marks.push({ v: k.reg, y, text: `${k.dir < 0 ? "Limit" : "Minimum"} ${F(k, k.reg)}` });
+    }
+  }
+  if (hasNum(k.target)) {
+    const y = Y(k.target);
+    if (y >= top - 1 && y <= base + 1) {
+      svg.append(sv("line", { x1: 0, x2: 640, y1: y, y2: y, stroke: "var(--accent)", "stroke-width": 1.4, "stroke-dasharray": "5 4", ...NSS }));
+      marks.push({ v: k.target, y, text: `${k.dir < 0 ? "Frühwarnung" : "Ziel"} ${F(k, k.target)}` });
+    }
+  }
+  for (const mk of marks) {
+    const left = Math.abs(ends[0] - mk.v) >= Math.abs(ends[1] - mk.v);
+    let below = (left ? ends[0] : ends[1]) > mk.v;
+    if (below && mk.y > base - 18) below = false;
+    if (!below && mk.y < top + 16) below = true;
+    lab(mk.text, `${left ? "left:0" : "right:0"};top:calc(${((mk.y / H) * 100).toFixed(2)}% ${below ? "+ 4px" : "- 15px"})`);
+  }
+}
+
+// Word-sized trend for the small tiles: the last 24 months, right-aligned so short histories do not stretch.
+function sparkSVG(k, m, r, n = 24) {
+  const W = 200, H = 44, a = Math.max(0, m - n + 1), vals = k.series.slice(a, m + 1), flow = k.kind === "flow", len = vals.length;
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  if (flow) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+  const pad = (hi - lo) * 0.14 || 1;
+  lo -= pad; hi += pad;
+  const Y = (v) => H - ((v - lo) / (hi - lo)) * H, kids = [];
+  if (flow) {
+    const slot = W / n, bw = slot * 0.62;
+    vals.forEach((v, i) => kids.push(sv("rect", { x: (W - (len - i) * slot + (slot - bw) / 2).toFixed(1), y: Math.min(Y(v), Y(0)).toFixed(1), width: bw.toFixed(1), height: Math.max(1, Math.abs(Y(0) - Y(v))).toFixed(1),
+      fill: v < 0 || (hasNum(k.target) && v < k.target) ? "var(--alert)" : "var(--ink-2)", "fill-opacity": i === len - 1 ? 1 : 0.45 })));
+    kids.push(sv("line", { x1: 0, x2: W, y1: Y(0), y2: Y(0), stroke: "var(--ink)", "stroke-opacity": 0.35, ...NSS }));
+  } else if (len > 1) {
+    const X = (i) => W - (len - 1 - i) * (W / (n - 1)), col = kcol(r.kind);
+    const d = "M" + vals.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" L");
+    kids.push(sv("path", { d: `${d} L${W},${H} L${X(0).toFixed(1)},${H} Z`, fill: col, "fill-opacity": 0.1 }), sv("path", { d, fill: "none", stroke: col, "stroke-width": 1.7, "stroke-linejoin": "round", ...NSS }));
+  }
+  return sv("svg", { class: "spark", viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "none", "aria-hidden": "true" }, ...kids);
+}
+
+// The chart on a large tile: the last three years up to the pane's month.
+function tileChart(host, k, m, r) {
+  const W = 640, H = 200, top = 12, base = 186, n = 36, a = Math.max(0, m - n + 1), vals = k.series.slice(a, m + 1), len = vals.length, flow = k.kind === "flow";
+  const { svg, lab } = plotBox(host, H);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  if (flow) { lo = Math.min(lo, 0); hi = Math.max(hi, 0, k.target || 0); }
+  const span = hi - lo || Math.abs(hi) * 0.1 || 1;
+  if (!flow) for (const th of [k.reg, k.target]) if (hasNum(th) && th > lo - span * 0.9 && th < hi + span * 0.9) { lo = Math.min(lo, th); hi = Math.max(hi, th); }
+  const pad = (hi - lo) * 0.1 || 1;
+  lo -= flow ? pad * 0.25 : pad; hi += pad;
+  const Y = (v) => base - ((v - lo) / (hi - lo)) * (base - top), slot = W / n, X = (i) => W - (len - 1 - i + 0.5) * slot;
+  svg.append(rule(base));
+  if (flow) {
+    const y0 = Y(0), bw = slot * 0.6;
+    vals.forEach((v, i) => {
+      // IBCS: the plan stands as an outline behind the actual bar.
+      if (hasNum(k.target)) svg.append(sv("rect", { x: X(i) - bw / 2 - 1.3, y: Math.min(Y(k.target), y0), width: bw + 2.6, height: Math.abs(y0 - Y(k.target)), fill: "none", stroke: "var(--ink)", "stroke-opacity": 0.3, "stroke-width": 1, ...NSS }));
+      svg.append(sv("rect", { x: X(i) - bw / 2, y: Math.min(Y(v), y0), width: bw, height: Math.max(1, Math.abs(y0 - Y(v))), fill: v < 0 || (hasNum(k.target) && v < k.target) ? "var(--alert)" : "var(--ink-2)", "fill-opacity": i === len - 1 ? 1 : 0.5 }));
+    });
+    svg.append(rule(y0, 0.4));
+    if (hasNum(k.target)) lab(`Umriss: Plan ${F(k, k.target)} pro Monat`, "left:50%;top:93%;transform:translateX(-50%)", "pl-x");
+  } else {
+    refLines(svg, lab, k, Y, H, top, base, [mean(vals.slice(0, 5)), mean(vals.slice(-5))]);
+    if (len > 1) {
+      const col = kcol(r.kind), d = "M" + vals.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" L");
+      svg.append(sv("path", { d: `${d} L${X(len - 1).toFixed(1)},${base} L${X(0).toFixed(1)},${base} Z`, fill: col, "fill-opacity": 0.09 }), sv("path", { d, fill: "none", stroke: col, "stroke-width": 2, "stroke-linejoin": "round", ...NSS }));
+      host.append(h("span", { class: "pl-dot", style: `left:${((X(len - 1) / W) * 100).toFixed(2)}%;top:${((Y(vals[len - 1]) / H) * 100).toFixed(2)}%;background:${col}` }));
+    }
+  }
+  if (len > 9) lab(PERIODS.monat[a].label, `left:${Math.max(0, (X(0) / W) * 100 - 3).toFixed(1)}%;top:93%`, "pl-x");
+  lab(PERIODS.monat[m].label, "right:0;top:93%", "pl-x");
+}
+
+// Focus · Verlauf: the whole history on one fixed axis. The cursor follows the flight; what lies after it is faint.
+function focusTrend(host, k) {
+  const W = 640, H = 260, top = 14, base = 238, flow = k.kind === "flow", s = k.series;
+  const { svg, lab } = plotBox(host, H);
+  let lo = Math.min(...s), hi = Math.max(...s);
+  if (flow) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+  const span = hi - lo || 1;
+  if (!flow) for (const th of [k.reg, k.target]) if (hasNum(th) && th > lo - span * 0.7 && th < hi + span * 0.7) { lo = Math.min(lo, th); hi = Math.max(hi, th); }
+  const pad = (hi - lo) * 0.08 || 1;
+  lo -= flow ? pad * 0.4 : pad; hi += pad;
+  const X = (m) => ((m + 0.5) / N) * W, Y = (v) => base - ((v - lo) / (hi - lo)) * (base - top);
+  for (let m = 0; m < N; m++) if (mOf(m) === 0) {
+    const x = (m / N) * W;
+    if (m) svg.append(sv("line", { x1: x, x2: x, y1: top, y2: base, stroke: "var(--ink)", "stroke-opacity": 0.07, ...NSS }));
+    lab(String(PERIODS.monat[m].y), `left:calc(${((x / W) * 100).toFixed(2)}% + 3px);top:91.5%`, "pl-x");
+  }
+  svg.append(rule(base));
+  let bars = null, clip = null;
+  if (flow) {
+    const y0 = Y(0), bw = (W / N) * 0.64;
+    bars = s.map((v, m) => {
+      if (hasNum(k.target)) svg.append(sv("rect", { x: X(m) - bw / 2 - 0.9, y: Math.min(Y(k.target), y0), width: bw + 1.8, height: Math.abs(y0 - Y(k.target)), fill: "none", stroke: "var(--ink)", "stroke-opacity": 0.26, "stroke-width": 1, ...NSS }));
+      const b = sv("rect", { x: X(m) - bw / 2, y: Math.min(Y(v), y0), width: bw, height: Math.max(0.8, Math.abs(y0 - Y(v))), fill: v < 0 || (hasNum(k.target) && v < k.target) ? "var(--alert)" : "var(--ink-2)" });
+      svg.append(b);
+      return b;
+    });
+    svg.append(rule(y0, 0.4));
+  } else {
+    refLines(svg, lab, k, Y, H, top, base, [mean(s.slice(0, 8)), mean(s.slice(-8))]);
+    const d = "M" + s.map((v, m) => `${X(m).toFixed(1)},${Y(v).toFixed(1)}`).join(" L"), id = "fc" + ++uidN;
+    clip = sv("rect", { x: 0, y: 0, width: 0, height: H });
+    svg.append(sv("defs", {}, sv("clipPath", { id }, clip)),
+      sv("path", { d, fill: "none", stroke: "var(--ink)", "stroke-opacity": 0.2, "stroke-width": 1.2, ...NSS }),
+      sv("g", { "clip-path": `url(#${id})` },
+        sv("path", { d: `${d} L${X(N - 1).toFixed(1)},${base} L${X(0).toFixed(1)},${base} Z`, fill: "var(--kc)", "fill-opacity": 0.1 }),
+        sv("path", { d, fill: "none", stroke: "var(--kc)", "stroke-width": 2.1, "stroke-linejoin": "round", ...NSS })));
+  }
+  const cur = sv("line", { y1: top - 8, y2: base, stroke: "var(--accent)", "stroke-width": 1.5, ...NSS });
+  svg.append(cur);
+  const dot = h("span", { class: "pl-dot" }), tip = h("span", { class: "pl pl-cur" });
+  host.append(dot, tip);
+  lab(F(k, hi), "left:0;top:-2px");
+  return {
+    legend: flow ? [[null, "Balken: Ist pro Monat, rot unter Plan"], [null, `Umriss: Plan ${hasNum(k.target) ? F(k, k.target) : ""} pro Monat`]] : [["var(--kc)", k.name]],
+    frame(t) {
+      const x = X(t), m = clamp(Math.round(t), 0, N - 1);
+      cur.setAttribute("x1", x.toFixed(1)); cur.setAttribute("x2", x.toFixed(1));
+      if (clip) clip.setAttribute("width", x.toFixed(1));
+      dot.style.left = ((x / W) * 100).toFixed(2) + "%";
+      dot.style.top = ((Y(flow ? s[m] : valAt(k, t)) / H) * 100).toFixed(2) + "%";
+      const pc = (x / W) * 100;   // near an edge the read-out hangs to the inner side of the cursor
+      tip.style.left = pc.toFixed(2) + "%";
+      tip.style.transform = pc > 78 ? "translateX(calc(-100% + 9px))" : pc < 22 ? "translateX(-9px)" : "translateX(-50%)";
+      tip.textContent = `${PERIODS.monat[m].label} · ${F(k, s[m])}`;
+    },
+    month(m) { if (bars) bars.forEach((b, i) => b.setAttribute("fill-opacity", i > m ? 0.13 : i === m ? 1 : 0.55)); },
+  };
+}
+
+// Focus · Zusammensetzung: stacked parts over the last three years.
+function focusParts(host, k, m) {
+  const W = 640, H = 260, top = 14, base = 238, names = Object.keys(k.parts), flow = k.kind === "flow", n = 36, a = Math.max(0, m - n + 1), slot = W / n;
+  const { svg, lab } = plotBox(host, H), X = (i) => W - (m - i + 0.5) * slot, rows = [];
+  for (let i = a; i <= m; i++) rows.push(names.map((nm) => k.parts[nm][i]));
+  let lo = 0, hi = flow ? Math.max(0, ...rows.map((r) => sum(r.filter((v) => v > 0)))) : Math.max(...rows.map(sum));
+  if (flow) lo = Math.min(0, ...rows.map((r) => sum(r.filter((v) => v < 0))));
+  const pad = (hi - lo) * 0.1 || 1;
+  hi += pad; if (lo < 0) lo -= pad * 0.4;
+  const Y = (v) => base - ((v - lo) / (hi - lo)) * (base - top);
+  if (flow) {
+    const bw = slot * 0.62;
+    rows.forEach((r, j) => {
+      let up = 0, down = 0;
+      r.forEach((v, p) => {
+        const from = v >= 0 ? up : down, to = from + v;
+        if (v >= 0) up = to; else down = to;
+        svg.append(sv("rect", { x: X(a + j) - bw / 2, y: Math.min(Y(from), Y(to)) + 0.7, width: bw, height: Math.max(0.6, Math.abs(Y(from) - Y(to)) - 1.4), fill: PART[p % 3], "fill-opacity": a + j === m ? 1 : 0.6 }));
+      });
+    });
+    svg.append(rule(Y(0), 0.4));
+  } else if (rows.length > 1) {
+    let acc = rows.map(() => 0);
+    names.forEach((nm, p) => {
+      const topv = rows.map((r, j) => acc[j] + r[p]);
+      const up = topv.map((v, j) => `${X(a + j).toFixed(1)},${Y(v).toFixed(1)}`), dn = acc.map((v, j) => `${X(a + j).toFixed(1)},${Y(v).toFixed(1)}`).reverse();
+      svg.append(sv("path", { d: "M" + up.join(" L") + " L" + dn.join(" L") + " Z", fill: PART[p % 3], "fill-opacity": 0.8, stroke: "var(--sheet)", "stroke-width": 2, ...NSS }));
+      lab(nm, `right:8px;top:calc(${((((Y(acc[acc.length - 1]) + Y(topv[topv.length - 1])) / 2) / H) * 100).toFixed(2)}% - 8px)`, "pl-in");
+      acc = topv;
+    });
+  }
+  svg.append(rule(base));
+  lab(F(k, hi), "left:0;top:-2px");
+  if (rows.length > 9) lab(PERIODS.monat[a].label, `left:${Math.max(0, (X(a) / W) * 100 - 3).toFixed(1)}%;top:91.5%`, "pl-x");
+  lab(PERIODS.monat[m].label, "right:0;top:91.5%", "pl-x");
+  const vs = names.map((nm) => k.parts[nm][m]), tot = sum(vs.map(Math.abs)) || 1;
+  return { legend: names.map((nm, p) => [PART[p % 3], `${nm} ${F(k, vs[p])}${flow ? "" : " · " + Math.round((vs[p] / tot) * 100) + " %"}`]) };
+}
+
+// Focus · Brücke: what changed over twelve months, part by part.
+function focusBridge(host, k, m) {
+  const W = 640, H = 260, top = 30, base = 206, names = Object.keys(k.parts), flow = k.kind === "flow";
+  if (m < (flow ? 23 : 12)) { host.replaceChildren(h("p", { class: "plot-empty", text: "Für die Brücke braucht es zwölf Monate Geschichte." })); return { legend: [] }; }
+  const { svg, lab } = plotBox(host, H), val = (arr, at) => (flow ? sum(arr.slice(at - 11, at + 1)) : arr[at]);
+  const start = val(k.series, m - 12), end = val(k.series, m);
+  const steps = [{ name: flow ? "12 Monate davor" : PERIODS.monat[m - 12].label, from: 0, to: start, kind: "base" }];
+  let acc = start;
+  for (const nm of names) { const dl = val(k.parts[nm], m) - val(k.parts[nm], m - 12); steps.push({ name: nm, from: acc, to: acc + dl, kind: dl * (k.dir || 1) >= 0 ? "good" : "alert" }); acc += dl; }
+  steps.push({ name: flow ? "letzte 12 Monate" : PERIODS.monat[m].label, from: 0, to: end, kind: "end" });
+  const lo = Math.min(0, ...steps.map((s) => Math.min(s.from, s.to))), hi = Math.max(...steps.map((s) => Math.max(s.from, s.to)));
+  const cut = flow ? lo : Math.max(0, Math.min(...steps.map((s) => Math.min(s.from || s.to, s.to))) * 0.95);
+  const Y = (v) => base - ((v - cut) / ((hi - cut) * 1.05 || 1)) * (base - top), n = steps.length, slot = W / n;
+  steps.forEach((s, i) => {
+    const whole = s.kind === "base" || s.kind === "end", y1 = Y(Math.max(whole ? cut : s.from, s.to)), y2 = Y(Math.min(whole ? cut : s.from, s.to));
+    svg.append(sv("rect", { x: i * slot + slot * 0.22, y: y1, width: slot * 0.56, height: Math.max(1.5, y2 - y1), fill: s.kind === "base" ? "var(--ink-2)" : s.kind === "end" ? "var(--ink)" : `var(--${s.kind})`, "fill-opacity": s.kind === "base" ? 0.5 : 0.92 }));
+    if (i < n - 1) svg.append(sv("line", { x1: i * slot + slot * 0.78, x2: (i + 1) * slot + slot * 0.22, y1: Y(s.to), y2: Y(s.to), stroke: "var(--ink)", "stroke-opacity": 0.4, "stroke-dasharray": "3 3", ...NSS }));
+    lab(whole ? short(k, s.to) : (s.to - s.from >= 0 ? "+" : "−") + short(k, Math.abs(s.to - s.from)), `left:${(((i + 0.5) / n) * 100).toFixed(2)}%;top:calc(${((y1 / H) * 100).toFixed(2)}% - 17px);transform:translateX(-50%)`, "pl-strong");
+    lab(s.name, `left:${(((i + 0.5) / n) * 100).toFixed(2)}%;top:${((base / H) * 100).toFixed(1)}%;width:${(100 / n - 1).toFixed(1)}%;transform:translateX(-50%)`, "pl-cat");
+  });
+  svg.append(rule(base, 0.3));
+  return { legend: [["var(--good)", "hilft"], ["var(--alert)", "belastet"]].concat(cut > 0 ? [[null, "Achse gekürzt, damit die Schritte sichtbar sind"]] : []) };
+}
+
+// Focus · indexed lines (Zähler und Nenner, Vergleich): both start at 100, names sit at the line ends.
+function focusIndexed(host, series, m, all) {
+  const W = 640, H = 260, top = 14, base = 238, a = all ? 0 : Math.max(0, m - 35), b = all ? N - 1 : m, XW = W * 0.8;
+  const { svg, lab } = plotBox(host, H), X = (i) => ((i - a) / Math.max(1, b - a)) * XW;
+  const lines = series.map((s) => ({ ...s, pts: Array.from({ length: b - a + 1 }, (_, j) => (s.arr[a + j] / s.arr[a]) * 100) }));
+  const vals = lines.flatMap((l) => l.pts).concat(100), lo = Math.min(...vals) - 3, hi = Math.max(...vals) + 3;
+  const Y = (v) => base - ((v - lo) / (hi - lo)) * (base - top);
+  svg.append(rule(base), sv("line", { x1: 0, x2: XW, y1: Y(100), y2: Y(100), stroke: "var(--ink)", "stroke-opacity": 0.4, "stroke-dasharray": "2 4", ...NSS }));
+  lab("100", `left:0;top:calc(${((Y(100) / H) * 100).toFixed(2)}% - 14px)`);
+  const ends = lines.map((l, i) => ({ i, y: Y(l.pts[l.pts.length - 1]) })).sort((p, q) => p.y - q.y);
+  for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 26) ends[i].y = ends[i - 1].y + 26;
+  lines.forEach((l, i) => {
+    svg.append(sv("path", { d: "M" + l.pts.map((v, j) => `${X(a + j).toFixed(1)},${Y(v).toFixed(1)}`).join(" L"), fill: "none", stroke: l.color, "stroke-width": 2.1, "stroke-linejoin": "round", ...NSS }));
+    lab(`${l.name} ${Math.round(l.pts[clamp(m - a, 0, l.pts.length - 1)])}`, `left:calc(${((XW / W) * 100).toFixed(1)}% + 8px);top:calc(${((ends.find((e) => e.i === i).y / H) * 100).toFixed(2)}% - 7px)`, "pl-strong");
+  });
+  if (all) { const x = X(m); svg.append(sv("line", { x1: x, x2: x, y1: top, y2: base, stroke: "var(--accent)", "stroke-width": 1.5, ...NSS })); }
+  lab(PERIODS.monat[a].label, "left:0;top:91.5%", "pl-x");
+  lab(PERIODS.monat[b].label, `left:${((XW / W) * 100).toFixed(1)}%;top:91.5%;transform:translateX(-100%)`, "pl-x");
+  return { legend: lines.map((l) => [l.color, l.name]).concat([[null, "Beide Reihen = 100 am Anfang. Gleichlauf zeigt einen Zusammenhang, keine Ursache."]]) };
+}
+
+// Focus · kumuliert: the months of the year against the path to the yearly target.
+function focusCum(host, k, m) {
+  const W = 640, H = 260, top = 14, base = 238, y0 = m - mOf(m), slot = W / 12, X = (i) => (i - y0 + 0.5) * slot;
+  const { svg, lab } = plotBox(host, H), cum = [], months = [];
+  let acc = 0;
+  for (let i = y0; i <= Math.min(N - 1, y0 + 11); i++) { months.push([i, k.series[i]]); if (i <= m) { acc += k.series[i]; cum.push([i, acc]); } }
+  const target = (k.target || 0) * 12;
+  let lo = Math.min(0, ...months.filter((p) => p[0] <= m).map((p) => p[1]), ...cum.map((p) => p[1])), hi = Math.max(target, ...cum.map((p) => p[1]));
+  const pad = (hi - lo) * 0.1 || 1;
+  hi += pad; if (lo < 0) lo -= pad * 0.4;
+  const Y = (v) => base - ((v - lo) / (hi - lo)) * (base - top), yz = Y(0), bw = slot * 0.5;
+  svg.append(rule(base), sv("line", { x1: 0, y1: yz, x2: W, y2: Y(target), stroke: "var(--accent)", "stroke-width": 1.4, "stroke-dasharray": "5 4", ...NSS }));
+  months.forEach(([i, v]) => { if (i <= m) svg.append(sv("rect", { x: X(i) - bw / 2, y: Math.min(Y(v), yz), width: bw, height: Math.max(1, Math.abs(yz - Y(v))), fill: v < 0 || v < (k.target || 0) ? "var(--alert)" : "var(--ink-2)", "fill-opacity": i === m ? 0.9 : 0.5 })); });
+  svg.append(rule(yz, 0.4), sv("path", { d: "M0," + yz.toFixed(1) + " " + cum.map((p) => `L${(X(p[0]) + slot / 2).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" "), fill: "none", stroke: "var(--ink)", "stroke-width": 2.2, "stroke-linejoin": "round", ...NSS }));
+  const last = cum[cum.length - 1], behind = last[1] < (k.target || 0) * cum.length;
+  host.append(h("span", { class: "pl-dot", style: `left:${(((X(last[0]) + slot / 2) / W) * 100).toFixed(2)}%;top:${((Y(last[1]) / H) * 100).toFixed(2)}%;background:var(--ink)` }));
+  lab(`Jahresziel ${F(k, target)}`, `right:0;top:calc(${((Y(target) / H) * 100).toFixed(2)}% - 17px)`);
+  MON.forEach((mn, i) => lab(mn[0], `left:${(((i + 0.5) / 12) * 100).toFixed(2)}%;top:91.5%;transform:translateX(-50%)`, "pl-x"));
+  return { legend: [["var(--ink)", `Kumuliert ${F(k, last[1])} bis ${MON[mOf(m)]}`], [null, `Zielpfad bis hier ${F(k, (k.target || 0) * cum.length)}: ${behind ? "im Rückstand" : "im Plan"}`], [null, "Balken: Monatswerte"]] };
+}
+
+// ═════ Rail: today at the bottom, 2019 at the top ═════
+function buildRail() {
+  const kids = [h("i", { class: "rail-track" })];
+  for (let m = 0; m < N; m++) {
+    const c = levelCounts(m), p = ((m / (N - 1)) * 100).toFixed(2), mm = mOf(m);
+    if (c.alert || c.watch) kids.push(h("i", { class: "rail-heat" + (c.alert ? " is-alert" : ""), style: `--p:${p}` }));
+    if (mm === 0) kids.push(h("i", { class: "rail-tick rail-tick--y", style: `--p:${p}` }), h("span", { class: "rail-year", style: `--p:${p}`, text: String(PERIODS.monat[m].y) }));
+    else if (mm % 3 === 0) kids.push(h("i", { class: "rail-tick", style: `--p:${p}` }));
+  }
+  for (const e of EVENTS) kids.push(h("i", { class: "rail-ev", style: `--p:${((e.t / (N - 1)) * 100).toFixed(2)}`, title: `${PERIODS.monat[e.t].long}: ${e.title}` }));
+  railLab = h("span");
+  railHandle = h("div", { class: "rail-handle" }, railLab);
+  rail.replaceChildren(...kids, railHandle);
+  rail.setAttribute("aria-valuemax", String(N - 1));
+  let drag = false;
+  const at = (e) => { const b = rail.getBoundingClientRect(); return clamp(G.phone ? (e.clientX - b.left) / b.width : (e.clientY - b.top) / b.height, 0, 1) * (N - 1); };
+  rail.addEventListener("pointerdown", (e) => {
+    if (e.button > 0) return;
+    userInput(true);
+    drag = true;
+    rail.setPointerCapture(e.pointerId);
+    T.tween = null;
+    setPlaying(false);
+    T.dragging = true;
+    T.target = at(e);
+    kick();
+  });
+  rail.addEventListener("pointermove", (e) => { if (drag) { T.target = at(e); kick(); } });
+  const end = () => { if (!drag) return; drag = false; T.dragging = false; kick(); };
+  rail.addEventListener("pointerup", end);
+  rail.addEventListener("pointercancel", end);
+}
+
+// ═════ Tray: Lumina's suggestions first, then every other figure ═════
+const tray = $("tray"), btnTray = $("btn-tray"), noteEl = $("note"), btnNote = $("btn-note"), toastEl = $("toast"), DISMISSED = new Set();
+const edgeCol = (kind) => (kind === "alert" || kind === "watch" || kind === "good" ? `var(--${kind})` : "var(--calm)");
+function reasonFor(k, r) {
+  if (r.level !== "calm") return `${r.label}: ${sayFor(r)} In der Tiefe siehst du, seit wann.`;
+  if (hasNum(k.reg)) return `Ruhig, ${headroom(k, r)} Puffer zum ${k.dir < 0 ? "Limit" : "Minimum"}. In der Tiefe siehst du, ob der Abstand schrumpft.`;
+  if (hasNum(k.target)) return "Ruhig und im Ziel. In der Tiefe siehst du, wie stabil das ist.";
+  return "Kein Ziel hinterlegt. In der Tiefe siehst du, wie sich der Wert bewegt hat.";
+}
+function toggleTray(open = !trayOpen) {
+  trayOpen = open;
+  tray.classList.toggle("is-open", open);
+  tray.inert = !open;
+  btnTray.setAttribute("aria-expanded", String(open));
+  if (open) { toggleNote(false); renderTray(); }
+}
+function renderTray() {
+  const m = month();
+  const ranked = candidatesFor("all", m).filter((c) => c.kind === "trend" && !onBoard(c.k)).map((c) => K[c.k]);
+  const sugg = ranked.filter((k) => !DISMISSED.has(k.id)).slice(0, 2), rest = ranked.filter((k) => !sugg.includes(k));
+  const card = (k) => {
+    const r = evaluate(k, "monat", m);
+    return h("div", { class: "sugg", style: `--kc:${edgeCol(r.kind)}` }, h("b", { text: `${k.name} · ${F(k, r.cur)}` }),
+      h("div", { class: "sugg-act" }, h("button", { class: "btn btn--solid", type: "button", "data-add": k.id, onclick: () => addModule(k.id) }, "Aufs Board"),
+        h("button", { class: "icon-btn", type: "button", title: "Vorschlag ausblenden", "aria-label": "Vorschlag ausblenden", onclick: () => { DISMISSED.add(k.id); renderTray(); } }, "×")),
+      h("p", { text: reasonFor(k, r) }));
+  };
+  const pick = (k) => { const r = evaluate(k, "monat", m); return h("button", { class: "pick", type: "button", "data-add": k.id, style: `--kc:${edgeCol(r.kind)}`, onclick: () => addModule(k.id) }, h("i"), "+ " + k.name, h("span", { text: short(k, r.cur) })); };
+  tray.replaceChildren(
+    h("div", { class: "tray-head" }, h("span", { class: "label", text: `Bausteine · Stand ${PERIODS.monat[m].long}` + (sugg.length ? " · ✦ schlägt Lumina vor" : "") }), h("button", { class: "icon-btn", type: "button", "aria-label": "Schliessen", onclick: () => toggleTray(false) }, "×")),
+    ...(sugg.length ? [h("div", { class: "tray-sugg" }, ...sugg.map(card))] : []),
+    ...(rest.length ? [h("div", { class: "tray-all" }, ...rest.map(pick))] : []),
+    ...(!ranked.length ? [h("p", { class: "focus-why", text: "Alle Kennzahlen liegen schon auf deinem Board." })] : []));
+}
+function toggleNote(open = noteEl.hidden) {
+  noteEl.hidden = !open;
+  btnNote.setAttribute("aria-expanded", String(open));
+  if (open) toggleTray(false);
+}
+let toastTimer = 0;
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (toastEl.hidden = true), 2800);
+}
+
+// ═════ Focus: the depth is for travelling, the flat chart is for reading ═════
+const focusEl = $("focus"), FX = {};
+const VIEW_NAME = { trend: "Verlauf", parts: "Zusammensetzung", funnel: "Nach Stufe", bridge: "Brücke", drivers: "Zähler und Nenner", cum: "Kumuliert", compare: "Vergleich" };
+function viewsFor(id, m) {
+  const seen = new Set(), out = [];
+  for (const c of candidatesFor(K[id].group, m)) {
+    if (!VIEW_NAME[c.kind] || !(c.k === id || (c.ks && c.ks.includes(id))) || seen.has(c.kind)) continue;
+    seen.add(c.kind);
+    out.push(c);
+  }
+  return out.sort((a, b) => (a.kind === "trend" ? -1 : b.kind === "trend" ? 1 : 0));
+}
+function placeFocus() {
+  if (!FOCUS) return;
+  focusEl.style.left = (G.phone ? 10 : G.x - 12) + "px";
+  focusEl.style.width = (G.phone ? G.sw - 20 : G.W + 24) + "px";
+  focusEl.style.top = G.y - 8 + "px";
+  focusEl.style.height = Math.max(G.H + 16, Math.min(G.phone ? 410 : 440, G.sh - G.y - 62)) + "px";
+}
+function openFocus(id, kind = "trend") {
+  if (!onBoard(id)) return;
+  const front = isSettled() ? frontPane() : null, origin = front && front.mods[id] ? front.mods[id].el.getBoundingClientRect() : null, fresh = !FOCUS;
+  FOCUS = { id, kind, chart: null, drawn: "", views: [] };
+  world.classList.add("has-focus");
+  briefEl.style.visibility = "hidden";
+  toggleTray(false);
+  layoutV++;   // every pane re-renders, so the shaft lights up through the whole depth
+  focusEl.hidden = false;
+  placeFocus();
+  buildFocus();
+  place();
+  if (origin && fresh && !reduced) {
+    const b = focusEl.getBoundingClientRect();
+    focusEl.animate([{ transform: `translate(${origin.left - b.left}px, ${origin.top - b.top}px) scale(${origin.width / b.width}, ${origin.height / b.height})`, opacity: 0.5 }, { transform: "none", opacity: 1 }], { duration: 380, easing: "cubic-bezier(.2,.8,.2,1)" });
+  }
+}
+function closeFocus() {
+  if (!FOCUS) return;
+  FOCUS = null;
+  world.classList.remove("has-focus");
+  briefEl.style.visibility = "";
+  focusEl.hidden = true;
+  layoutV++;
+  place();
+}
+function syncFocusTools() {
+  const b = FOCUS && BOARD.find((x) => x.id === FOCUS.id);
+  if (b && FX.sizes) FX.sizes.querySelectorAll("button").forEach((bt) => bt.setAttribute("aria-pressed", String(bt.dataset.size === b.size)));
+}
+function buildFocus() {
+  const k = K[FOCUS.id];
+  FX.val = h("div", { class: "focus-val" });
+  FX.status = h("span", { class: "focus-status" });
+  FX.delta = h("span", { class: "mod-delta" });
+  FX.why = h("p", { class: "focus-why" });
+  FX.plot = h("div", { class: "plot focus-plot" });
+  FX.legend = h("div", { class: "legend" });
+  FX.chips = h("div", { class: "chips", role: "group", "aria-label": "Ansicht" });
+  FX.sizes = h("div", { class: "seg", role: "group", "aria-label": "Grösse auf dem Board" }, ...["S", "M", "L"].map((s) => h("button", { type: "button", "data-size": s, title: "Grösse auf dem Board", onclick: () => resizeModule(k.id, s) }, s)));
+  focusEl.replaceChildren(
+    h("div", { class: "focus-head" },
+      h("div", {}, h("span", { class: "label", text: GROUPS[k.group] }), h("h2", { class: "focus-title" }, k.name, h("small", { text: k.long }))),
+      h("div", { class: "focus-tools" }, FX.sizes, h("button", { class: "icon-btn", type: "button", onclick: () => removeModule(k.id) }, "Entfernen"), h("button", { class: "icon-btn", type: "button", id: "focus-close", "aria-label": "Schliessen", onclick: () => closeFocus() }, "×"))),
+    h("div", { class: "focus-read" }, FX.val, FX.status, FX.delta, FX.why),
+    FX.plot,
+    h("div", { class: "focus-foot" }, FX.chips, FX.legend));
+  syncFocusTools();
+  focusMonth(month());
+}
+function focusMonth(m) {
+  const k = K[FOCUS.id], r = evaluate(k, "monat", m), [num, unit] = split(k, r.cur);
+  focusEl.style.setProperty("--kc", kcol(r.kind));
+  focusEl.dataset.kind = r.kind;
+  FX.val.replaceChildren(num, h("small", { text: unit }));
+  FX.status.replaceChildren(h("i"), r.label);
+  FX.delta.textContent = [r.delta, m < N - 1 ? "heute " + F(k, k.series[N - 1]) : r.yoyText].filter(Boolean).join(" · ");
+  FOCUS.views = viewsFor(k.id, m);
+  if (!FOCUS.views.some((v) => v.kind === FOCUS.kind)) FOCUS.kind = "trend";
+  const view = FOCUS.views.find((v) => v.kind === FOCUS.kind);
+  FX.why.textContent = view ? moved(view.why) : "";
+  FX.chips.replaceChildren(...FOCUS.views.map((v) => h("button", { class: "chip", type: "button", "data-view": v.kind, "aria-pressed": String(v.kind === FOCUS.kind), onclick: () => { FOCUS.kind = v.kind; FOCUS.drawn = ""; focusMonth(month()); } }, VIEW_NAME[v.kind])));
+  drawFocus(m);
+}
+function drawFocus(m) {
+  const k = K[FOCUS.id], kind = FOCUS.kind, parts = k.parts ? Object.keys(k.parts) : [];
+  if (kind === "trend") {
+    if (FOCUS.drawn !== "trend") { FOCUS.chart = focusTrend(FX.plot, k); FOCUS.drawn = "trend"; setLegend(FOCUS.chart.legend); }
+    FOCUS.chart.month(m);
+    FOCUS.chart.frame(T.t);
+    return;
+  }
+  FOCUS.chart = kind === "parts" || kind === "funnel" ? focusParts(FX.plot, k, m)
+    : kind === "bridge" ? focusBridge(FX.plot, k, m)
+    : kind === "cum" ? focusCum(FX.plot, k, m)
+    : kind === "drivers" ? focusIndexed(FX.plot, parts.map((nm, i) => ({ name: nm, arr: k.parts[nm], color: PART[i] })), m, false)
+    : focusIndexed(FX.plot, ["lcr", "dep"].map((id, i) => ({ name: K[id].name, arr: K[id].series, color: PART[i] })), m, true);
+  FOCUS.drawn = kind + m;
+  setLegend(FOCUS.chart.legend);
+}
+function setLegend(items) { FX.legend.replaceChildren(...items.map(([c, text]) => h("span", {}, c ? h("i", { style: `background:${c}` }) : null, text))); }
+function focusFrame(t) { if (FOCUS.kind === "trend" && FOCUS.chart && FOCUS.chart.frame) FOCUS.chart.frame(t); }
+
+// ═════ Input: wheel and drag fly, a click opens, dragging a module reorders ═════
+let fly = null, press = null, reorder = null;
+app.addEventListener("wheel", (e) => {
+  if (e.target.closest(".tray, .note")) return;
+  e.preventDefault();
+  userInput(true);
+  if (T.tween) { T.tween = null; T.target = T.t; }
+  setPlaying(false);
+  T.target = clamp(T.target - e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 300 : 1) * 0.01, 0, N - 1);   // one wheel notch is one month
+  T.lastWheel = performance.now();
+  kick();
+}, { passive: false });
+
+stage.addEventListener("pointerdown", (e) => {
+  if (e.button > 0 || e.target.closest(".mod-tools")) return;
+  userInput(false);
+  const el = e.target.closest(".is-front .mod");
+  if (el && isSettled()) {
+    press = { id: el.dataset.id, x: e.clientX, y: e.clientY, pid: e.pointerId, touch: e.pointerType === "touch", timer: 0 };
+    // Touch: a swipe flies, a long press picks the module up.
+    if (press.touch) press.timer = setTimeout(() => { if (press && !reorder) startReorder(press, press.x, press.y); }, 380);
+    return;
+  }
+  fly = { y: e.clientY, from: T.target, pid: e.pointerId, moved: false };
+});
+stage.addEventListener("pointermove", (e) => {
+  if (reorder) { moveReorder(e); return; }
+  if (press) {
+    if (Math.hypot(e.clientX - press.x, e.clientY - press.y) < 6) return;
+    clearTimeout(press.timer);
+    if (press.touch) { fly = { y: press.y, from: T.target, pid: press.pid, moved: false }; press = null; }
+    else { startReorder(press, press.x, press.y); if (reorder) moveReorder(e); else press = null; return; }
+  }
+  if (!fly) {
+    if (e.pointerType === "mouse" && !reduced) { PX.tx = (e.clientX / G.sw - 0.5) * 2; PX.ty = (e.clientY / G.sh - 0.5) * 2; kick(); }
+    return;
+  }
+  const dy = e.clientY - fly.y;
+  if (!fly.moved) {
+    if (Math.abs(dy) < 4) return;
+    fly.moved = true;
+    userInput(true);
+    if (T.tween) { T.tween = null; T.target = T.t; }
+    setPlaying(false);
+    fly.from = T.target;
+    fly.y = e.clientY;
+    T.dragging = true;
+    stage.classList.add("is-flying");
+    try { stage.setPointerCapture(fly.pid); } catch { /* pointer already gone */ }
+    return;
+  }
+  T.target = clamp(fly.from - dy / 58, 0, N - 1);   // pulling down brings the past towards you
+  kick();
+});
+function release(e) {
+  if (reorder) { endReorder(); press = null; dropFocus(); return; }
+  if (press) {
+    clearTimeout(press.timer);
+    const id = press.id;
+    press = null;
+    if (FOCUS && FOCUS.id === id) closeFocus(); else openFocus(id);
+    dropFocus();   // the module is re-rendered under the pointer, so the browser may send no click for it
+    return;
+  }
+  if (fly) {
+    const moved = fly.moved;
+    fly = null;
+    if (moved) { T.dragging = false; kick(); }
+    else if (FOCUS && e.type === "pointerup") closeFocus();
+  }
+}
+stage.addEventListener("pointerup", release);
+stage.addEventListener("pointercancel", release);
+
+// Reordering works on layout positions, so modules that are still gliding do not confuse the hit test.
+function slotRect(front, el) { const p = front.el.getBoundingClientRect(); return { left: p.left + el.offsetLeft, top: p.top + el.offsetTop, right: p.left + el.offsetLeft + el.offsetWidth, bottom: p.top + el.offsetTop + el.offsetHeight }; }
+function startReorder(p, x, y) {
+  const front = frontPane();
+  if (!front || !front.mods[p.id] || BOARD.length < 2) return;
+  const el = front.mods[p.id].el, b = slotRect(front, el);
+  reorder = { id: p.id, el, gx: x - b.left, gy: y - b.top, last: null };
+  el.classList.add("is-dragging");
+  try { stage.setPointerCapture(p.pid); } catch { /* pointer already gone */ }
+}
+function moveReorder(e) {
+  const r = reorder, front = frontPane();
+  if (!front) return;
+  let over = null;
+  for (const [id, mod] of Object.entries(front.mods)) {
+    if (id === r.id) continue;
+    const b = slotRect(front, mod.el);
+    if (e.clientX >= b.left && e.clientX <= b.right && e.clientY >= b.top && e.clientY <= b.bottom) { over = id; break; }
+  }
+  if (over && over !== r.last) {
+    r.last = over;
+    relayout(() => {
+      const from = BOARD.findIndex((b) => b.id === r.id), to = BOARD.findIndex((b) => b.id === over), [it] = BOARD.splice(from, 1);
+      BOARD.splice(to, 0, it);
+    });
+  } else if (!over) r.last = null;
+  const b = slotRect(front, r.el);
+  r.el.style.transform = `translate(${(e.clientX - r.gx - b.left).toFixed(1)}px, ${(e.clientY - r.gy - b.top).toFixed(1)}px)`;
+}
+function endReorder() {
+  const r = reorder;
+  reorder = null;
+  const from = r.el.getBoundingClientRect();
+  r.el.style.transform = "";
+  r.el.classList.remove("is-dragging");
+  const to = r.el.getBoundingClientRect();
+  if (!reduced) r.el.animate([{ transform: `translate(${from.left - to.left}px, ${from.top - to.top}px)` }, { transform: "none" }], { duration: 320, easing: "cubic-bezier(.2,.8,.2,1)" });
+  saveBoard();
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.target.matches("input, textarea")) return;
+  const key = e.key;
+  if (key === "Escape") { if (!noteEl.hidden) toggleNote(false); else if (trayOpen) toggleTray(false); else if (FOCUS) closeFocus(); return; }
+  if (key === "?") { toggleNote(); return; }
+  if (key === "ArrowLeft" || key === "ArrowRight") { e.preventDefault(); userInput(true); stepBy((key === "ArrowRight" ? 1 : -1) * (e.shiftKey ? 12 : 1)); }
+  else if (key === "Home") { e.preventDefault(); userInput(true); flyTo(0); }
+  else if (key === "End") { e.preventDefault(); userInput(true); flyTo(N - 1); }
+  else if (key === " " && e.target.tagName !== "BUTTON") { e.preventDefault(); userInput(true); setPlaying(!T.playing); }
+  else if (key === "z" || key === "Z") { userInput(true); jumpZ(); }
+  else if (key === "Enter" && e.target.classList && e.target.classList.contains("mod")) openFocus(e.target.dataset.id);
+});
+// A click with the mouse or a finger must not leave focus on the control: the next Space belongs to the time-lapse.
+// A click made from the keyboard (detail 0) keeps its focus, so whoever tabs to a button still presses it with Space.
+// Capture phase: some controls stop their click from bubbling.
+function dropFocus() {
+  const el = document.activeElement;
+  if (el && el !== document.body && el.matches("button, [role='button'], [role='slider']")) el.blur();
+}
+document.addEventListener("click", (e) => { if (e.detail !== 0) dropFocus(); }, true);
+btnPlay.addEventListener("click", () => { userInput(true); setPlaying(!T.playing); });
+btnToday.addEventListener("click", () => { userInput(true); T.memo = month(); flyTo(N - 1); });
+btnTray.addEventListener("click", () => { userInput(false); toggleTray(); });
+btnNote.addEventListener("click", () => { userInput(false); toggleNote(); });
+window.addEventListener("resize", () => { measure(); layoutV++; place(); });
+
+// ═════ Start ═════
+buildWorld();
+buildRail();
+measure();
+intro();
+place();
+if (!T.intro) settle();
+</script>

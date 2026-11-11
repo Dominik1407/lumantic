@@ -1,0 +1,130 @@
+/* The five designs of Lumantic. Every colour the app paints, in CSS, SVG and canvas, is one of these tokens.
+   A design is a block of tokens on <html data-design="…">; corporate designs from the config are added the same way
+   at run time (src/themes.ts). Faces and sizes are a second, independent choice: <html data-face="serif" | "sans">.
+   Status colours were checked with the dataviz validator per design (contrast against the ground, separation under
+   colour blindness); every status also carries a shape and a word, so colour is never the only cue. */
+
+/* ── Nacht: the original Kosmos night ── */
+:root, :root[data-design="nacht"] {
+  --bg: #070a16; --bg-2: #0c1124; --sky-glow: #111938; --ground: #070a16;
+  --sheet: transparent; --sheet-line: transparent; --sheet-shadow: 0 0 0 0 transparent;
+  --ink: #e9edf8; --ink-2: #a9b1cc; --dim: #717a98; --calm: #a9b1cc;
+  --line: rgba(185, 196, 255, .16); --line-2: rgba(185, 196, 255, .34);
+  --grid: #bec8ff; --grid-a: 1; --thread: #b9c4ff; --thread-a: 1;
+  --accent: #b9c3ff; --accent-ink: #0b1026; --accent-soft: rgba(185, 196, 255, .13);
+  --alert: #ff7059; --watch: #f2b84b; --good: #62d6a2;
+  --c1: #3987e5; --c2: #d55181; --c3: #9085e9;
+  --chip: #151c3a; --menu: #0c1124; --shadow: 0 18px 44px -14px rgba(2, 4, 12, .8); --scrim: rgba(3, 5, 14, .55);
+  --halo: 1; --glow-pct: 38%;
+  --lens-rim-1: #ffffff; --lens-rim-2: #b9c3ff; --lens-rim-3: #6d79cf; --coin-1: #222c5c; --coin-2: #0a0f25;
+  --lens-glass: #b9c3ff; --glass-a: 1; --lens-in: rgba(2, 4, 12, .5); --lens-shine: #ffffff; --lens-shadow: rgba(2, 4, 12, .55);
+  --lens-tint: #8092ff; --lens-tint-a: 1;
+  --f-design-text: "Newsreader Variable", "Newsreader", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --f-design-ui: "Sora", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-design-mono: "Martian Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+
+/* ── Kreide: neutral and bright like a white sheet; ink, and an ink blue for what you operate ── */
+:root[data-design="kreide"] {
+  --bg: #f2f3f6; --bg-2: #f7f8fa; --sky-glow: #ffffff; --ground: #f8f9fb;
+  --sheet: transparent; --sheet-line: transparent; --sheet-shadow: 0 0 0 0 transparent;
+  --ink: #161b26; --ink-2: #3b4353; --dim: #5d6677; --calm: #8b93a3;
+  --line: rgba(22, 27, 38, .14); --line-2: rgba(22, 27, 38, .3);
+  --grid: #161b26; --grid-a: .5; --thread: #3b4353; --thread-a: 1.25;
+  --accent: #2446c9; --accent-ink: #ffffff; --accent-soft: rgba(36, 70, 201, .1);
+  --alert: #b42318; --watch: #b77400; --good: #13804f;
+  --c1: #2a6fd6; --c2: #c43f7f; --c3: #7356d8;
+  --chip: #e7eaf0; --menu: #ffffff; --shadow: 0 16px 40px -14px rgba(22, 27, 38, .24); --scrim: rgba(22, 27, 38, .16);
+  --halo: .5; --glow-pct: 0%;
+  --lens-rim-1: #b9c5f2; --lens-rim-2: #2446c9; --lens-rim-3: #142a80; --coin-1: #ffffff; --coin-2: #e2e6ee;
+  --lens-glass: #2446c9; --glass-a: .45; --lens-in: rgba(22, 27, 38, .16); --lens-shine: #ffffff; --lens-shadow: rgba(22, 27, 38, .18);
+  --lens-tint: #2446c9; --lens-tint-a: .45;
+  --f-design-text: var(--ff-plex); --f-design-ui: var(--ff-plex); --f-design-mono: var(--ff-plex-mono);
+  color-scheme: light;
+}
+
+/* ── Nebel: a cool light blue grey as the room, pages lie on it as white sheets ── */
+:root[data-design="nebel"] {
+  --bg: #e2e7ef; --bg-2: #e8ecf3; --sky-glow: #f1f4f9; --ground: #fbfcfe;
+  --sheet: #fbfcfe; --sheet-line: #d3d9e4; --sheet-shadow: 0 1px 2px rgba(25, 32, 58, .05), 0 22px 48px -22px rgba(25, 32, 58, .22);
+  --ink: #19203a; --ink-2: #394260; --dim: #576081; --calm: #8d95ad;
+  --line: rgba(25, 32, 58, .14); --line-2: rgba(25, 32, 58, .28);
+  --grid: #19203a; --grid-a: .5; --thread: #394260; --thread-a: 1.2;
+  --accent: #4a4ec2; --accent-ink: #ffffff; --accent-soft: rgba(74, 78, 194, .1);
+  --alert: #b0271c; --watch: #b07000; --good: #12805a;
+  --c1: #2a6fd6; --c2: #c43f7f; --c3: #7356d8;
+  --chip: #e9edf4; --menu: #ffffff; --shadow: 0 16px 40px -14px rgba(25, 32, 58, .26); --scrim: rgba(25, 32, 58, .16);
+  --halo: .5; --glow-pct: 0%;
+  --lens-rim-1: #c6c8f4; --lens-rim-2: #4a4ec2; --lens-rim-3: #2b2e86; --coin-1: #ffffff; --coin-2: #e4e8f3;
+  --lens-glass: #4a4ec2; --glass-a: .45; --lens-in: rgba(25, 32, 58, .16); --lens-shine: #ffffff; --lens-shadow: rgba(25, 32, 58, .2);
+  --lens-tint: #4a4ec2; --lens-tint-a: .45;
+  --f-design-text: var(--ff-plex); --f-design-ui: var(--ff-plex); --f-design-mono: var(--ff-plex-mono);
+  color-scheme: light;
+}
+
+/* ── Stein: a warm light grey like sandstone, graphite for the type, plum as the accent ── */
+:root[data-design="stein"] {
+  --bg: #e7e4dd; --bg-2: #ece9e3; --sky-glow: #f6f4ef; --ground: #f1efea;
+  --sheet: transparent; --sheet-line: transparent; --sheet-shadow: 0 0 0 0 transparent;
+  --ink: #23211e; --ink-2: #46433d; --dim: #625e56; --calm: #98928a;
+  --line: rgba(35, 33, 30, .15); --line-2: rgba(35, 33, 30, .3);
+  --grid: #23211e; --grid-a: .5; --thread: #46433d; --thread-a: 1.2;
+  --accent: #6b3a78; --accent-ink: #ffffff; --accent-soft: rgba(107, 58, 120, .1);
+  --alert: #a82a1a; --watch: #ad6f00; --good: #12805a;
+  --c1: #2a6fd6; --c2: #c43f7f; --c3: #7356d8;
+  --chip: #e0dcd4; --menu: #f8f7f3; --shadow: 0 16px 40px -14px rgba(35, 33, 30, .24); --scrim: rgba(35, 33, 30, .16);
+  --halo: .5; --glow-pct: 0%;
+  --lens-rim-1: #dcc9e2; --lens-rim-2: #6b3a78; --lens-rim-3: #3f2048; --coin-1: #fbfaf7; --coin-2: #e2ded6;
+  --lens-glass: #6b3a78; --glass-a: .45; --lens-in: rgba(35, 33, 30, .16); --lens-shine: #ffffff; --lens-shadow: rgba(35, 33, 30, .2);
+  --lens-tint: #6b3a78; --lens-tint-a: .45;
+  --f-design-text: var(--ff-plex); --f-design-ui: var(--ff-plex); --f-design-mono: var(--ff-plex-mono);
+  color-scheme: light;
+}
+
+/* ── Dämmerung: a middle slate blue instead of the night; the stars still glow, the type is softer ── */
+:root[data-design="daemmerung"] {
+  --bg: #2b3350; --bg-2: #313a57; --sky-glow: #3c4668; --ground: #323b59;
+  --sheet: transparent; --sheet-line: transparent; --sheet-shadow: 0 0 0 0 transparent;
+  --ink: #f2f4fa; --ink-2: #ccd2e2; --dim: #a3abc4; --calm: #9aa2bd;
+  --line: rgba(242, 244, 250, .14); --line-2: rgba(242, 244, 250, .3);
+  --grid: #e6e9f5; --grid-a: .6; --thread: #d3d8ea; --thread-a: .95;
+  --accent: #b9c1ff; --accent-ink: #1d2340; --accent-soft: rgba(185, 193, 255, .15);
+  --alert: #e6553f; --watch: #c69a2e; --good: #27a877;
+  --c1: #3987e5; --c2: #d55181; --c3: #9085e9;
+  --chip: #3d4769; --menu: #343d5b; --shadow: 0 18px 44px -14px rgba(10, 14, 30, .6); --scrim: rgba(10, 14, 30, .35);
+  --halo: .8; --glow-pct: 24%;
+  --lens-rim-1: #ffffff; --lens-rim-2: #b9c1ff; --lens-rim-3: #6d79cf; --coin-1: #4a5480; --coin-2: #262d48;
+  --lens-glass: #b9c1ff; --glass-a: .85; --lens-in: rgba(10, 14, 30, .4); --lens-shine: #ffffff; --lens-shadow: rgba(10, 14, 30, .45);
+  --lens-tint: #9aa6ff; --lens-tint-a: .9;
+  --f-design-text: var(--ff-plex); --f-design-ui: var(--ff-plex); --f-design-mono: var(--ff-plex-mono);
+  color-scheme: dark;
+}
+
+/* ── Faces: the design's own, or one the person chose in the settings ── */
+:root {
+  --ff-plex: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --ff-plex-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --ff-source: "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+  --ff-geist: "Geist", "Helvetica Neue", Arial, sans-serif;
+  --f-text: var(--f-design-text); --f-ui: var(--f-design-ui); --f-mono: var(--f-design-mono);
+  --f-data: var(--f-mono); --f-voice: var(--f-text);
+  --pw: 560px; --gut: 30px; --far: 1; --fs-k: 1;
+}
+:root[data-font="plex"] { --f-text: var(--ff-plex); --f-ui: var(--ff-plex); --f-mono: var(--ff-plex-mono); }
+:root[data-font="source"] { --f-text: var(--ff-source); --f-ui: var(--ff-source); --f-mono: var(--ff-plex-mono); }
+:root[data-font="geist"] { --f-text: var(--ff-geist); --f-ui: var(--ff-geist); --f-mono: var(--ff-plex-mono); }
+:root[data-size="gross"] { --fs-k: 1.12; }
+/* A serif text face sets smaller and lighter, with italics for Lumina's voice. A sans face needs neither. */
+:root, :root[data-face="serif"] {
+  --italic: italic; --w-hl: 400; --w-big: 500; --w-voice: 400;
+  --fs-text: calc(21px * var(--fs-k)); --fs-hl: calc(40px * var(--fs-k)); --fs-big: calc(54px * var(--fs-k)); --fs-when: calc(25px * var(--fs-k));
+  --fs-title: calc(25px * var(--fs-k)); --fs-q: calc(17.5px * var(--fs-k)); --fs-cap: calc(16.5px * var(--fs-k)); --fs-gline: calc(17px * var(--fs-k));
+  --fs-mi: 16px; --fs-plabel: 17px; --fs-hint: 17px; --fs-idee: 30px;
+}
+:root[data-face="sans"] {
+  --italic: normal; --w-hl: 600; --w-big: 600; --w-voice: 500;
+  --fs-text: calc(18.5px * var(--fs-k)); --fs-hl: calc(35px * var(--fs-k)); --fs-big: calc(48px * var(--fs-k)); --fs-when: calc(21px * var(--fs-k));
+  --fs-title: calc(22px * var(--fs-k)); --fs-q: calc(15.5px * var(--fs-k)); --fs-cap: calc(14.5px * var(--fs-k)); --fs-gline: calc(15px * var(--fs-k));
+  --fs-mi: 14.5px; --fs-plabel: 14.5px; --fs-hint: 15px; --fs-idee: 26px;
+}

@@ -1,0 +1,8 @@
+/bin/
+/data/
+/goldlayer/
+/web/node_modules/
+/web/dist/assets/
+*.tmp
+/scripts/ui-test/shots/
+/scripts/ui-test/edge-cdp-*/
