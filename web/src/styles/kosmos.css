@@ -203,6 +203,15 @@ kbd { font: 400 9.5px/1 var(--f-mono); border: 1px solid var(--line-2); padding:
 .page:hover .play, .play:focus-visible, .play[aria-pressed="true"] { opacity: 1; }
 .play:hover, .play[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
 .play[aria-pressed="true"] { padding: 0; letter-spacing: 1px; }
+/* The raster beside the time word: three quiet words at the end of the line, the chosen one underlined. */
+.grain { margin-left: auto; display: inline-flex; gap: 2px; }
+.gb { position: relative; border: 0; background: none; padding: 2px 5px 3px; font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--dim); cursor: pointer; transition: color .2s; }
+.gb::after { content: ""; position: absolute; left: 5px; right: 5px; bottom: 0; height: 1px; background: var(--accent); transform: scaleX(0); transition: transform .32s cubic-bezier(.2, .8, .2, 1); }
+.gb:hover { color: var(--ink-2); }
+.gb[aria-checked="true"] { color: var(--ink); }
+.gb[aria-checked="true"]::after { transform: scaleX(1); }
+.gb[aria-disabled="true"] { opacity: .4; cursor: default; }
+.gb[aria-disabled="true"]:hover { color: var(--dim); }
 .ptitle { min-width: 3em; outline: none; font: 500 var(--fs-title)/1.2 var(--f-text); letter-spacing: -.01em; text-transform: none; color: var(--ink); cursor: text; user-select: text; -webkit-user-select: text; caret-color: var(--accent); }
 .ptitle:empty::before { content: attr(data-ph); font-style: var(--italic); color: var(--dim); opacity: 0; transition: opacity .2s; }
 .page.is-active .ptitle:empty::before, .page:hover .ptitle:empty::before, .ptitle:focus:empty::before { opacity: 1; }

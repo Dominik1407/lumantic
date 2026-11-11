@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"lumantic/internal/config"
+	"lumantic/internal/katalog"
 	"lumantic/internal/metrics"
 )
 
@@ -23,6 +24,7 @@ import (
 type kpiView struct {
 	metrics.Def
 	Status string `json:"status"`
+	Origin string `json:"origin,omitempty"` // "quelle": from the company catalog, changed there or added in the Sternkatalog
 }
 
 func missingText(missing []string) string {
@@ -57,8 +59,18 @@ func (s *Server) getKPIs(w http.ResponseWriter, r *http.Request) {
 	if out.Groups == nil {
 		out.Groups = []metrics.Group{}
 	}
-	for _, k := range defs.KPIs {
-		out.KPIs = append(out.KPIs, kpiView{Def: k, Status: missingText(k.Missing(cat))})
+	// The list shows every figure of the Kosmos; those of the company catalog say so.
+	list := defs
+	if k.merged != nil {
+		list = k.merged
+		out.Groups = k.merged.Groups
+	}
+	for _, d := range list.KPIs {
+		v := kpiView{Def: d, Status: missingText(d.Missing(cat))}
+		if list.Origins[d.ID]["name"] == katalog.FromSource {
+			v.Origin = katalog.FromSource
+		}
+		out.KPIs = append(out.KPIs, v)
 	}
 	writeJSON(w, 200, out)
 }
@@ -105,9 +117,12 @@ func (s *Server) changeKPIs(r *http.Request, kid string, edit func(*metrics.Conf
 		}
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 90*time.Second)
-	l := load(ctx, cur.ad, next, nil, rm.data.Name)
+	perPerson := rm.rights == config.RightsSource
+	l := load(ctx, cur.ad, next, nil, rm.data.Name, !perPerson)
 	cancel()
-	s.put(kid, (&kosmos{defs: next}).with(cur.ad, l))
+	k := (&kosmos{defs: next}).with(cur.ad, l)
+	k.perPerson = perPerson
+	s.put(kid, k)
 	return 0, next, nil
 }
 
@@ -133,6 +148,9 @@ func (s *Server) addKPI(w http.ResponseWriter, r *http.Request) {
 	if err := readJSON(r, &in); err != nil {
 		fail(w, 400, "Ungültige Kennzahl.")
 		return
+	}
+	if !s.isAdmin(userOf(r)) {
+		in.Access = nil
 	}
 	var id string
 	code, defs, err := s.changeKPIs(r, kid, func(c *metrics.Config, cur *kosmos) (int, error) {
@@ -175,11 +193,15 @@ func (s *Server) updateKPI(w http.ResponseWriter, r *http.Request) {
 	}
 	delete(patch, "id")
 	delete(patch, "status")
+	// Who sees a figure is a question of rights: only admins change it.
+	if !s.isAdmin(userOf(r)) {
+		delete(patch, "access")
+	}
 	code, defs, err := s.changeKPIs(r, kid, func(c *metrics.Config, cur *kosmos) (int, error) {
 		cat := cur.cat
 		i := c.Find(id)
 		if i < 0 {
-			return 404, fmt.Errorf("Die Kennzahl %s gibt es nicht.", id)
+			return 404, notOwn(cur, id)
 		}
 		base, _ := json.Marshal(c.KPIs[i])
 		var merged map[string]json.RawMessage
@@ -213,10 +235,10 @@ func (s *Server) deleteKPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := r.PathValue("id")
-	code, _, err := s.changeKPIs(r, kid, func(c *metrics.Config, _ *kosmos) (int, error) {
+	code, _, err := s.changeKPIs(r, kid, func(c *metrics.Config, cur *kosmos) (int, error) {
 		i := c.Find(id)
 		if i < 0 {
-			return 404, fmt.Errorf("Die Kennzahl %s gibt es nicht.", id)
+			return 404, notOwn(cur, id)
 		}
 		c.KPIs = append(c.KPIs[:i], c.KPIs[i+1:]...)
 		return 0, nil
@@ -226,4 +248,13 @@ func (s *Server) deleteKPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(204)
+}
+
+// notOwn says why a figure cannot be changed here: it belongs to the company
+// catalog, or there is none of that name.
+func notOwn(cur *kosmos, id string) error {
+	if cur.merged != nil && cur.merged.Origins[id]["name"] == katalog.FromSource {
+		return fmt.Errorf("Diese Kennzahl kommt aus dem Fachkatalog in der Quelle. Was dort offen ist, ergänzt du im Sternkatalog.")
+	}
+	return fmt.Errorf("Die Kennzahl %s gibt es nicht.", id)
 }

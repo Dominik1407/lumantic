@@ -27,6 +27,7 @@ import "./styles/kosmos.css";
 import "./styles/app.css";
 import "./styles/settings.css";
 import "./styles/menu.css";
+import "./styles/catalog.css";
 
 import { bootKosmos, type KosmosRoom } from "virtual:kosmos";
 import { api, ApiError, MAIN, setKosmos, type KosmosInfo, type MetricsData, type Settings } from "./api";
@@ -36,6 +37,7 @@ import { gear, showMenu } from "./menu";
 import { P, flush, initPrefs, saveKosmos, setPref, storedKosmos } from "./prefs";
 import { applyLook, designOf, installCorporate } from "./themes";
 import { createSettings, TYPES } from "./settings";
+import { createCatalog } from "./catalog";
 
 const LENS_BACK = { "1M": 1, "1Q": 3, "1J": 12 } as const;
 const systemStill = matchMedia("(prefers-reduced-motion: reduce)");
@@ -46,6 +48,19 @@ let room: KosmosRoom | null = null;
 let settings: Settings | null = null;
 let kosmen: KosmosInfo[] = [];
 let here = ""; // the Kosmos this page shows; "" in the main menu
+
+// The Sternkatalog: inside a Kosmos its own, in the main menu every Kosmos's. «Zeigen» flies to the figure, or goes
+// into its Kosmos and flies there once the room stands.
+const catalog = createCatalog({
+  kosmos: () => here,
+  kosmen: () => kosmen.map((k) => ({ id: k.id, name: k.name })),
+  still: () => still(),
+  show: (id, kpi) => {
+    if (here === id && room) { room.home(kpi); return; }
+    try { sessionStorage.setItem("lumantic.home", kpi); } catch { /* the room opens as usual */ }
+    toKosmos(id);
+  },
+});
 
 // ───────────── Getting around ─────────────
 const path = location.pathname;
@@ -79,6 +94,7 @@ const sheet = createSettings({
   kosmos: () => here,
   kosmen: () => kosmen,
   enter: toKosmos,
+  catalog: (kpi) => void catalog.open(kpi || ""),
   menu: toMenu,
 });
 
@@ -141,7 +157,12 @@ function showEmpty(err: unknown) {
   const noFigures = noData && !!st && st.tables > 0 && st.kpis === 0;
   const name = kosmen.find((k) => k.id === here)?.name || "Die Datenquelle";
   const first = noData && !noFigures && settings?.configExists === false && here === MAIN;
-  $("empty").replaceChildren(first ? welcome() : h("div", { class: "empty-in" },
+  // Signed in, but no Kosmos is open to this person: nothing to set up, someone has to grant it.
+  const barred = err instanceof ApiError && err.status === 403;
+  $("empty").replaceChildren(barred ? h("div", { class: "empty-in" },
+    h("h1", { text: "Noch kein Kosmos für dich." }),
+    h("p", { text: "Dir ist noch kein Kosmos freigegeben. Frag einen Administrator nach der Gruppe, die ihn sieht." }),
+    h("p", { class: "why", text: msg })) : first ? welcome() : h("div", { class: "empty-in" },
     h("h1", { text: noFigures ? "Noch keine Kennzahlen." : noData ? "Noch keine Daten verbunden." : "Die Kennzahlen lassen sich gerade nicht laden." }),
     h("p", { text: noFigures ? `«${name}» ist verbunden. Sag Lumantic, welche Spalten Kennzahlen sind. Danach baut Lumina hier die Seiten.`
       : noData ? "Verbinde einen Goldlayer oder einen Ordner mit Tabellen. Danach baut Lumina hier die Seiten." : "Prüf die Datenquelle in den Einstellungen oder lade die Seite neu." }),
@@ -193,8 +214,17 @@ async function bootRoom(id: string) {
     // Back with new figures: the room opens on the page the person was reading, without the long opening.
     prefs: () => (resumed ? { ...P, start: "zuletzt" } : P),
     leave,
+    openCatalog: (kpi) => void catalog.open(kpi || ""),
+    closeCatalog: () => catalog.close(),
+    catalogOpen: () => catalog.isOpen(),
     arrived: () => arrived || resumed,
   });
+  // Coming from the Sternkatalog of the main menu: fly to the figure that was asked for.
+  try {
+    const kpi = sessionStorage.getItem("lumantic.home");
+    sessionStorage.removeItem("lumantic.home");
+    if (kpi && data.kpis.some((k) => k.id === kpi)) setTimeout(() => room?.home(kpi), still() ? 50 : 2600);
+  } catch { /* nothing to fly to */ }
   // For the real-time tests (scripts/ui-test): a read-only window into the room.
   Object.defineProperty(window, "__kosmos", { value: room.debug });
   const fine = $("idee-fine");
@@ -211,7 +241,8 @@ async function bootMenu(note: string) {
   initPrefs(settings?.ui, shared.status === "fulfilled" ? shared.value : null, "");
   applyLook(P, systemStill.matches);
   showBrand();
-  void showMenu(kosmen, { enter: toKosmos, settings: () => sheet.toggle(), add: () => sheet.open("daten", "kosmos"), settingsOpen: () => sheet.isOpen(), closeSettings: () => sheet.close(), still }, note);
+  void showMenu(kosmen, { enter: toKosmos, settings: () => sheet.toggle(), add: () => sheet.open("daten", "kosmos"), settingsOpen: () => sheet.isOpen() || catalog.isOpen(),
+    closeSettings: () => catalog.close() || sheet.close(), still, catalog: () => void catalog.open(), canAdd: () => settings?.me?.admin !== false }, note);
   Object.defineProperty(window, "__menu", { value: true });
   if (query.get("kosmen") === "neu") sheet.open("daten", "kosmos");
 }

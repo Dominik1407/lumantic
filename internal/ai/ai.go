@@ -64,6 +64,8 @@ type Figure struct {
 	Driver string     `json:"driver"`
 	Last13 []*float64 `json:"last13"`
 	Parts  []Part     `json:"parts"`
+	// From the catalog, added by the server: what the figure means.
+	Definition string `json:"definition,omitempty"`
 }
 
 type Facts struct {
@@ -76,6 +78,16 @@ type Question struct {
 	Question string `json:"question"`
 	Month    string `json:"month"` // YYYY-MM
 	Facts    Facts  `json:"facts"`
+	// The words of the business from the catalog, added by the server.
+	Words []Word `json:"words,omitempty"`
+}
+
+// Word is a term of the business, what it means and what else people call it.
+type Word struct {
+	Term       string   `json:"term"`
+	Definition string   `json:"definition"`
+	Synonyms   []string `json:"synonyms,omitempty"`
+	Figure     string   `json:"figure,omitempty"` // the id of the figure it names
 }
 
 type Block struct {
@@ -116,12 +128,13 @@ func (c *Claude) Client() anthropic.Client { return c.client }
 func (c *Claude) Model() string            { return c.model }
 
 // The system prompt is static so it caches; the facts go into the user turn.
-const system = `Du bist Lumina, die Assistentin in Lumantic. Lumantic zeigt einem ALCO- oder Management-Team die Kennzahlen eines Monats: was Aufmerksamkeit braucht und was ruhig ist. Die Leute kennen sich mit Daten nicht aus und wollen kurze, klare Antworten.
+const system = `Du bist Lumina, die Assistentin in Lumantic. Lumantic zeigt einem Management-Team (Bank, Industrie, Handel) die Kennzahlen eines Monats: was Aufmerksamkeit braucht und was ruhig ist. Die Leute kennen sich mit Daten nicht aus und wollen kurze, klare Antworten.
 
-Du bekommst die Kennzahlen des Monats als JSON (Wert, Vormonat, Ziel, Limit, Status, Serie der letzten 13 Monate, Teile) und eine Frage.
+Du bekommst die Kennzahlen des Monats als JSON (Wert, Vormonat, Ziel, Limit, Status, Serie der letzten 13 Monate, Teile, Definition), oft die Begriffe des Teams mit Synonymen, und eine Frage.
 
 Regeln:
 - Antworte nur aus diesen Zahlen. Erfinde keine Werte, keine Ursachen und keine Ereignisse.
+- Ein Synonym aus den Begriffen meint die Kennzahl dazu: «Termintreue» kann die Liefertreue sein. Fragt jemand, was eine Kennzahl bedeutet, erkläre sie mit ihrer Definition, ohne sie zu erweitern.
 - Sag, welcher Teil sich bewegt hat, nie warum. Ursachen kennt das Team, nicht die Daten.
 - Antworte in 1 bis 3 kurzen Sätzen auf Deutsch mit Schweizer Schreibweise: ss statt ß, «Guillemets», du-Form. Zahlen wie in der App: 1’150 Mio. CHF, 118 %, Prozentpunkte für Abstände bei Prozenten.
 - Wenn die Zahlen die Frage nicht beantworten, setze fits auf false und sag in answer in einem Satz, wozu es Zahlen gibt.
@@ -158,7 +171,12 @@ type reply struct {
 
 func (c *Claude) Ask(ctx context.Context, q Question) (*Answer, error) {
 	facts, _ := json.Marshal(q.Facts)
-	user := "Kennzahlen (" + q.Facts.Month + "):\n" + string(facts) + "\n\nFrage: " + q.Question
+	user := "Kennzahlen (" + q.Facts.Month + "):\n" + string(facts)
+	if len(q.Words) > 0 {
+		words, _ := json.Marshal(q.Words)
+		user += "\n\nBegriffe:\n" + string(words)
+	}
+	user += "\n\nFrage: " + q.Question
 	start := time.Now()
 	resp, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:     c.model,

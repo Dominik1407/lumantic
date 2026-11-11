@@ -56,7 +56,9 @@ func statusOf(k *kosmos) Status {
 	if k.cat != nil {
 		st.Tables = len(k.cat.Tables)
 	}
-	if k.defs != nil {
+	if k.merged != nil {
+		st.KPIs = len(k.merged.KPIs)
+	} else if k.defs != nil {
 		st.KPIs = len(k.defs.KPIs)
 	}
 	if !k.refreshedAt.IsZero() {
@@ -76,6 +78,9 @@ func statusOf(k *kosmos) Status {
 	switch {
 	case k.sourceErr != nil:
 		st.Error = "Die Datenquelle ist nicht erreichbar: " + source.Explain(k.sourceErr)
+	case k.perPerson && st.KPIs > 0:
+		// Weg 2: the figures are read in each person's name when they look.
+		st.OK, st.KPIsLoaded = true, st.KPIs
 	case k.figures == nil && st.KPIs == 0 && k.defsErr == nil:
 		st.Error = "Für diesen Kosmos sind noch keine Kennzahlen definiert."
 	case k.figures == nil && k.figuresErr != nil:
@@ -149,13 +154,15 @@ type settingsView struct {
 	Metrics      string       `json:"metrics"`
 	Status       Status       `json:"status"`
 	Refresh      refreshView  `json:"refresh"`
+	Grain        string       `json:"grain"` // the standard raster of the Kosmos
+	Me           me           `json:"me"`    // who asks, and what they may change
 	AI           aiView       `json:"ai"`
 	Brand        config.Brand `json:"brand"`
 }
 
 // settingsFor answers the settings as one Kosmos sees them: data, key figure
 // file and status are its own, everything else is shared.
-func (s *Server) settingsFor(id string) settingsView {
+func (s *Server) settingsFor(r *http.Request, id string) settingsView {
 	eff := s.Config.Effective()
 	_, aiTok, _ := s.Config.Secret(config.AnthropicToken)
 	_, wmTok, _ := s.Config.Secret(config.WindmillToken)
@@ -192,7 +199,7 @@ func (s *Server) settingsFor(id string) settingsView {
 	if db.Auth == "" {
 		db.Auth = "oauth"
 	}
-	return settingsView{
+	v := settingsView{
 		Version:      config.Version,
 		ConfigPath:   s.Config.Path(),
 		ConfigExists: s.Config.Exists(),
@@ -206,9 +213,19 @@ func (s *Server) settingsFor(id string) settingsView {
 		Metrics: rm.metrics,
 		Status:  s.status(rm.id),
 		Refresh: refreshView{Refresh: rm.refresh, Own: rm.ownPlan, Watchable: config.Watchable(d.Type), Token: s.tokenState(rm.id)},
+		Grain:   rm.grain,
 		AI:      aiView{AI: eff.AI, Token: aiTok, Models: config.Models, Ready: eff.AI.Enabled && aiTok.Set},
 		Brand:   brand,
 	}
+	v.Me = s.meOf(r, rm.id)
+	// Only admins change sources and tokens; the others see what they need to read the status.
+	if !v.Me.Admin {
+		v.ConfigPath, v.Locked, v.Metrics = "", []string{}, ""
+		v.Data = dataView{Type: d.Type, Name: d.Name}
+		v.Refresh.Token = config.SecretStatus{}
+		v.AI.Token = config.SecretStatus{}
+	}
+	return v
 }
 
 func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
@@ -216,7 +233,7 @@ func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
 	if k == nil {
 		return
 	}
-	writeJSON(w, 200, s.settingsFor(id))
+	writeJSON(w, 200, s.settingsFor(r, id))
 }
 
 // httpError carries the status a handler should answer with.
@@ -264,11 +281,18 @@ func (s *Server) putSettings(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+		if raw, ok := req["grain"]; ok {
+			if err := s.putRoomGrain(id, raw); err != nil {
+				failWith(w, err)
+				return
+			}
+		}
 		delete(req, "data")
 		delete(req, "metrics")
 		delete(req, "refresh")
+		delete(req, "grain")
 		if len(req) == 0 {
-			writeJSON(w, 200, s.settingsFor(id))
+			writeJSON(w, 200, s.settingsFor(r, id))
 			return
 		}
 	}
@@ -316,13 +340,13 @@ func (s *Server) putSettings(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		ctx, cancel := context.WithTimeout(r.Context(), 90*time.Second)
-		l := load(ctx, ad, defs, defsErr, after.Data.Name)
+		l := load(ctx, ad, defs, defsErr, after.Data.Name, after.Rights != config.RightsSource)
 		cancel()
 		if dataChanged && l.err != nil {
 			fail(w, 422, "Die neue Datenquelle ist nicht erreichbar: "+source.Explain(l.err))
 			return
 		}
-		fresh = (&kosmos{defs: defs, defsErr: defsErr}).with(ad, l)
+		fresh = (&kosmos{defs: defs, defsErr: defsErr, perPerson: after.Rights == config.RightsSource}).with(ad, l)
 	}
 	if err := s.Config.Save(cand); err != nil {
 		fail(w, 500, err.Error())
@@ -334,7 +358,7 @@ func (s *Server) putSettings(w http.ResponseWriter, r *http.Request) {
 	if !reflect.DeepEqual(before.AI, after.AI) {
 		s.rebuildAI()
 	}
-	writeJSON(w, 200, s.settingsFor(id))
+	writeJSON(w, 200, s.settingsFor(r, id))
 }
 
 // putRoomData changes the data source of a Kosmos beside the first. Like for
@@ -371,7 +395,8 @@ func (s *Server) putRoomData(r *http.Request, id string, raw json.RawMessage) er
 		return &httpError{422, err.Error()}
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 90*time.Second)
-	l := load(ctx, ad, cur.defs, cur.defsErr, d.Name)
+	rm, _ := s.room(id)
+	l := load(ctx, ad, cur.defs, cur.defsErr, d.Name, rm.rights != config.RightsSource)
 	cancel()
 	if l.err != nil {
 		return &httpError{422, "Die neue Datenquelle ist nicht erreichbar: " + source.Explain(l.err)}
@@ -396,6 +421,29 @@ func (s *Server) putRoomRefresh(id string, raw json.RawMessage) error {
 		return &httpError{422, "Einstellung refresh ist ungültig: " + err.Error()}
 	}
 	c.Kosmen[i].Refresh = r
+	config.Normalize(&c)
+	if err := config.Validate(c); err != nil {
+		return &httpError{422, err.Error()}
+	}
+	if err := s.Config.Save(c); err != nil {
+		return &httpError{500, err.Error()}
+	}
+	return nil
+}
+
+// putRoomGrain changes the standard raster of a Kosmos beside the first. The
+// figures stay as they are; the raster travels with GET /api/metrics.
+func (s *Server) putRoomGrain(id string, raw json.RawMessage) error {
+	c := s.Config.File()
+	i := c.Find(id)
+	if i < 0 {
+		return &httpError{404, errNoKosmos.Error()}
+	}
+	var g string
+	if err := json.Unmarshal(raw, &g); err != nil {
+		return &httpError{422, "Einstellung grain ist ungültig: " + err.Error()}
+	}
+	c.Kosmen[i].Grain = g
 	config.Normalize(&c)
 	if err := config.Validate(c); err != nil {
 		return &httpError{422, err.Error()}

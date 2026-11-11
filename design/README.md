@@ -114,8 +114,7 @@ mehr als einen Goldlayer sehen.
   ohne die Pause über dem Überblick. Heraus führen das Logo oben links und die Taste `K`. Mit einem einzigen Kosmos gibt es
   das Menü nicht: Niemand soll durch eine Auswahl mit einem Eintrag müssen.
 - **Die Leiste unten bleibt, was sie ist.** Im Raum nennt sie die Seiten, im Hauptmenü die Kosmen, am Ende immer das Zahnrad.
-- **Logo «Baustein».** Aus fünf Vorschlägen (Sternbild, Punkt, Baustein, Faden, Linse; https://claude.ai/artifact/2jR56k2ZU8q2y8JJUbMnQd)
-  gewählt: zwei Blöcke und ein leuchtender Stern, in der Form eines L. Es sagt das Blockbasierte und «Quiet until it
+- **Logo «Baustein».** Aus fünf Vorschlägen (Sternbild, Punkt, Baustein, Faden, Linse) gewählt: zwei Blöcke und ein leuchtender Stern, in der Form eines L. Es sagt das Blockbasierte und «Quiet until it
   matters» in drei Formen und bleibt bei 16 Pixeln lesbar. Die Wortmarke ist Sora 600 als Umriss, damit sie in jedem
   Design und mit jeder Hausschrift gleich aussieht.
 - **Fremdes Logo, leise Signatur.** Ein Unternehmen ersetzt das Logo per Konfiguration. Dann, und nur dann, steht oben
@@ -125,6 +124,104 @@ Offen:
 - Wer welchen Kosmos sieht, braucht eine Anmeldung. Bis dahin sehen alle alle.
 - Ein neuer Kosmos beginnt ohne Kennzahlen; man legt sie einzeln an. Vorschläge aus den Tabellen wären der nächste Schritt.
 - Das Hauptmenü liest jeden Kosmos ganz, um seinen Himmel zu zeichnen. Bei sehr vielen Kosmen bräuchte es eine Kurzfassung vom Server.
+
+## Katalog und Sternkatalog
+
+Etappe 4 der Spezifikation, gebaut am 11. November 2026 als Version 0.8. Dominik wünschte dazu einen Beispiel-Kosmos mit
+gemischter Herkunft und Daten aus dem Industrie-Controlling: Lumantic soll nicht nur für Banken sein.
+
+- **Drei Herkünfte, Feld für Feld.** Fachkatalog in der Quelle vor Lumantic vor Vermutung. Das Feld weiss, woher es
+  kommt; eine Kennzahl kann ihre Definition aus der Quelle, ihr Ziel aus Lumantic und ihre Einheit vermutet haben.
+- **Marken statt Farben.** Gefüllter Punkt für den Fachkatalog, Ring für Lumantic, gestrichelter Ring für Vermutetes. Farbe
+  bleibt dem Status vorbehalten. Jede Zeile der Liste trägt die Spur ihrer Felder, so sieht man auf einen Blick, wie viel
+  einer Kennzahl schon beschrieben ist.
+- **JSON statt YAML.** Die Spezifikation nannte YAML für Lumantics Teil. Er ist in die bestehende Kennzahlen-Datei gewandert
+  (`extra`, `terms`, `formula`, `owner`, `bounds`): eine Datei pro Kosmos wie bisher, und keine fremde Bibliothek.
+- **Der Sternkatalog ist eine Seite über dem Raum**, wie ein gedruckter Sternkatalog: links nummeriert nach Themen, rechts
+  der Steckbrief. Was offen ist, steht als «offen» da, mit «Ergänzen» daneben; was aus dem Fachkatalog kommt, sagt
+  «Fachkatalog» statt einer Schaltfläche. Im Hauptmenü sucht er über alle Kosmen.
+- **Ziele mit Gültigkeit** gelten Monat für Monat: Oktober 2025 misst sich am Budget 2025, Oktober 2026 am Budget 2026.
+- **Einheiten über Geld hinaus:** Stück, Tage, Stunden, Tausend CHF und Zahl, damit Industrie-Kennzahlen lesen, wie man sie
+  spricht.
+- **Beispiel «Industrie»:** die erfundene Musterwerk AG mit Werken in Aarau, Brno und Suzhou. Die Liefertreue fällt unter
+  ihren Mindestwert, die Lagerreichweite steigt, die EBIT-Marge verfehlt das höhere Budget 2026, die OEE wird besser.
+
+Offen:
+- Die Studien zur Gestaltung des Sternkatalogs, die die Spezifikation vorsah, sind hier ein erster Entwurf in der echten App.
+- Kataloge aus Werkzeugen (Unity-Catalog-Tags, Snowflake Semantic Views) und `filter` im Vertrag.
+
+## Zeitraster: Quartal und Jahr
+
+Etappe 5a der Spezifikation, gebaut am 11. November 2026 als Version 0.9. Woche und Tag (5b) brauchen Tagesdaten und ein
+neues Zeitmodell und folgen getrennt.
+
+- **Das Raster ist eine Leseart, kein Umbau.** Der Raum steht weiter auf einem Monat; im Quartal steht er auf dem letzten
+  Monat des Quartals. Pfeile, Ziehen am Datum, Abspielen und die Zeitlinse gehen eine Periode, `Shift` ein Jahr.
+- **Drei Wörter am Ende der Datumszeile** statt eines Schalters: Monat, Quartal, Jahr, das gewählte unterstrichen. Die Taste
+  `G` geht reihum. Woche und Tag stehen erst da, wenn eine Kennzahl sie hergibt.
+- **Der Status bleibt im Standardraster.** «Heute», seine Überschrift und das Hauptmenü urteilen im Raster des Kosmos. Was
+  ein Baustein sagt, folgt dem gewählten Raster. So kippt beim Umschalten keine Seite von ruhig auf rot.
+- **Zusammenfassen nach Art.** Bestand am Periodenende, Fluss summiert, Durchschnitt über die Monate mit Daten, Verhältnis
+  aus summierten oder Stichtags-Teilen. Den Faktor eines Verhältnisses (×100 für Prozent) liest Lumantic aus den Daten
+  selbst, damit niemand ihn einstellen muss.
+- **Laufende Perioden** heissen «Q4 2026 bis Oktober». Ein Fluss darin misst sich am Ziel bis heute und an denselben
+  Monaten des Vorjahrs.
+- **Flussziele wachsen mit:** aus «Monatsplan» wird «Quartalsplan», aus dem Monatsziel das Quartalsziel, als Summe der
+  Monate. Ein Bestandsziel gilt in jedem Raster gleich.
+- **Die Zinsmarge ist ein Durchschnitt**, wie im Beispiel der Spezifikation; im Industrie-Kosmos sind die OEE und die
+  Materialquote Durchschnitte und die Ausschussquote ein Verhältnis aus Ausschuss und gefertigten Teilen.
+
+Offen:
+- Die Gestaltungsstudien, die die Spezifikation für das Raster vorsah; gebaut ist ein erster Entwurf in der App.
+- «Kumuliert» und «Brücke» bleiben monatlich.
+
+## Zeitraster: Woche und Tag
+
+Etappe 5b, gebaut am 11. November 2026 als Version 0.10. Entschieden: Wochen nach ISO 8601 ab Montag; Flussziele liegen
+meist als Jahresbudget vor, und Lumantic nimmt den Branchenstandard, bis man umstellt.
+
+- **Wochen nur aus Tagen.** Der Server baut die ISO-Wochen aus allen Tageswerten, nach der Art jeder Kennzahl, und schickt
+  die letzten 104 Wochen und die Tage der letzten 90 Tage. Quartale und Jahre rechnet weiter der Browser aus den Monaten;
+  so braucht keine Datenbank Wochenfunktionen.
+- **Der Raum steht in Tagen und Wochen auf einem Tag oder einer Woche**, sein Monat folgt. Darum folgt auch der Status von
+  «Heute» weiter dem Monat. Zeitlinse und «festhalten» gehen in Tagen und Wochen monatsweise.
+- **Die Themen-Seiten urteilen im gelesenen Raster.** In 5a ordneten sie nach dem Status; eine Kennzahl, die in der Woche
+  unter dem Plan liegt, stand dann in der Zeile «Ruhig» mit einer roten Marke. Fest bleiben, wie die Spezifikation sagt,
+  «Heute» und das Hauptmenü.
+- **Branchenstandard für Jahresbudgets:** ein Zwölftel pro Monat, im Monat gleichmässig auf Montag bis Freitag. Pro
+  Kennzahl umstellbar auf Arbeitstage übers Jahr, Kalendertage oder ein eigenes Profil; im Sternkatalog als «Verteilung».
+  Ein Budget im Fachkatalog gilt für ein Jahr, ausser die neue Spalte `periode` sagt «Monat». Ein Jahresbudget heisst in
+  Monat, Woche und Tag «Monatsziel», «Wochenziel», «Tagesziel», im Jahr bei seinem Namen.
+- **Ohne Tageswerte bleibt eine Kennzahl beim Monat** und sagt «nur monatlich erhoben», wie die Spezifikation es wollte.
+  Tag und Woche sind blass, wenn keine Kennzahl eines Kosmos Tageswerte hat.
+- **Beispiel:** Im Industrie-Kosmos fertigen die drei Werke jeden Arbeitstag seit November 2024; in KW 46 steht in Brno eine
+  Presse still. Der Umsatz hat Budgets 2025 und 2026 im Fachkatalog.
+
+Offen:
+- Feiertage beim Verteilen auf Arbeitstage (kantonal verschieden).
+- Ein Standardraster in Woche oder Tag für einen Kosmos, in dem alle Kennzahlen täglich sind.
+
+## Anmeldung und Rechte
+
+Etappe 3 der Spezifikation, gebaut am 11. November 2026 als Version 0.7. Grundlage: der Abschnitt «Anmeldung und Rechte»
+der Spezifikation. Gewählt ist Weg 1 (Lumantic prüft die Gruppen), für Snowflake und Databricks, wo es passt, Weg 2
+(die Datenbank prüft, weil Lumantic in deinem Namen fragt).
+
+- **Keine eigenen Benutzer.** Lumantic nimmt Konto, Name und Gruppen aus der Anmeldung: über einen Proxy davor oder mit
+  OpenID Connect. Eine eigene Kerberos-Anmeldung gibt es nicht; die Windows-Anmeldung übernimmt der Anbieter (Authentik
+  mit Kerberos, Entra ID). So bleibt Lumantic ohne fremde Bibliotheken.
+- **Ohne Anmeldung nur dieser Rechner.** Wer Lumantic ohne Anmeldung von aussen erreichbar macht, bekommt einen Satz statt
+  eines Starts.
+- **Rechte in drei Stufen:** Administratoren, wer einen Kosmos sieht, wer seine Kennzahlen pflegt; dazu Gruppen pro
+  Kennzahl. Wer nicht ändern darf, bekommt keine Formulare, die nicht gehen, sondern einen Satz, wer es tut.
+- **Weg 2 in den Adaptern.** Snowflake bekommt das Token der Anmeldung als OAuth-Token, Databricks tauscht es gegen ein
+  eigenes. Die Zahlen gibt es dann pro Person, gelesen beim ersten Blick und gehalten bis zum nächsten Neulesen.
+- **Eigene Seiten pro Person**, die mit den bisher geteilten beginnen; ein Zugriffsprotokoll ohne Zahlen.
+
+Offen:
+- Rechte auf Teile einer Kennzahl (Region Ost sieht nur Ost), denn ob dann die Summe nur über sichtbare Teile läuft, ist
+  noch nicht entschieden. Rechte wie die Windows-Ordnerrechte kommen mit der eigenen Integration.
+- Weg 2 und die Anmeldung sind gegen nachgebaute Anbieter getestet, nicht gegen Authentik, Snowflake oder Databricks.
 
 ## Aktualisierung: Anstoss, Zeitplan, Dateien
 
@@ -146,8 +243,7 @@ Etappe 2 der Spezifikation, gebaut am 11. November 2026 als Version 0.6.
 
 ## Datenquellen: Snowflake, Databricks, Ersteinrichtung
 
-Erste Etappe der Spezifikation «Datenquellen, Katalog und Zeitraster» (https://claude.ai/artifact/SgKrvCdRHFbJoeH9DubEod),
-gebaut am 11. November 2026 als Version 0.5.
+Erste Etappe der Spezifikation «Datenquellen, Katalog und Zeitraster», gebaut am 11. November 2026 als Version 0.5.
 
 - **REST statt Treiber.** Die Spezifikation nannte die Go-Treiber gosnowflake und databricks-sql-go. Gebaut sind beide
   Adapter über die offiziellen REST-Schnittstellen: die Snowflake SQL API und die Databricks SQL Statement Execution API.

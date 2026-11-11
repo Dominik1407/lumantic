@@ -139,3 +139,29 @@ func TestPrepareAddsGroupAndChecks(t *testing.T) {
 		t.Fatal("bad unit accepted")
 	}
 }
+
+// A quarter needs to know how a figure adds up: kinds avg and ratio, and the
+// kind of a ratio's parts.
+func TestKindsSayHowFiguresAddUp(t *testing.T) {
+	ok := `{"groups":[{"id":"a"}],"kpis":[{"id":"x","group":"a","unit":"%","kind":"avg","monthly":{"table":"t","value":"v"}},
+		{"id":"y","group":"a","unit":"%","kind":"ratio","monthly":{"table":"t","value":"v"},"parts":{"mode":"ratio","kind":"flow","columns":[{"name":"a","column":"a"},{"name":"b","column":"b"}]}}]}`
+	if _, err := parse([]byte(ok)); err != nil {
+		t.Fatal(err)
+	}
+	for name, raw := range map[string]string{
+		"an unknown kind":         `{"groups":[{"id":"a"}],"kpis":[{"id":"x","group":"a","unit":"%","kind":"median","monthly":{"table":"t","value":"v"}}]}`,
+		"a ratio of nothing":      `{"groups":[{"id":"a"}],"kpis":[{"id":"x","group":"a","unit":"%","kind":"ratio","monthly":{"table":"t","value":"v"}}]}`,
+		"a ratio of a sum":        `{"groups":[{"id":"a"}],"kpis":[{"id":"x","group":"a","unit":"%","kind":"ratio","monthly":{"table":"t","value":"v"},"parts":{"mode":"sum","columns":[{"name":"a","column":"a"}]}}]}`,
+		"parts of a strange kind": `{"groups":[{"id":"a"}],"kpis":[{"id":"x","group":"a","unit":"%","kind":"stock","monthly":{"table":"t","value":"v"},"parts":{"mode":"ratio","kind":"avg","columns":[{"name":"a","column":"a"},{"name":"b","column":"b"}]}}]}`,
+	} {
+		if _, err := parse([]byte(raw)); err == nil {
+			t.Errorf("%s: expected an error", name)
+		}
+	}
+	c := &Config{Groups: []Group{{ID: "a"}}, KPIs: []Def{{ID: "q", Group: "a", Unit: "%", Kind: "ratio", Monthly: Source{Table: "g.monat", Value: "wert"},
+		Parts: &Parts{Mode: "ratio", Kind: "flow", Columns: []PartColumn{{Name: "A", Column: "a"}, {Name: "B", Column: "b"}}}}}}
+	d, err := Load(context.Background(), &fake{}, testCatalog(), c)
+	if err != nil || d.KPIs[0].Kind != "ratio" || d.KPIs[0].PartsKind != "flow" || len(d.KPIs[0].Parts) != 2 {
+		t.Fatalf("%v %+v", err, d.KPIs[0])
+	}
+}

@@ -22,6 +22,8 @@ const (
 	// A loading job sends this token to say there is new data (POST /api/refresh).
 	// The file keeps only "<last four>:<sha256>"; an environment variable holds it plain.
 	RefreshToken = "refreshToken"
+	// The client secret of Lumantic at the OpenID Connect provider.
+	OIDCSecret = "oidcSecret"
 )
 
 var secretKeys = []struct {
@@ -35,6 +37,7 @@ var secretKeys = []struct {
 	{DatabricksToken, "data.databricks.token", []string{"DATABRICKS_TOKEN"}, true},
 	{DatabricksSecret, "data.databricks.secret", []string{"DATABRICKS_CLIENT_SECRET"}, true},
 	{RefreshToken, "refresh.token", []string{"LUMANTIC_REFRESH_TOKEN"}, true},
+	{OIDCSecret, "auth.oidc.secret", []string{"OIDC_CLIENT_SECRET"}, false},
 }
 
 // KosmosKey names a warehouse secret of one Kosmos. The first Kosmos uses the

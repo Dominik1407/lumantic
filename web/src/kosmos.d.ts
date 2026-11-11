@@ -15,6 +15,9 @@ declare module "virtual:kosmos" {
     settingsOpen(): boolean;
     prefs(): { hints: boolean; start: string; lastPage: string };
     leave(): void; // to the main menu, when there is more than one Kosmos
+    openCatalog(kpi?: string): void; // the Sternkatalog, at a figure's entry if one is named
+    closeCatalog(): boolean;
+    catalogOpen(): boolean;
     arrived(): boolean; // true when this page was opened from the main menu
   }
 
@@ -35,6 +38,7 @@ declare module "virtual:kosmos" {
     setHints(on: boolean): void;
     setSheet(px: number): void;
     resetAll(): void;
+    home(kpi: string): void; // fly to a figure's place in the room
     debug: Record<string, unknown>;
   }
 

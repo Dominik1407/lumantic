@@ -29,7 +29,7 @@ export default async (t) => {
   }
 
   const places = await q(`return [...document.querySelectorAll("#places button")].map((b) => b.textContent)`);
-  check("places list the Kosmen and end with the settings", places.join() === "ALCO,Firmenkunden,Privatkunden,Einstellungen", places);
+  check("places list the Kosmen and end with the catalog and the settings", places.join() === "ALCO,Firmenkunden,Privatkunden,Katalog,Einstellungen", places);
   await t.shot("k01-hauptmenue");
 
   // ── the settings of the main menu: «Kosmen» instead of «Daten»
@@ -75,6 +75,16 @@ export default async (t) => {
   await t.wait(400);
   await t.key("k");
   check("K leads back to the main menu", await menu());
+
+  // ── the Sternkatalog of the main menu: every Kosmos, one search
+  await t.wait(900);
+  await q(`document.activeElement?.blur(); return 1`);
+  await t.key("c");
+  check("in the main menu C opens the catalog of every Kosmos", await until(`return !document.getElementById("katalog").hidden && document.querySelectorAll("#katalog .kt-kosmos").length === 3`, 8000),
+    await q(`return [...document.querySelectorAll("#katalog .kt-kosmos")].map((x) => x.textContent)`));
+  await t.shot("k05c-katalog-aller-kosmen");
+  await t.key("Escape");
+  await t.wait(400);
 
   // ── a new Kosmos: the form, a broken path, the way to its first key figure
   await t.wait(900);

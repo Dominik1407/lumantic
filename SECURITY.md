@@ -23,6 +23,13 @@ Useful to know when judging whether something is a vulnerability:
 - Lumina sends only the evaluated figures of the current month to the configured AI provider,
   no raw tables. AI can be switched off in the settings.
 - Requests that change something must be JSON and come from the same origin.
-- Login is being built. Until it ships, everyone who can reach Lumantic sees every Kosmos and
-  shares the same pages, so run it inside your own network. This is a known limitation, not a
-  vulnerability.
+- Without a login (`auth.kind: "none"`) everyone who reaches Lumantic may change everything, so
+  it then listens only on 127.0.0.1 and refuses to start on any other address unless
+  `LUMANTIC_OPEN` is set. That is by design.
+- With a login, people sign in through a trusted proxy (headers count only from its addresses) or
+  with OpenID Connect (authorization code with PKCE, ID tokens checked against the provider's
+  keys, RS256 and ES256 only). Sessions live in memory. Who sees which Kosmos, who changes
+  settings and who looks after key figures follows the groups of the login.
+- A loading job may trigger a refresh with a per-Kosmos token; only a hash of it is stored.
+- Lumantic only reads from data sources. Snowflake and Databricks adapters also refuse anything
+  that is not a single `SELECT` or `WITH` statement.

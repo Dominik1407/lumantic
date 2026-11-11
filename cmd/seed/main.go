@@ -45,7 +45,12 @@ var (
 func main() {
 	dir := flag.String("dir", "goldlayer", "output directory")
 	duckdb := flag.String("duckdb", "duckdb", "path to the DuckDB CLI")
+	folders := flag.Bool("folders", false, "write only the CSV folders (Firmenkunden, Privatkunden, Industrie), not the DuckDB file")
 	flag.Parse()
+	if *folders {
+		writeFolders(*dir)
+		return
+	}
 
 	layers := []struct {
 		schema, folder string
@@ -91,17 +96,22 @@ func main() {
 	}
 	log.Printf("Goldlayer gebaut: %s (%d Tabellen)", db, count)
 
-	// Two more gold layers as plain folders of CSV files, for a second and third Kosmos.
+	writeFolders(*dir)
+}
+
+// writeFolders writes the gold layers kept as plain folders of CSV files, for
+// the further Kosmen.
+func writeFolders(dir string) {
 	for _, l := range folderLayers() {
-		if err := os.MkdirAll(filepath.Join(*dir, l.folder), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Join(dir, l.folder), 0o755); err != nil {
 			log.Fatal(err)
 		}
 		for _, t := range l.tables {
-			if err := writeCSV(filepath.Join(*dir, l.folder, t.name+".csv"), t); err != nil {
+			if err := writeCSV(filepath.Join(dir, l.folder, t.name+".csv"), t); err != nil {
 				log.Fatal(err)
 			}
 		}
-		log.Printf("Goldlayer gebaut: %s (%d CSV-Dateien)", filepath.Join(*dir, l.folder), len(l.tables))
+		log.Printf("Goldlayer gebaut: %s (%d CSV-Dateien)", filepath.Join(dir, l.folder), len(l.tables))
 	}
 }
 

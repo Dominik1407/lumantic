@@ -7,9 +7,11 @@ Firmendesign liegt in `lumantic.example.json`. Kopieren, umbenennen und anpassen
 | Abschnitt | Wofür |
 |---|---|
 | `data` | Woher die Zahlen kommen: `duckdb` (eine DuckDB-Datei), `files` (ein Ordner mit Parquet- oder CSV-Dateien, jede Datei wird eine Tabelle `<schema>.<dateiname>`; ein Unterordner mit Parquet-Dateien ebenfalls), `snowflake`, `databricks` (siehe unten) oder `windmill` (zwei Skripte im Windmill-Workspace, Vorlagen in `adapters/windmill/`). |
-| `metrics` | Datei mit den Kennzahlen (Ziel, Limit, Richtung, Tabelle, Spalte). Leer heisst: die eingebauten ALCO-Kennzahlen. Wer in der App eine Kennzahl ändert oder hinzufügt, bekommt `config/kennzahlen.json`. |
+| `metrics` | Datei mit den Kennzahlen (Ziel, Limit, Richtung, Tabelle, Spalte) und Lumantics Teil des Katalogs. Leer heisst: die eingebauten ALCO-Kennzahlen. Wer in der App eine Kennzahl ändert oder hinzufügt, bekommt `config/kennzahlen.json`. |
 | `kosmen` | Weitere Kosmen neben dem ersten (siehe unten). `data` und `metrics` oben sind der erste Kosmos. |
 | `refresh` | Wann der erste Kosmos von selbst neu gelesen wird (siehe «Aktualisierung»). Fehlt es, gilt das Übliche für seine Datenquelle. |
+| `auth` | Wie man sich anmeldet und wer Administrator ist (siehe «Anmeldung und Rechte»). Nur in dieser Datei, nie aus der App. |
+| `access`, `editors`, `rights` | Wer den ersten Kosmos sieht, wer seine Kennzahlen pflegt, und ob die Datenbank selbst prüft. |
 | `ai` | Lumina mit Claude: an oder aus, Modell, und optional eine Adresse für ein Firmen-Gateway. |
 | `ui` | Die Standard-Darstellung für alle. Jede Person kann sie in der App für sich ändern. |
 | `brand` | Firmenname, eigenes Logo und eigene Designs (siehe unten). |
@@ -37,6 +39,10 @@ Eine Umgebungsvariable gewinnt immer gegen die Datei. Die App zeigt solche Felde
 | `WINDMILL_URL`, `WINDMILL_WORKSPACE`, `WINDMILL_DESCRIBE`, `WINDMILL_QUERY`, `WINDMILL_TOKEN` | `data.windmill.*` und der Windmill-Token |
 | `LUMANTIC_METRICS` | `metrics` |
 | `LUMANTIC_REFRESH_TOKEN` | der Aktualisierungs-Token des ersten Kosmos, im Klartext (sonst in der App erzeugen) |
+| `LUMANTIC_AUTH`, `LUMANTIC_ADMINS` | `auth.kind` und `auth.admins` (Gruppen mit Komma getrennt) |
+| `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `LUMANTIC_URL` | `auth.oidc.issuer`, `auth.oidc.clientId`, das Client-Secret und `auth.oidc.url` |
+| `LUMANTIC_ACCESS_LOG` | Datei des Zugriffsprotokolls (Standard `data/zugriff.log`) |
+| `LUMANTIC_OPEN` | Lumantic ohne Anmeldung trotzdem von aussen erreichbar machen, nur hinter einer eigenen Absicherung |
 | `LUMANTIC_LUMINA` (`claude` oder `beispiel`), `LUMANTIC_MODEL`, `ANTHROPIC_BASE_URL` | `ai.enabled`, `ai.model`, `ai.baseURL` |
 | `ANTHROPIC_API_KEY` oder `ANTHROPIC_AUTH_TOKEN` | der Claude-Token |
 | `LUMANTIC_ADDR`, `LUMANTIC_DATA` | Adresse des Servers, Datei mit dem Arbeitsbereich |
@@ -105,6 +111,121 @@ Goldlayer?» und führt durch dieselben Felder.
   erzeugt man in der App unter Daten › Aktualisierung; in `data/secrets.json` steht nur `<letzte vier>:<sha256>`. Für
   den ersten Kosmos geht auch `LUMANTIC_REFRESH_TOKEN`.
 - Weitere Kosmen haben `refresh` in ihrem Eintrag unter `kosmen`.
+
+## Raster
+
+```json
+"grain": "quartal"
+```
+
+- Das Standardraster eines Kosmos: `monat` (Standard), `quartal` oder `jahr`. Darin urteilen «Heute» und das Hauptmenü.
+  Lesen kann jede Person die Seiten in jedem Raster (Wahl neben dem Datum, Taste `G`); das merkt sich ihr Arbeitsbereich.
+- Weitere Kosmen haben `grain` in ihrem Eintrag unter `kosmen`. In der App: Daten › Raster.
+- Wie eine Kennzahl zu einem Quartal zusammenkommt, sagt ihr `kind` in der Kennzahlen-Datei: `stock`, `flow`, `avg` oder
+  `ratio`. Ein Verhältnis braucht `parts` mit `mode: "ratio"` und sagt mit `parts.kind` (`stock` oder `flow`), wie Zähler
+  und Nenner zusammenkommen. Im Fachkatalog heissen die Arten Bestand, Fluss, Durchschnitt und Verhältnis; ein Verhältnis
+  ohne Zähler und Nenner mittelt Lumantic, bis sie da sind, und sagt das im Sternkatalog.
+- Woche und Tag gibt es für Kennzahlen mit `daily`. Wochen nach ISO 8601, ab Montag. Als Standardraster eines Kosmos
+  gehen sie nicht, denn der Status braucht alle Kennzahlen.
+- Ziele von Flüssen: Ein Ziel mit Gültigkeit (`bounds`, im Fachkatalog `lumantic_ziele`) ist ein Jahresbudget, ausser
+  es sagt `per: "monat"` (Spalte `periode`: «Monat»). Ein einzelnes `target` gilt pro Monat, mit `targetPer: "jahr"`
+  pro Jahr. Verteilt wird nach `phasing`: `monate` (Standard: ein Zwölftel pro Monat, im Monat auf die Arbeitstage),
+  `arbeitstage`, `kalendertage` oder `profil` mit `profile` (zwölf Gewichte). `phasing` steht pro Kennzahl, unter
+  `extra` für Kennzahlen des Fachkatalogs, oder ganz oben in der Kennzahlen-Datei für alle.
+
+## Anmeldung und Rechte
+
+Ohne `auth` meldet sich niemand an: Alle sind «Lokal» und dürfen alles, und Lumantic hört dann nur auf diesem Rechner.
+Ist `LUMANTIC_ADDR` von aussen erreichbar, startet Lumantic ohne Anmeldung nicht.
+
+**Über einen Proxy** (zum Beispiel einen Authentik-Outpost vor Lumantic), der anmeldet und weitergibt, wer jemand ist:
+
+```json
+"auth": { "kind": "proxy", "admins": ["GG-Lumantic-Admin"],
+          "proxy": { "trust": ["10.1.2.3"] } }
+```
+
+Lumantic liest Konto, Name und Gruppen aus `X-authentik-username`, `X-authentik-name` und `X-authentik-groups`
+(Gruppen mit `|` getrennt). Andere Kopfzeilen stellt man unter `proxy` ein (`user`, `name`, `email`, `groups`, `sep`).
+Die Kopfzeilen zählen nur, wenn die Anfrage von einer Adresse unter `trust` kommt (Standard: dieser Rechner).
+«Abmelden» führt zu `/outpost.goauthentik.io/sign_out` oder zu `proxy.logout`.
+
+**Mit OpenID Connect** (Authentik, Entra ID, Keycloak, ADFS):
+
+```json
+"auth": { "kind": "oidc", "admins": ["GG-Lumantic-Admin"],
+          "oidc": { "issuer": "https://authentik.bank.ch/application/o/lumantic/", "clientId": "lumantic",
+                    "url": "https://lumantic.bank.ch" } }
+```
+
+- Beim Anbieter legt man Lumantic als Anwendung an, mit der Rücksprungadresse `<url>/auth/callback`. Das Client-Secret
+  kommt in `OIDC_CLIENT_SECRET` oder in `data/secrets.json` als `oidcSecret`.
+- Die Gruppen stehen im Token unter `groups` (bei Authentik im Bereich `profile` enthalten), das Konto unter
+  `preferred_username`; beides lässt sich unter `oidc.groups` und `oidc.user` umstellen. Bei Entra ID sind die Gruppen
+  Objekt-IDs; dann stehen diese IDs in der Konfiguration.
+- `scopes` ist standardmässig `openid profile email offline_access`; `offline_access` erlaubt, eine Anmeldung zu
+  verlängern, ohne erneut zu fragen. Eine Sitzung dauert 8 Stunden.
+- Die Windows-Anmeldung übernimmt der Anbieter: Authentik kann Kerberos mit dem Active Directory, Entra ID tut es mit
+  Windows ohnehin.
+- Lumantic prüft die Signatur des Tokens und nimmt nur RS256 und ES256 an. Worauf es bei den Anbietern ankommt:
+  - **Authentik:** Der Provider braucht einen Signierschlüssel (sonst signiert Authentik mit HS256), und «Include claims
+    in id_token» muss an sein. Für das Verlängern braucht es die Zuordnung für `offline_access`.
+  - **Entra ID:** `issuer` ist mandantenbezogen, `https://login.microsoftonline.com/<tenant>/v2.0`. Statt Gruppen-IDs
+    lieber App-Rollen nehmen (`"groups": "roles"`); bei sehr vielen Gruppen lässt Entra den Eintrag `groups` weg.
+  - **Keycloak:** ein Gruppen-Mapper ohne «Full group path», sonst heissen Gruppen `/Finanz`.
+  - **ADFS:** `user` auf `upn` stellen; Gruppen brauchen eine Transformationsregel.
+- Sitzungen liegen im Speicher: Ein Neustart meldet alle ab, sie melden sich ohne Eingabe wieder an. Mehrere Instanzen
+  brauchen dann feste Zuordnung (sticky sessions). In Betrieb `url` setzen, statt die Adresse aus der Anfrage zu nehmen.
+
+**Rechte**
+
+| Wo | Was | Leer heisst |
+|---|---|---|
+| `auth.admins` | Gruppen, die Datenquellen, Lumina, Kosmen und Aktualisierungs-Tokens ändern und alle Kosmen sehen | alle Angemeldeten |
+| `access` (oben für den ersten Kosmos, sonst im Eintrag unter `kosmen`) | Gruppen, die den Kosmos sehen; die anderen sehen ihn auch im Hauptmenü nicht | alle Angemeldeten |
+| `editors` | Gruppen, die seine Kennzahlen pflegen (Ziele, Grenzen, neue Kennzahlen) | nur Administratoren |
+| `access` in einer Kennzahl (Kennzahlen-Datei) | Gruppen, die diese eine Kennzahl sehen | alle, die den Kosmos sehen |
+| `rights: "source"` | Lumantic fragt Snowflake oder Databricks im Namen der Person; deren eigene Rechte gelten | Lumantic prüft die Gruppen |
+
+Gruppen werden ohne Rücksicht auf Gross- und Kleinschreibung verglichen. Wer welche Kennzahl sieht, ändern nur
+Administratoren. Sobald sich Leute anmelden, hat jede Person in jedem Kosmos ihre eigenen Seiten; sie beginnen mit den
+Seiten, die vorher alle teilten.
+
+**Im Namen der Person fragen** (`rights: "source"`, nur mit OpenID Connect): Das technische Konto des Kosmos liest nur
+noch die Struktur. Die Zahlen liest Lumantic mit der Anmeldung der Person, wenn sie den Kosmos öffnet, und behält sie bis
+zum nächsten Neulesen.
+- Snowflake bekommt das Token der Anmeldung als OAuth-Token. Dafür braucht es in Snowflake eine External-OAuth-Integration,
+  die dem Anbieter vertraut; es gilt die Rolle der Person.
+- Databricks tauscht das Token der Anmeldung gegen ein eigenes (Token-Federation). Dafür braucht es im Databricks-Konto
+  eine Federation-Policy für den Anbieter; es gelten die Rechte der Person im Unity Catalog, mit Zeilenfiltern und Masken.
+- Beides ist gegen nachgebaute Antworten getestet, nicht gegen echte Konten.
+
+**Zugriffsprotokoll:** Mit Anmeldung schreibt Lumantic in `data/zugriff.log`, wer sich wann an- und abmeldet und welchen
+Kosmos öffnet, eine JSON-Zeile pro Ereignis, ohne Zahlen. Wie lange es bleibt, bestimmt ihr.
+
+## Katalog
+
+Ein Fachkatalog im Goldlayer besteht aus bis zu drei Tabellen oder Views mit festen Namen, in einem Schema, das die
+Datenquelle zeigt (bei einem Ordner sind es Dateien `lumantic_kennzahlen.csv` und so fort). Nur die erste ist Pflicht;
+fehlende Spalten bleiben offen. Wie euer Katalog intern aussieht, spielt keine Rolle: Die Views bilden ihn auf diese
+Spalten ab.
+
+| Tabelle | Spalten |
+|---|---|
+| `lumantic_kennzahlen` | `id`, `name`, `definition`, `thema`, `einheit` (z. B. «Mio. CHF», «%», «Stück», «Tage»), `art` («Bestand» oder «Fluss»), `richtung` («höher ist besser», «tiefer ist besser», «neutral»), `tabelle`, `wert_spalte`, `zeit_spalte`, `teile_spalte`, `eigner`, `berechnung` |
+| `lumantic_ziele` | `kennzahl_id`, `art` («Ziel» oder «Grenze»), `wert`, `name`, `gueltig_ab`, `gueltig_bis`, `periode` («Jahr» oder «Monat», optional) |
+| `lumantic_begriffe` | `begriff`, `definition`, `synonyme` (mit `;` getrennt), `kennzahl_id` |
+
+- Jede Zeile von `lumantic_kennzahlen` ist eine Kennzahl, jedes `thema` eine Seite. Mit dem Fachkatalog allein baut
+  sich ein Kosmos, ohne Kennzahlen-Datei.
+- Was der Fachkatalog offen lässt, ergänzt Lumantic in der Kennzahlen-Datei des Kosmos unter `extra`, eine Kennzahl pro
+  `id` (`desc`, `formula`, `owner`, `unit`, `kind`, `dir`, `target`, `limit`, `targetName`, `limitName`). Was der
+  Fachkatalog füllt, gilt; Lumantic weist Änderungen daran ab.
+- Lumantics eigene Begriffe stehen unter `terms`, eigene Kennzahlen wie bisher unter `kpis`.
+- Was weder dort noch hier steht, vermutet Lumantic aus dem Spaltennamen und zeigt es als vermutet.
+- Zeilen, die sich nicht lesen lassen, zeigt der Sternkatalog oben als Hinweis; die übrigen gelten.
+- `GET /api/katalog/export?format=sql` (im Sternkatalog unter «Tabellen») schreibt den ganzen Katalog als SQL, das die
+  drei Views im Schema `lumantic` anlegt, in der SQL-Sprache der Datenquelle.
 
 ## Mehrere Kosmen
 

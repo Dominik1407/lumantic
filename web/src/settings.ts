@@ -4,7 +4,7 @@
 // no Kosmos, the same place is «Kosmen»: the list of all, and the form for one more.
 // Every change applies at once. New figures or a new source rebuild the room when the sheet closes.
 import type { KosmosRoom } from "virtual:kosmos";
-import { api, ApiError, type Catalog, type DataSource, type KosmosInfo, type KpiDef, type KpiList, type SecretKey, type SecretState, type Settings, type SourceSecrets, type TestResult } from "./api";
+import { api, ApiError, type Catalog, type DataSource, type Grain, type KosmosInfo, type KpiDef, type KpiList, type SecretKey, type SecretState, type Settings, type SourceSecrets, type TestResult } from "./api";
 import { $, h } from "./dom";
 import { logo } from "./logo";
 import { P, setPref, uiOnly, type Prefs } from "./prefs";
@@ -23,6 +23,7 @@ export interface SettingsHost {
   kosmen(): KosmosInfo[];
   enter(id: string): void; // go into a Kosmos
   menu(what?: string): void; // go to the main menu; "neu" opens the form for a new Kosmos there
+  catalog(kpi?: string): void; // the Sternkatalog, at a figure's entry if one is named
 }
 
 const TABS: [Tab, string][] = [["darstellung", "Darstellung"], ["start", "Start"], ["daten", "Daten"], ["lumina", "Lumina"], ["ueber", "Über"]];
@@ -38,8 +39,9 @@ export const TYPES = [
 const SF_AUTH = [{ v: "keypair", name: "Schlüsselpaar", note: "Empfohlen: ein technischer Benutzer mit eigenem Schlüssel" }, { v: "token", name: "Token", note: "Ein Programmatic Access Token oder ein OAuth-Token" }] as const;
 const DB_AUTH = [{ v: "oauth", name: "Service Principal", note: "Empfohlen: OAuth mit Client-ID und Secret" }, { v: "token", name: "Persönliches Token", note: "Zum Ausprobieren" }] as const;
 const DIRS = [{ v: 1, name: "Höher ist besser" }, { v: -1, name: "Tiefer ist besser" }, { v: 0, name: "Neutral" }] as const;
-const UNITS = [{ v: "%", name: "%" }, { v: "Mio", name: "Mio. CHF" }, { v: "Mrd", name: "Mrd. CHF" }] as const;
-const KINDS = [{ v: "stock", name: "Bestand am Monatsende" }, { v: "flow", name: "Summe im Monat" }] as const;
+const UNITS = [{ v: "%", name: "%" }, { v: "Mio", name: "Mio. CHF" }, { v: "Mrd", name: "Mrd. CHF" }, { v: "Tsd", name: "Tsd. CHF" },
+  { v: "Stk", name: "Stück" }, { v: "Tage", name: "Tage" }, { v: "h", name: "Stunden" }, { v: "Zahl", name: "Zahl" }] as const;
+const KINDS = [{ v: "stock", name: "Bestand am Monatsende" }, { v: "flow", name: "Summe im Monat" }, { v: "avg", name: "Durchschnitt der Monate" }] as const;
 
 const monthLabel = (ym: string) => { const [y, m] = ym.split("-").map(Number); return y && m ? `${MON[m - 1]} ${y}` : ym; };
 const thousands = (v: number) => Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "’");
@@ -55,6 +57,8 @@ function ago(iso: string) {
   return `am ${d.getDate()}. ${MON[d.getMonth()]} ${d.getFullYear()}`;
 }
 const errText = (e: unknown) => (e instanceof ApiError ? e.message : "Der Server antwortet nicht.");
+// Without a login everyone may change everything; an older server says nothing about it either.
+const admin = (s: Settings | null) => s?.me?.admin !== false;
 // «1’250,5» or «1 250.5» → 1250.5 · empty → null · anything else → NaN
 function parseNum(s: string): number | null {
   const t = s.replace(/[’'\s]/g, "").replace(",", ".");
@@ -64,7 +68,7 @@ function parseNum(s: string): number | null {
 }
 const showNum = (v: number | null | undefined) => (v === null || v === undefined ? "" : String(v));
 // Amounts are kept in Mio. CHF, also for figures shown in Mrd.
-const unitOf = (u: string) => (u === "%" ? "in %" : "in Mio. CHF");
+const unitOf = (u: string) => ({ "%": "in %", Tsd: "in Tsd. CHF", Stk: "in Stück", Tage: "in Tagen", h: "in Stunden", Zahl: "als Zahl" } as Record<string, string>)[u] || "in Mio. CHF";
 
 // ───────────── Controls ─────────────
 let uid = 0;
@@ -271,7 +275,7 @@ export function createSettings(host: SettingsHost) {
       group("Bewegung", motion, note(systemStill ? "Dein System wünscht wenig Bewegung. Lumantic hält sich daran." : "Ruhig zeigt jede Änderung sofort, ohne Flüge und Übergänge.")),
       group("Textgrösse", size),
     ];
-    if (s) {
+    if (s && admin(s)) {
       const m = msgLine();
       out.push(h("div", { class: "s-foot" }, note("Was du hier wählst, gilt für dich. «Für alle speichern» macht es zum Standard für alle, die Lumantic neu öffnen."),
         btn("Für alle speichern", async () => {
@@ -425,6 +429,13 @@ export function createSettings(host: SettingsHost) {
   }
 
   function data(s: Settings): Node[] {
+    // Only admins change a source and its schedule; the others see how it is doing and its key figures.
+    if (!admin(s)) return [
+      h("p", { class: "s-status", "data-tone": s.status.ok ? "ok" : "bad" }, h("i", { class: "s-led", "aria-hidden": "true" }), statusText(s)),
+      note("Datenquelle und Aktualisierung richten Administratoren ein."),
+      group("Kennzahlen", kpiPart(s)),
+      ...(s.kosmos.count > 1 ? [group("Kosmos", actions(h("button", { type: "button", class: "s-btn", onclick: () => host.menu() }, "Alle Kosmen")))] : []),
+    ];
     if (!draft) draft = structuredClone(s.data);
     const dr = draft, f = sourceForm(dr, "src", (k) => s.locked.includes("data." + k), (k, label, what) => secretBlock(k, label, stateOf(s, k), what));
     const save = btn("Speichern", async () => {
@@ -458,6 +469,7 @@ export function createSettings(host: SettingsHost) {
       h("p", { class: "s-status", "data-tone": s.status.ok ? "ok" : s.configExists ? "bad" : "off" }, h("i", { class: "s-led", "aria-hidden": "true" }), statusText(s)),
       group("Datenquelle", ...f.nodes, actions(tryTest(f, "src", dr), save, refresh), f.msg.el, f.found),
       ...(s.refresh ? [refreshGroup(s)] : []),
+      rasterGroup(s),
       group("Kennzahlen", kpiPart(s)),
       kosmosGroup(s),
     ];
@@ -515,6 +527,26 @@ export function createSettings(host: SettingsHost) {
     if (rf.own) kids.push(actions(h("button", { type: "button", class: "s-btn quiet", onclick: () => void put(null, "Wieder wie üblich für diese Datenquelle.") }, "Zurück zum Üblichen")));
     kids.push(m.el, h("h4", { class: "s-sub", text: "Anstoss durch einen Ladeprozess" }), ...tokenPart(s));
     return group("Aktualisierung", ...kids);
+  }
+
+  // ───────────── Raster ─────────────
+  // The standard raster: «Heute» and the main menu judge in it. Everyone may still read the pages in another one.
+  const RASTERS = [
+    { v: "monat", name: "Monat", note: "Wie bisher: der Status gilt für den laufenden Monat" },
+    { v: "quartal", name: "Quartal", note: "Für Gremien, die vierteljährlich berichten" },
+    { v: "jahr", name: "Jahr", note: "Für Ziele, die erst am Jahresende zählen" },
+  ] as const;
+  function rasterGroup(s: Settings): Node {
+    const m = flashed("grain");
+    return group("Raster",
+      note("Danach urteilen «Heute» und das Hauptmenü. Lesen kann jede Person jede Seite auch in einem anderen Raster, mit der Wahl neben dem Datum oder der Taste G."),
+      h("div", { class: "s-field" }, h("span", { class: "s-flabel", text: "Standardraster" }),
+        choice("Standardraster", RASTERS, s.grain || "monat", (v) => void (async () => {
+          try { host.setSettings(await api.saveSettings({ grain: v as Grain })); dataChanged = true; flash("grain", "Gespeichert. Der Kosmos urteilt jetzt im neuen Raster, sobald du die Einstellungen schliesst.", "ok"); }
+          catch (e) { flash("grain", errText(e), "bad"); }
+          render();
+        })(), { stacked: true })),
+      m.el);
   }
 
   function tokenPart(s: Settings): Node[] {
@@ -581,12 +613,13 @@ export function createSettings(host: SettingsHost) {
         h("span", { class: "s-kn", text: k.name || k.id }),
         h("span", { class: "s-km", text: `${TYPES.find((t) => t.v === k.type)?.name || k.type} · ${line}` }),
         h("span", { class: "s-kst", "data-tone": st.ok ? "ok" : "bad", text: st.ok ? "bereit" : st.tables > 0 && st.kpis === 0 ? "ohne Kennzahlen" : "antwortet nicht" })),
-        actions(h("button", { type: "button", class: "s-btn", onclick: () => host.enter(k.id) }, "Öffnen"), k.main ? null : removeKosmos(k.id, k.name, m)));
+        actions(h("button", { type: "button", class: "s-btn", onclick: () => host.enter(k.id) }, "Öffnen"), k.main || !admin(s) ? null : removeKosmos(k.id, k.name, m)));
     });
     return [
       group("Kosmen", note("Jeder Kosmos ist ein Raum über einer Datenquelle, mit eigenen Kennzahlen und eigenen Seiten. Datenquelle und Kennzahlen eines Kosmos änderst du in seinen Einstellungen unter «Daten»."),
         h("ul", { class: "s-klist is-kosmen" }, ...rows), m.el),
-      adding ? newKosmos(s) : actions(h("button", { type: "button", class: "s-btn primary", onclick: () => { adding = true; render(); body.querySelector(".is-new")?.scrollIntoView({ block: "nearest" }); } }, "Kosmos hinzufügen")),
+      !admin(s) ? note("Weitere Kosmen legen Administratoren an.")
+        : adding ? newKosmos(s) : actions(h("button", { type: "button", class: "s-btn primary", onclick: () => { adding = true; render(); body.querySelector(".is-new")?.scrollIntoView({ block: "nearest" }); } }, "Kosmos hinzufügen")),
     ];
   }
   function newKosmos(s: Settings): HTMLElement {
@@ -627,7 +660,7 @@ export function createSettings(host: SettingsHost) {
   function kpiPart(s: Settings): Node {
     if (!kpis && !kpisErr && !kpisLoading) void loadKpis();
     if (!kpis) return note(kpisErr || "Lumantic liest die Kennzahlen …");
-    const list = kpis, groups = new Map(list.groups.map((g) => [g.id, g.name]));
+    const list = kpis, groups = new Map(list.groups.map((g) => [g.id, g.name])), mayEdit = s.me?.editor !== false;
     const m = flashed("kpi");
     const rows = list.kpis.map((k) => {
       const ok = k.status === "ok", open = editing === k.id;
@@ -635,15 +668,19 @@ export function createSettings(host: SettingsHost) {
         h("button", { type: "button", class: "s-khead", "aria-expanded": String(open), onclick: () => { editing = open ? "" : k.id; render(); } },
           h("span", { class: "s-kn", text: k.name }),
           h("span", { class: "s-km", text: `${groups.get(k.group) || k.group} · ${k.monthly.table}.${k.monthly.value}` }),
-          h("span", { class: "s-kst", "data-tone": ok ? "ok" : "bad", text: ok ? "bereit" : (k.status || "").replace(/^fehlt: /, "fehlt: ") })));
-      if (open) row.append(kpiEdit(k));
+          h("span", { class: "s-kst", "data-tone": ok ? "ok" : "bad", text: ok ? (k.origin === "quelle" ? "Fachkatalog" : "bereit") : (k.status || "").replace(/^fehlt: /, "fehlt: ") })));
+      // A figure of the company catalog is changed there; what it leaves open is added in the Sternkatalog.
+      if (open && k.origin === "quelle") row.append(h("div", { class: "s-kedit" }, note("Diese Kennzahl kommt aus dem Fachkatalog in der Quelle. Was dort offen ist, ergänzt du im Sternkatalog."),
+        actions(h("button", { type: "button", class: "s-btn", onclick: () => { close(); host.catalog(k.id); } }, "Im Sternkatalog öffnen"))));
+      else if (open) row.append(mayEdit ? kpiEdit(k) : note(k.desc || "Ohne Beschreibung."));
       return row;
     });
     return h("div", { class: "s-kpis" },
       note(list.builtIn ? "Das sind die eingebauten ALCO-Kennzahlen. Mit der ersten Änderung legt Lumantic eine eigene Datei an."
         : list.file ? `Gespeichert in ${list.file}.` : "Dieser Kosmos hat noch keine Kennzahlen. Mit der ersten legt Lumantic eine Datei für ihn an."),
       h("ul", { class: "s-klist" }, ...rows),
-      editing === "new" ? kpiAdd(list, s) : actions(h("button", { type: "button", class: "s-btn", onclick: () => { editing = "new"; render(); } }, "Kennzahl hinzufügen")),
+      !mayEdit ? note("Die Kennzahlen dieses Kosmos pflegen andere.")
+        : editing === "new" ? kpiAdd(list, s) : actions(h("button", { type: "button", class: "s-btn", onclick: () => { editing = "new"; render(); } }, "Kennzahl hinzufügen")),
       m.el);
   }
   // Server sentences about a figure: name, table and column, or the topic, each under its own field.
@@ -699,7 +736,11 @@ export function createSettings(host: SettingsHost) {
       guessUnit();
     };
     // The column's name says its unit: lcr_pct is a percentage, kredite_mio an amount.
-    const guessUnit = () => { unit = /_pct$|_quote$|_ratio$/i.test(valueSel.value) ? "%" : "Mio"; drawUnit(); };
+    const guessUnit = () => {
+      const c = valueSel.value;
+      unit = /_pct$|_quote$|_ratio$/i.test(c) ? "%" : /_stk$|_stueck$/i.test(c) ? "Stk" : /_tage$/i.test(c) ? "Tage" : /_h$|_std$/i.test(c) ? "h" : /_tsd$/i.test(c) ? "Tsd" : "Mio";
+      drawUnit();
+    };
     tableSel.addEventListener("change", fillValues);
     valueSel.addEventListener("change", guessUnit);
     fillValues();
@@ -733,7 +774,7 @@ export function createSettings(host: SettingsHost) {
       h("div", { class: "s-field" }, h("span", { class: "s-flabel", text: "Einheit" }), unitBox),
       h("div", { class: "s-field" }, h("span", { class: "s-flabel", text: "Art" }), choice("Art", KINDS, kind, (v) => (kind = v), { stacked: true })),
       h("div", { class: "s-field" }, h("span", { class: "s-flabel", text: "Richtung" }), choice("Richtung", DIRS, dir, (v) => (dir = v))),
-      h("div", { class: "s-pair" }, fT.wrap, fL.wrap), note("Ziel und Limit in Prozent oder in Mio. CHF, wie die Wertspalte."),
+      h("div", { class: "s-pair" }, fT.wrap, fL.wrap), note("Ziel und Limit in der Einheit der Wertspalte, Beträge in Mio. CHF."),
       fTopic.wrap, actions(add, cancel), m.el);
   }
 
@@ -790,6 +831,11 @@ export function createSettings(host: SettingsHost) {
         m.set(r.ok ? `Verbunden mit ${nm}, Antwort in ${thousands(r.ms)} ms.` : r.error || "Die Verbindung klappt nicht.", r.ok ? "ok" : "bad");
       } catch (e) { m.set(errText(e), "bad"); }
     });
+    if (!admin(s)) return [
+      h("p", { class: "s-status", "data-tone": ai.ready ? "ok" : "off" }, h("i", { class: "s-led", "aria-hidden": "true" }), state),
+      note("Lumina richten Administratoren ein."),
+      h("p", { class: "s-privacy" }, "Lumina schickt deine Frage und die Kennzahlen dieses Monats an Anthropic. Keine Datenzeilen aus dem Goldlayer."),
+    ];
     return [
       h("p", { class: "s-status", "data-tone": ai.ready ? "ok" : "off" }, h("i", { class: "s-led", "aria-hidden": "true" }), state),
       group("KI", toggle("KI verwenden", ai.enabled, (v) => void put({ enabled: v }), locked("enabled")), locked("enabled") ? note("Durch eine Umgebungsvariable festgelegt.") : null),
@@ -805,13 +851,18 @@ export function createSettings(host: SettingsHost) {
     const rows: [string, string][] = s ? [
       ["Version", s.version],
       host.kosmos() ? ["Kosmos", `${s.data.name || "ohne Namen"} · ${TYPES.find((t) => t.v === s.data.type)?.name || s.data.type}`] : ["Kosmen", String(s.kosmos.count)],
-      ["Konfiguration", s.configPath + (s.configExists ? "" : " (noch nicht angelegt, es gelten die Standardwerte)")],
-      ...(host.kosmos() ? [["Kennzahlen", s.metrics || (s.kosmos.main ? "eingebaut (ALCO)" : "noch keine")] as [string, string]] : []),
+      ...(admin(s) ? [["Konfiguration", s.configPath + (s.configExists ? "" : " (noch nicht angelegt, es gelten die Standardwerte)")] as [string, string]] : []),
+      ...(host.kosmos() && admin(s) ? [["Kennzahlen", s.metrics || (s.kosmos.main ? "eingebaut (ALCO)" : "noch keine")] as [string, string]] : []),
     ] : [];
     const out: Node[] = [h("div", { class: "s-about" }, h("p", { class: "s-word" }, logo(26)), h("p", { class: "s-slogan", text: "Quiet until it matters." }))];
     if (rows.length) out.push(h("dl", { class: "s-facts" }, ...rows.flatMap(([k, v]) => [h("dt", { text: k }), h("dd", { text: v })])));
     else out.push(offline());
-    out.push(group("Firmen-Design", note("Farben, Hausschrift und Logo stehen in der Konfiguration unter «brand». Mit einem eigenen Logo (brand.logo) steht eures oben links, und Lumantic zeichnet mit «powered by lumantic». Eine Vorlage mit dem Beispiel «Musterbank» liegt in config/lumantic.example.json, Logo und Schriftdateien kommen nach config/brand/.")));
+    const me = s?.me;
+    if (me && me.login !== "none") out.push(group("Angemeldet",
+      h("p", { class: "s-sec", text: `${me.name}${me.name !== me.id ? ` (${me.id})` : ""}` }),
+      note([me.admin ? "Administrator" : "", me.groups.length ? `Gruppen: ${me.groups.join(", ")}` : "Ohne Gruppen"].filter(Boolean).join(" · ")),
+      me.logout ? actions(h("a", { class: "s-btn", href: me.logout }, "Abmelden")) : null));
+    if (admin(s)) out.push(group("Firmen-Design", note("Farben, Hausschrift und Logo stehen in der Konfiguration unter «brand». Mit einem eigenen Logo (brand.logo) steht eures oben links, und Lumantic zeichnet mit «powered by lumantic». Eine Vorlage mit dem Beispiel «Musterbank» liegt in config/lumantic.example.json, Logo und Schriftdateien kommen nach config/brand/.")));
     if (room) {
       const m = msgLine();
       const reset = confirmReset

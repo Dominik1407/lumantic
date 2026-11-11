@@ -36,9 +36,10 @@ type Databricks struct {
 	ClientSecret string       // for "oauth"
 	Client       *http.Client // nil = a shared client with a 60 s timeout
 
-	mu      sync.Mutex // guards the cached OAuth token
+	mu      sync.Mutex // guards the cached OAuth token and the traded ones
 	oauth   string
 	expires time.Time
+	traded  map[string]traded // Databricks tokens for people's logins (onbehalf.go)
 }
 
 var _ adapter.Adapter = (*Databricks)(nil)

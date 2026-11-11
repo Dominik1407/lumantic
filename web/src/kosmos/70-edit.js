@@ -229,8 +229,9 @@ function openBlockMenu(b, anchor, byKey) {
   if (i > 0) items.push({ label: "Nach oben", run: () => moveBlock(b, -1) });
   if (i < pg.blocks.length - 1) items.push({ label: "Nach unten", run: () => moveBlock(b, 1) });
   if (b.kind !== "quiet") items.push({ label: b.auto ? "Kopie auf Seite …" : "Auf Seite …", keep: true, run: () => openPageMenu(b, anchor, byKey) });
-  if (b.kind !== "answer") items.push(b.t !== null ? { label: "Wieder mitlaufen", hint: "folgt dem Raum", run: () => toggleHold(b) } : { label: "Monat festhalten", hint: PERIODS.monat[effM(b)].label, run: () => toggleHold(b) });
+  if (b.kind !== "answer") items.push(b.t !== null ? { label: "Wieder mitlaufen", hint: "folgt dem Raum", run: () => toggleHold(b) } : { label: `${fine(G) ? "Monat" : GRAIN_NAME[G]} festhalten`, hint: periodOf(effM(b)).label, run: () => toggleHold(b) });
   if (k && b.page !== topicId(b.k)) items.push({ label: "Zur Heimat fliegen", hint: GROUPS[k.group], run: () => flyHome(b.k) });
+  if (k) items.push({ label: "Im Sternkatalog", hint: "C", run: () => HOST.openCatalog(b.k) });
   if (!b.auto) items.push({ label: "Entfernen", hint: "Entf", run: () => removeBlock(b.id) });
   selId = b.id;
   openMenu(anchor, items, { opener: st ? st.el : null, focus: !!byKey });
@@ -340,18 +341,19 @@ function keywordAnswer(pg, text, u, asNote, lead) {
   if (!u.ks.length) { asNote(); say(pg, pre + "Dazu finde ich keine Kennzahl. Ich habe es als Notiz abgelegt."); return; }
   const k = u.ks[0], views = viewsFor(k), view = u.view && views.some((x) => x.kind === u.view) ? u.view : "trend", held = u.when !== null && u.when !== T.base ? u.when : null;
   addFigure(pg, k.id, { form: "satz", open: view, t: held });
-  say(pg, pre + `Verstanden: ${k.name}, ${VIEW_NAME[view]}${held !== null ? ", festgehalten auf " + PERIODS.monat[held].long : ""}.` + (u.view && u.view !== view ? ` «${VIEW_NAME[u.view]}» gibt es für diese Kennzahl nicht.` : ""), asNote);
+  say(pg, pre + `Verstanden: ${k.name}, ${VIEW_NAME[view]}${held !== null ? ", festgehalten auf " + periodOf(held).long : ""}.` + (u.view && u.view !== view ? ` «${VIEW_NAME[u.view]}» gibt es für diese Kennzahl nicht.` : ""), asNote);
 }
 
 // ───────────── Lumina with the AI: the server asks Claude, with the figures of the month ─────────────
 const r2 = (v) => (v === null || v === undefined || !Number.isFinite(v) ? null : Math.round(v * 100) / 100);
-// What Lumina may know: the evaluated figures of one month, their last thirteen values and their parts. No data rows.
+// What Lumina may know: the evaluated figures of one period in the room's raster, their last thirteen months and
+// their parts. No data rows.
 function factsFor(m) {
-  return { title: TITLE, month: PERIODS.monat[m].long, figures: KPIS.map((k) => {
-    const r = stateOf(k, m), d = driverOf(k, m);
-    return { id: k.id, name: k.name, unit: k.unit === "%" ? "%" : "Mio. CHF", value: r.gap ? null : r2(r.cur), prev: r2(r.prev), target: r2(r.tgt), limit: r2(k.reg),
+  return { title: TITLE, month: periodOf(m).long, figures: KPIS.map((k) => {
+    const r = shownOf(k, m), d = driverOf(k, m);
+    return { id: k.id, name: k.name, unit: k.unit === "%" ? "%" : unitOf(k).full || "Zahl", value: r.gap ? null : r2(r.cur), prev: r2(r.prev), target: r2(r.tgt), limit: r2(k.reg),
       level: r.level, label: r.label, run: r.run, driver: d ? `${d.name} ${d.text}` : "", last13: k.series.slice(Math.max(0, m - 12), m + 1).map(r2),
-      parts: k.parts ? Object.entries(k.parts).map(([name, s]) => ({ name, value: r2(s[m]), prev: m > 0 ? r2(s[m - 1]) : null })) : [] };
+      parts: k.parts ? Object.keys(k.parts).map((name) => { const pp = r.i > 0 ? partPair(k, r, name) : null; return { name, value: pp ? r2(pp[0]) : null, prev: pp ? r2(pp[1]) : null }; }) : [] };
   }) };
 }
 // A view Lumina names that this figure does not have becomes the nearest one it has.
@@ -365,7 +367,7 @@ function askLumina(pg, text) {
   pg.say.replaceChildren("Lumina denkt …");
   HOST.ask(text, DATA.months[m], factsFor(m)).then((res) => {
     if (!pages.has(pg.id)) return;
-    const ab = insertBlock(pg, { id: newId("b"), kind: "answer", q: `${text} · ${PERIODS.monat[m].label}`, text: String(res.answer || "").trim() || "Dazu habe ich nichts gefunden." });
+    const ab = insertBlock(pg, { id: newId("b"), kind: "answer", q: `${text} · ${periodOf(m).label}`, text: String(res.answer || "").trim() || "Dazu habe ich nichts gefunden." });
     let n = 0;
     for (const sb of Array.isArray(res.blocks) ? res.blocks.slice(0, 3) : []) {
       const k = sb && K[sb.figure];

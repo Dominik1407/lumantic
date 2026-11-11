@@ -1,7 +1,7 @@
 // ═════ Kosmos · the blocks of a page. Every block is its own instance, with its own form, evidence and month. ═════
 const shortWhy = (s) => (s.length < 112 ? s : s.split(". ").pop());
 // A figure in few characters, for the quiet line: «117 %», «33.9 Mrd.», «1’150 Mio.».
-const shortF = (k, v) => (k.unit === "%" ? v.toFixed(k.dec) + " %" : k.unit === "Mrd" ? (v / 1000).toFixed(1) + " Mrd." : (v < 0 ? "−" : "") + thousands(Math.abs(v)) + " Mio.");
+const shortF = (k, v) => (k.unit === "%" ? v.toFixed(k.dec) + " %" : k.unit === "Mrd" ? (v / 1000).toFixed(1) + " Mrd." : (v < 0 ? "−" : "") + amount(k, v));
 // After a block changed (form, evidence, month): redraw it, recolour its star, measure its page again.
 function refreshBlock(b, mode) {
   const v = VIEWS.get(b.id), pg = pages.get(b.page);
@@ -16,10 +16,10 @@ function syncTag(v, m) {
   const b = v.b, held = b.t !== null, show = held || m !== T.base;
   v.tag.hidden = !show;
   if (!show) return;
-  const text = PERIODS.monat[m].label + (held ? " ×" : "");
+  const text = periodOf(m).label + (held ? " ×" : "");
   if (v.tag.textContent !== text) v.tag.textContent = text;
   v.tag.dataset.pin = String(held);
-  v.tag.title = held ? "Festgehalten. Ein Klick lässt den Baustein wieder mitlaufen." : "Ein Klick hält diesen Monat auf dem Baustein fest.";
+  v.tag.title = held ? "Festgehalten. Ein Klick lässt den Baustein wieder mitlaufen." : `Ein Klick hält ${THIS[G]} auf dem Baustein fest.`;
 }
 const tagEl = () => h("button", { class: "tag", type: "button", "data-tag": "1", hidden: true });
 function toolsEl(b) {
@@ -40,9 +40,10 @@ function kpiView(b) {
   const v = { b, k, el, main, evBox, evPad, tag, form: null, sents: new Map(), para: null, big: null, evKind: null, evFixed: false, chart: null, cap: null, fresh: true, m: T.base };
   v.update = (m, mode) => {
     v.m = m;
-    const r = stateOf(k, m), form = FORMS.includes(b.form) ? b.form : "satz", inLabel = form === "zeile" || form === "diagramm";
+    const r = shownOf(k, m), form = FORMS.includes(b.form) ? b.form : "satz", inLabel = form === "zeile" || form === "diagramm";
     el.dataset.kind = r.kind;
-    swapText(stw, r.label, mode);
+    // In days and weeks a figure without daily values shows its month, and says so.
+    swapText(stw, r.label + (fine(G) && r.g !== G ? (hasFine(k) ? " · Monat" : " · nur monatlich erhoben") : ""), mode);
     syncTag(v, m);
     if (v.form !== form) {
       v.form = form; v.sents.clear(); v.para = v.big = null;
@@ -135,7 +136,7 @@ function quietView(b) {
       }
       const want = prev ? prev.nextSibling : line.firstChild;
       if (want !== it.el) line.insertBefore(it.el, want);
-      const r = stateOf(k, m);
+      const r = shownOf(k, m);
       it.mk.hidden = r.level === "calm";
       if (r.level !== "calm" && it.mk.textContent !== r.label) it.mk.textContent = r.label;
       rollSet(it.roll, shortF(k, r.cur), rollMode(mode));
@@ -148,14 +149,14 @@ function quietView(b) {
 
 // A live figure inside a note: name, value and word-sized chart follow the month of the note.
 function chipEl(k, m) {
-  const roll = makeRoll(F(k, k.series[m]), "num"), sp = sparkEl(k);
+  const roll = makeRoll(F(k, shownOf(k, m).cur), "num"), sp = sparkEl(k);
   sparkSet(sp, m);
   const c = h("span", { class: "chip", contenteditable: "false", "data-k": k.id, title: `${k.long}: zur Seite ${GROUPS[k.group]} fliegen` }, h("span", { class: "cn", text: k.name }), " ", roll, sp);
   c._roll = roll; c._sp = sp;
   return c;
 }
 function updateChips(root, m, mode) {
-  root.querySelectorAll(".chip").forEach((c) => { if (c._roll) { const k = K[c.dataset.k]; rollSet(c._roll, F(k, k.series[m]), rollMode(mode)); sparkSet(c._sp, m); } });
+  root.querySelectorAll(".chip").forEach((c) => { if (c._roll) { const k = K[c.dataset.k]; rollSet(c._roll, F(k, shownOf(k, m).cur), rollMode(mode)); sparkSet(c._sp, m); } });
 }
 const fillNote = (p, segs, m) => p.replaceChildren(...segs.map((s) => (s.k ? chipEl(K[s.k], m) : s.t)));
 function readNote(p) {
@@ -223,10 +224,14 @@ function buildPage(pg) {
     pg.tagEl = h("span", { class: "dl-tag", text: "Heute" });
     pg.when = h("button", { class: "when", type: "button", title: "Ziehen reist durch die Monate" });
     pg.play = h("button", { class: "play", type: "button", "aria-pressed": "false", "aria-label": "Geschichte abspielen", title: "Geschichte abspielen (Leertaste)" }, "▶");
+    // The raster the pages are read in. The status of «Heute» and the main menu keeps the Kosmos' own.
+    pg.grain = h("span", { class: "grain", role: "radiogroup", "aria-label": "Raster" },
+      ...GRAINS.map((g) => h("button", { class: "gb", type: "button", role: "radio", "data-grain": g, "aria-checked": String(g === G), "aria-disabled": AVAILABLE.includes(g) ? null : "true",
+        title: AVAILABLE.includes(g) ? `In ${RUN_NOUN[g]} lesen (G)` : "Keine Kennzahl dieses Kosmos hat Tageswerte" }, GRAIN_NAME[g])));
     pg.ruler = h("div", { class: "ruler", role: "slider", tabindex: "-1", "aria-label": "Zeitlineal: Monat wählen" });
     pg.rr = h("div", { class: "rr", "data-open": "false" }, h("div", {}, pg.ruler));
     pg.hl = h("h2", { class: "hl" });
-    head.append(h("div", { class: "dl" }, pg.tagEl, pg.when, pg.play), pg.rr, pg.hl);
+    head.append(h("div", { class: "dl" }, pg.tagEl, pg.when, pg.play, pg.grain), pg.rr, pg.hl);
   } else if (pg.sys) {
     pg.tagEl = h("span", { class: "dl-tag", text: GROUPS[pg.sys.slice(2)] });
     pg.whenTxt = h("span", { class: "dl-when" });
@@ -253,22 +258,23 @@ function buildPage(pg) {
   pg.ro.observe(pg.el);
 }
 function updateHead(pg, mode) {
-  const m = T.base, per = PERIODS.monat[m], past = m < TODAY;
+  const m = T.base, per = periodOf(m), past = !atToday();
   if (pg.sys === "heute") {
     pg.tagEl.textContent = past ? "Rückblick" : "Heute";
     swapText(pg.when, per.long, mode);
-    pg.when.setAttribute("aria-label", `${per.long}. Ziehen oder Pfeiltasten wechseln den Monat.`);
+    pg.when.setAttribute("aria-label", `${per.long}. Ziehen oder Pfeiltasten wechseln ${ACC[G]}.`);
     if (RULER_CUR) {
+      const pm = PERIODS.monat[m];
       RULER_CUR.style.left = (m / TODAY) * 100 + "%";
       RULER_CUR.dataset.edge = m < 5 ? "l" : m > TODAY - 5 ? "r" : "";
-      RULER_CUR.firstChild.textContent = `Q${per.q} ${per.y}`;
+      RULER_CUR.firstChild.textContent = `Q${pm.q} ${pm.y}`;
       pg.ruler.setAttribute("aria-valuenow", m);
       pg.ruler.setAttribute("aria-valuetext", per.long);
     }
-  } else if (pg.sys) pg.whenTxt.textContent = past ? "· " + per.long : "";
+  } else if (pg.sys) pg.whenTxt.textContent = past || G !== "monat" ? "· " + per.long : ""; // a quarter says which one, also today
   const hl = pg.hl;
   if (!hl) return;
-  const text = headlineFor(m, scopeOf(pg));
+  const text = headlineFor(m, scopeOf(pg), pg.sys !== "heute");
   if (hl._t === text) return;
   if (hl._t && mode === "step" && !reduced) ghostOf(hl);
   const first = !hl._t;
@@ -283,10 +289,10 @@ function updateLabel(pg) {
   let sub;
   if (pg.sys === "heute") sub = h("i", { text: headlineFor(T.base, "all") });
   else if (pg.sys) {
-    const c = levelCounts(T.base, scopeOf(pg)), kind = c.alert ? "alert" : c.watch ? "watch" : c.good ? "good" : "calm";
+    const c = levelCounts(T.base, scopeOf(pg), true), kind = c.alert ? "alert" : c.watch ? "watch" : c.good ? "good" : "calm";
     sub = h("small", { "data-kind": kind, text: c.alert ? (c.alert === 1 ? "eine Sache braucht dich" : `${c.alert} Dinge brauchen dich`) : c.watch ? "im Auge behalten" : c.good ? "gute Nachricht" : "alles ruhig" });
   } else sub = h("small", { text: pg.blocks.length === 1 ? "ein Baustein" : pg.blocks.length + " Bausteine" });
-  pg.lab.replaceChildren(pg.sys === "heute" && T.base < TODAY ? "Rückblick" : pageName(pg), sub);
+  pg.lab.replaceChildren(pg.sys === "heute" && !atToday() ? "Rückblick" : pageName(pg), sub);
   pg.lab.setAttribute("aria-label", `Zur Seite ${pageName(pg)} fliegen`);
 }
 // A block that is new on its page fades in under its star.

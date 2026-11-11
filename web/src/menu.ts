@@ -12,10 +12,12 @@ export interface MenuHost {
   settingsOpen(): boolean;
   closeSettings(): boolean;
   still(): boolean;
+  catalog(): void; // the Sternkatalog of every Kosmos
+  canAdd(): boolean; // may connect a further Kosmos (admins)
 }
 
 const NUM = ["Kein", "Ein", "Zwei", "Drei", "Vier", "Fünf", "Sechs", "Sieben", "Acht", "Neun", "Zehn", "Elf", "Zwölf"];
-const TYPE: Record<string, string> = { duckdb: "DuckDB-Datei", files: "Ordner mit Dateien", windmill: "Windmill" };
+const TYPE: Record<string, string> = { duckdb: "DuckDB-Datei", files: "Ordner mit Dateien", snowflake: "Snowflake", databricks: "Databricks", windmill: "Windmill" };
 const rad = (deg: number) => (deg * Math.PI) / 180;
 // A small steady number from a name, so a sky looks the same every time without looking ruled.
 const hash = (s: string) => { let x = 7; for (const c of s) x = (x * 31 + c.charCodeAt(0)) % 9973; return x; };
@@ -107,7 +109,7 @@ export async function showMenu(list: KosmosInfo[], host: MenuHost, note = "") {
   const add = h("button", { type: "button", class: "km-k km-new", style: `--n:${list.length}`, title: "Einen weiteren Goldlayer verbinden (Taste N)", onclick: () => host.add() },
     (() => { const s = noSky(); s.append(sv("path", { class: "km-plus", d: "M120 91v18M111 100h18" })); return s; })(),
     h("span", { class: "km-name", text: "Kosmos hinzufügen" }), h("span", { class: "km-meta", text: "einen weiteren Goldlayer verbinden" }));
-  ol.append(h("li", {}, add));
+  if (host.canAdd()) ol.append(h("li", {}, add));
 
   root.replaceChildren(h("div", { class: "km-in" }, h("header", { class: "km-head" }, h("p", { class: "km-eye", text: "Deine Kosmen" }), hl, note ? h("p", { class: "km-note", role: "status", text: note }) : null), ol));
   root.hidden = false;
@@ -116,7 +118,7 @@ export async function showMenu(list: KosmosInfo[], host: MenuHost, note = "") {
   const places = () => $("places").replaceChildren(
     ...items.map((it, i) => h("button", { type: "button", title: i < 9 ? `${it.info.name} (Taste ${i + 1})` : it.info.name, onclick: () => enter(it) },
       it.sum?.counts.alert ? h("i", { class: "pl-al", title: "braucht dich" }) : null, it.info.name)),
-    gear(() => host.settings()));
+    katalogButton(() => host.catalog()), gear(() => host.settings()));
   places();
   $("btn-idee").style.visibility = "hidden";
 
@@ -127,7 +129,8 @@ export async function showMenu(list: KosmosInfo[], host: MenuHost, note = "") {
     const at = items.findIndex((it) => it.el === document.activeElement);
     if (/^[1-9]$/.test(e.key) && items[+e.key - 1]) enter(items[+e.key - 1]);
     else if (e.key === ",") { e.preventDefault(); host.settings(); }
-    else if (e.key === "n" || e.key === "N" || e.key === "+") host.add();
+    else if ((e.key === "n" || e.key === "N" || e.key === "+") && host.canAdd()) host.add();
+    else if (e.key === "c" || e.key === "C") host.catalog();
     else if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); (items[(at + 1) % items.length] || items[0]).el.focus(); }
     else if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); (items[(at - 1 + items.length) % items.length] || items[0]).el.focus(); }
   });
@@ -143,6 +146,14 @@ export async function showMenu(list: KosmosInfo[], host: MenuHost, note = "") {
   hl.textContent = [first, second].filter(Boolean).join(" ");
   places();
 }
+
+// The Sternkatalog's place in the row: a small star and the word, on a phone the star alone. The room draws the same.
+export function katalogButton(onclick: () => void): HTMLElement {
+  return h("button", { type: "button", class: "pl-set pl-kat", "data-katalog": "1", "aria-label": "Sternkatalog", title: "Sternkatalog (Taste C)", onclick },
+    sv("svg", { class: "gear", viewBox: "-8 -8 16 16", "aria-hidden": "true" }, sv("path", { d: STAR_D })), h("span", { class: "pl-word", text: "Katalog" }));
+}
+// A four-pointed star, the catalog's sign.
+const STAR_D = "M0,-6.5 L1.6,-1.6 L6.5,0 L1.6,1.6 L0,6.5 L-1.6,1.6 L-6.5,0 L-1.6,-1.6 Z";
 
 // The same gear the room draws at the end of its places row (kosmos/75-hands.js).
 const GEAR_D = (() => {

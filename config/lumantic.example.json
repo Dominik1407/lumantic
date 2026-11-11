@@ -47,6 +47,23 @@
         }
       },
       "metrics": "config/beispiele/privatkunden.json"
+    },
+    {
+      "id": "industrie",
+      "data": {
+        "type": "files",
+        "name": "Industrie",
+        "path": "goldlayer/industrie",
+        "schema": "gold",
+        "duckdb": "",
+        "windmill": {
+          "url": "",
+          "workspace": "lumantic",
+          "describe": "f/lumantic/describe",
+          "query": "f/lumantic/query"
+        }
+      },
+      "metrics": "config/beispiele/industrie.json"
     }
   ],
   "ai": {

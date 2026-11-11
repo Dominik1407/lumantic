@@ -47,7 +47,7 @@
     },
     {
       "id": "nim", "group": "zins", "name": "Zinsmarge", "long": "Nettozinsmarge", "short": "Zinsmarge",
-      "unit": "%", "dec": 2, "kind": "stock", "dir": 1, "season": true,
+      "unit": "%", "dec": 2, "kind": "avg", "dir": 1, "season": true,
       "desc": "Zinserfolg im Verhältnis zu den zinstragenden Aktiven, annualisiert.",
       "monthly": { "table": "gold_alco.erfolg_monat", "value": "zinsmarge_pct" }
     },

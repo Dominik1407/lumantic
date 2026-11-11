@@ -1,0 +1,66 @@
+{
+  "title": "Industrie",
+  "source": "Goldlayer · Musterwerk AG",
+  "groups": [
+    { "id": "finanzen", "name": "Finanzen" },
+    { "id": "vertrieb", "name": "Vertrieb" },
+    { "id": "produktion", "name": "Produktion" },
+    { "id": "logistik", "name": "Logistik" }
+  ],
+  "kpis": [
+    {
+      "id": "gutteile", "group": "produktion", "name": "Gutteile", "long": "Fehlerfreie Teile aller Werke", "short": "Gutteile",
+      "unit": "Stk", "dec": 0, "kind": "flow", "dir": 1, "target": 185000, "targetName": "Monatsplan",
+      "desc": "Fehlerfreie Teile, die die Werke im Monat gefertigt haben.",
+      "owner": "Produktion · Werkleitung",
+      "monthly": { "table": "gold.produktion_monat", "value": "gutteile_stk" },
+      "daily": { "table": "gold.produktion_tag", "value": "gutteile_stk" },
+      "parts": { "mode": "sum", "split": "werk", "order": ["Aarau", "Brno", "Suzhou"] }
+    },
+    {
+      "id": "ausschuss", "group": "produktion", "name": "Ausschussquote", "long": "Ausschuss in Prozent der gefertigten Teile", "short": "Ausschuss",
+      "unit": "%", "dec": 1, "kind": "ratio", "dir": -1, "target": 2.5, "targetName": "Zielwert", "limit": 3.5, "limitName": "Höchstwert",
+      "desc": "Anteil der gefertigten Teile, die nicht verkauft werden können.",
+      "formula": "Teile mit Fehler ÷ gefertigte Teile",
+      "owner": "Qualität",
+      "monthly": { "table": "gold.kpi_monat", "value": "ausschussquote_pct" },
+      "daily": { "table": "gold.qualitaet_tag", "value": "ausschussquote_pct" },
+      "parts": { "mode": "ratio", "kind": "flow", "columns": [{ "name": "Ausschuss", "column": "ausschuss_stk" }, { "name": "Gefertigt", "column": "gesamt_stk" }] }
+    },
+    {
+      "id": "reichweite", "group": "logistik", "name": "Lagerreichweite", "long": "Reichweite des Lagers in Arbeitstagen", "short": "Reichweite",
+      "unit": "Tage", "dec": 0, "kind": "stock", "dir": -1, "target": 45, "targetName": "Zielwert", "limit": 60, "limitName": "Höchstwert",
+      "desc": "Wie viele Arbeitstage der Lagerbestand beim heutigen Verbrauch reicht.",
+      "formula": "Lagerwert ÷ Materialverbrauch pro Arbeitstag",
+      "owner": "Logistik",
+      "monthly": { "table": "gold.kpi_monat", "value": "lagerreichweite_tage" }
+    },
+    {
+      "id": "lagerwert", "group": "logistik", "name": "Lagerwert", "long": "Wert des Lagers aller Werke", "short": "Lagerwert",
+      "unit": "Mio", "dec": 0, "kind": "stock", "dir": -1,
+      "desc": "Wert von Material, Halbfabrikaten und Fertigware per Monatsende.",
+      "monthly": { "table": "gold.lager_monat", "value": "lagerwert_mio" },
+      "parts": { "mode": "sum", "split": "werk", "order": ["Aarau", "Brno", "Suzhou"] }
+    },
+    {
+      "id": "materialquote", "group": "finanzen", "name": "Materialquote", "long": "Materialaufwand in Prozent des Umsatzes", "short": "Material",
+      "unit": "%", "dec": 1, "kind": "avg", "dir": -1, "target": 45.5, "targetName": "Budget",
+      "desc": "Wie viel vom Umsatz für Material ausgegeben wird.",
+      "monthly": { "table": "gold.kpi_monat", "value": "materialquote_pct" }
+    }
+  ],
+  "extra": {
+    "auftragseingang": {
+      "desc": "Bestellungen, die im Monat neu eingegangen sind, zum Auftragswert.",
+      "owner": "Vertrieb · A. Rossi", "dir": 1, "target": 42, "targetName": "Monatsziel"
+    },
+    "liefertreue": { "formula": "Pünktlich und vollständig gelieferte Aufträge ÷ alle Aufträge des Monats" }
+  },
+  "terms": [
+    { "term": "Lagerreichweite", "definition": "Wie lange der Bestand beim heutigen Verbrauch reicht.", "synonyms": ["Days on Hand", "Reichweite"], "kpi": "reichweite" },
+    { "term": "Gutteile", "definition": "Teile ohne Fehler, die verkauft werden können.", "synonyms": ["Gutstück", "i.O.-Teile"], "kpi": "gutteile" }
+  ],
+  "events": [
+    { "month": "2026-08", "title": "Lieferant in Asien", "text": "Ein Zulieferer für Steuerplatinen liefert verspätet und unvollständig." }
+  ]
+}
