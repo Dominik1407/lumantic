@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"lumantic/internal/card"
-	"lumantic/internal/config"
-	"lumantic/internal/engine"
-	"lumantic/internal/lumina"
-	"lumantic/internal/store"
+	"github.com/Dominik1407/lumantic/internal/card"
+	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/engine"
+	"github.com/Dominik1407/lumantic/internal/lumina"
+	"github.com/Dominik1407/lumantic/internal/store"
 )
 
 // The first board: questions become cards with a fixed calculation. Kosmos

@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"lumantic/internal/catalog"
+	"github.com/Dominik1407/lumantic/internal/catalog"
 )
 
 // Editing key figures from the app. The definitions stay a JSON file the

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/adapter"
 )
 
 var _ adapter.OnBehalf = (*Snowflake)(nil)

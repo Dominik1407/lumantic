@@ -12,11 +12,11 @@ import (
 	"os/exec"
 	"strings"
 
-	"lumantic/internal/adapter"
-	"lumantic/internal/adapter/databricks"
-	"lumantic/internal/adapter/snowflake"
-	"lumantic/internal/catalog"
-	"lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/adapter/databricks"
+	"github.com/Dominik1407/lumantic/internal/adapter/snowflake"
+	"github.com/Dominik1407/lumantic/internal/catalog"
+	"github.com/Dominik1407/lumantic/internal/config"
 )
 
 // DuckDBBin resolves the DuckDB CLI: the configured path, else PATH.

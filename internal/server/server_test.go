@@ -12,11 +12,11 @@ import (
 	"strings"
 	"testing"
 
-	"lumantic/internal/adapter"
-	"lumantic/internal/ai"
-	"lumantic/internal/catalog"
-	"lumantic/internal/config"
-	"lumantic/internal/store"
+	"github.com/Dominik1407/lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/ai"
+	"github.com/Dominik1407/lumantic/internal/catalog"
+	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/store"
 )
 
 // fakeSource is a gold layer with one monthly table g.monat (monat, wert, kredite).

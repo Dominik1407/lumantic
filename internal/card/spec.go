@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"lumantic/internal/adapter"
-	"lumantic/internal/catalog"
+	"github.com/Dominik1407/lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/catalog"
 )
 
 // Rule says what "good" means: at most / at least a value, or at most / at

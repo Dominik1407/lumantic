@@ -22,9 +22,9 @@ import (
 	"sort"
 	"strings"
 
-	"lumantic/internal/adapter"
-	"lumantic/internal/catalog"
-	"lumantic/internal/metrics"
+	"github.com/Dominik1407/lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/catalog"
+	"github.com/Dominik1407/lumantic/internal/metrics"
 )
 
 // Where a value comes from.

@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"strings"
 
-	"lumantic/internal/adapter"
-	"lumantic/internal/catalog"
-	"lumantic/internal/config"
-	"lumantic/internal/katalog"
-	"lumantic/internal/metrics"
+	"github.com/Dominik1407/lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/catalog"
+	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/katalog"
+	"github.com/Dominik1407/lumantic/internal/metrics"
 )
 
 // The Sternkatalog: every key figure of a Kosmos with what it means, where it

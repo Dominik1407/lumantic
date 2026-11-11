@@ -1,4 +1,4 @@
-module lumantic
+module github.com/Dominik1407/lumantic
 
 go 1.25
 

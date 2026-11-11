@@ -6,7 +6,7 @@ package adapter
 import (
 	"context"
 
-	"lumantic/internal/catalog"
+	"github.com/Dominik1407/lumantic/internal/catalog"
 )
 
 type Row map[string]any

@@ -26,8 +26,8 @@ import (
 	"sync"
 	"time"
 
-	"lumantic/internal/adapter"
-	"lumantic/internal/catalog"
+	"github.com/Dominik1407/lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/catalog"
 )
 
 var _ adapter.Adapter = (*Snowflake)(nil)

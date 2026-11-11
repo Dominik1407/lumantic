@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/config"
 )
 
 // clock is a clock the tests turn.

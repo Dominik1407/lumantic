@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"lumantic/internal/adapter"
-	"lumantic/internal/catalog"
-	"lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/catalog"
+	"github.com/Dominik1407/lumantic/internal/config"
 )
 
 // catalogSource is a gold layer that keeps a company catalog: one figure,

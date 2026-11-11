@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	"lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/config"
 )
 
 // ---- keys and signing ----

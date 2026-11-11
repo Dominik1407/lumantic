@@ -16,16 +16,16 @@ import (
 	"sync"
 	"time"
 
-	"lumantic/internal/adapter"
-	"lumantic/internal/ai"
-	"lumantic/internal/auth"
-	"lumantic/internal/catalog"
-	"lumantic/internal/config"
-	"lumantic/internal/katalog"
-	"lumantic/internal/lumina"
-	"lumantic/internal/metrics"
-	"lumantic/internal/source"
-	"lumantic/internal/store"
+	"github.com/Dominik1407/lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/ai"
+	"github.com/Dominik1407/lumantic/internal/auth"
+	"github.com/Dominik1407/lumantic/internal/catalog"
+	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/katalog"
+	"github.com/Dominik1407/lumantic/internal/lumina"
+	"github.com/Dominik1407/lumantic/internal/metrics"
+	"github.com/Dominik1407/lumantic/internal/source"
+	"github.com/Dominik1407/lumantic/internal/store"
 )
 
 type Server struct {

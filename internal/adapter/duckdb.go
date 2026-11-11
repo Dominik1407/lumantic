@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"lumantic/internal/catalog"
+	"github.com/Dominik1407/lumantic/internal/catalog"
 )
 
 // DuckDB runs queries through the DuckDB CLI in read-only mode. Each query is

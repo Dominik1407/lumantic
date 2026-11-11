@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/adapter"
 )
 
 // In the person's name, Databricks gets a token traded for their login token

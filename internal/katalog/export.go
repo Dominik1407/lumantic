@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"lumantic/internal/adapter"
-	"lumantic/internal/metrics"
+	"github.com/Dominik1407/lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/metrics"
 )
 
 // How the contract writes units, kinds and directions in words.

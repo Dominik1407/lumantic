@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"lumantic/internal/config"
-	"lumantic/internal/metrics"
-	"lumantic/internal/source"
+	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/metrics"
+	"github.com/Dominik1407/lumantic/internal/source"
 )
 
 // A person may see more than one gold layer. Each is a Kosmos of its own; the

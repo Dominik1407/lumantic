@@ -12,9 +12,9 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"lumantic/internal/adapter"
-	"lumantic/internal/auth"
-	"lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/auth"
+	"github.com/Dominik1407/lumantic/internal/config"
 )
 
 // fakeLogin signs people in by a test header, as a proxy or a provider would.

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/config"
 )
 
 // seenFor is how long a person who arrives through the proxy counts as signed

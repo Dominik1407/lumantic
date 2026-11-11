@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"lumantic/internal/config"
-	"lumantic/internal/metrics"
-	"lumantic/internal/source"
+	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/metrics"
+	"github.com/Dominik1407/lumantic/internal/source"
 )
 
 // Status says in numbers whether the gold layer is there.

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"lumantic/internal/catalog"
+	"github.com/Dominik1407/lumantic/internal/catalog"
 )
 
 // Files reads a gold layer kept as files: every .parquet or .csv file in a

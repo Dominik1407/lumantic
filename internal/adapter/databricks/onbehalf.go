@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/adapter"
 )
 
 var _ adapter.OnBehalf = (*Databricks)(nil)

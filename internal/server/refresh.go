@@ -16,9 +16,9 @@ import (
 	"sync"
 	"time"
 
-	"lumantic/internal/adapter"
-	"lumantic/internal/config"
-	"lumantic/internal/metrics"
+	"github.com/Dominik1407/lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/metrics"
 )
 
 // A Kosmos is read again when a loading job says so (POST /api/refresh with

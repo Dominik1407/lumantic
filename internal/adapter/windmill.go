@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"lumantic/internal/catalog"
+	"github.com/Dominik1407/lumantic/internal/catalog"
 )
 
 // Windmill calls two Windmill scripts that run on the team's gold layer:
