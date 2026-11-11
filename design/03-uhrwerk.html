@@ -1,0 +1,1736 @@
+<title>Lumantic Uhrwerk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans+Condensed:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: a time machine with three skins. The overview is a dial whose rim is history; the selected moment sits under a fixed pointer.
+   Opening a theme unfolds its stars into a full dashboard that Lumina has pre-built from the data. */
+:root {
+  --bg: #05070f; --bg-2: #0b1122; --surface: rgba(12, 17, 34, .74); --surface-2: rgba(255, 255, 255, .03);
+  --ink: #eee8d9; --ink-2: #b4ae9f; --dim: #7d7a71;
+  --line: rgba(238, 232, 217, .11); --line-2: rgba(238, 232, 217, .24);
+  --accent: #d6b06a; --alert: #ff6b4d; --watch: #f3b746; --good: #63d39f;
+  --c1: #d6b06a; --c2: #6f9fd6; --c3: #c58bd0;
+  --halo: 1; --mark: 1; --radius: 0px; --blur: 10px; --shadow: none; --dash: none;
+  --f-display: "Cormorant Garamond", Georgia, serif; --f-voice: "Cormorant Garamond", Georgia, serif;
+  --f-ui: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif; --f-data: "Geist Mono", ui-monospace, Consolas, monospace;
+  --voice-style: italic; --voice-size: 1.15; --display-weight: 600; --label-case: uppercase;
+  --page: radial-gradient(ellipse 70% 55% at 30% 0%, color-mix(in srgb, #d6b06a 7%, #0b1122) 0%, transparent 70%);
+  --accent-soft: color-mix(in srgb, var(--accent) 15%, transparent);
+  color-scheme: dark;
+}
+:root[data-design="zifferblatt"] {
+  --bg: #eceef1; --bg-2: #ffffff; --surface: #ffffff; --surface-2: #f5f6f8;
+  --ink: #15223d; --ink-2: #4b5772; --dim: #8892a6;
+  --line: rgba(21, 34, 61, .1); --line-2: rgba(21, 34, 61, .2);
+  --accent: #2348b5; --alert: #c63f2b; --watch: #b07a0a; --good: #1c7c52;
+  --c1: #2348b5; --c2: #7b8db8; --c3: #c9a24a;
+  --halo: 0; --mark: 0; --radius: 14px; --blur: 0px; --shadow: 0 1px 2px rgba(21, 34, 61, .05), 0 10px 30px rgba(21, 34, 61, .07); --dash: none;
+  --f-display: "Manrope", system-ui, sans-serif; --f-voice: "Newsreader", Georgia, serif;
+  --f-ui: "Manrope", system-ui, sans-serif; --f-data: "IBM Plex Mono", ui-monospace, monospace;
+  --voice-style: italic; --voice-size: 1.05; --display-weight: 700; --label-case: uppercase;
+  --page: radial-gradient(ellipse 60% 50% at 70% 0%, #ffffff 0%, transparent 70%);
+  color-scheme: light;
+}
+:root[data-design="messtisch"] {
+  --bg: #0b1f36; --bg-2: #0f2744; --surface: rgba(13, 36, 63, .86); --surface-2: rgba(127, 211, 247, .04);
+  --ink: #e4f0f9; --ink-2: #9dbfd7; --dim: #6889a4;
+  --line: rgba(150, 205, 240, .16); --line-2: rgba(150, 205, 240, .34);
+  --accent: #7fd3f7; --alert: #ff7a59; --watch: #f2c14e; --good: #6fe3b0;
+  --c1: #7fd3f7; --c2: #f2c14e; --c3: #c6a6ff;
+  --halo: .35; --mark: 1; --radius: 2px; --blur: 0px; --shadow: none; --dash: 4 3;
+  --f-display: "IBM Plex Sans Condensed", system-ui, sans-serif; --f-voice: "IBM Plex Sans Condensed", system-ui, sans-serif;
+  --f-ui: "IBM Plex Sans Condensed", system-ui, sans-serif; --f-data: "IBM Plex Mono", ui-monospace, monospace;
+  --voice-style: italic; --voice-size: 1; --display-weight: 600; --label-case: uppercase;
+  --page: linear-gradient(rgba(127, 211, 247, .06) 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, rgba(127, 211, 247, .06) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(rgba(127, 211, 247, .1) 1px, transparent 1px) 0 0 / 120px 120px, linear-gradient(90deg, rgba(127, 211, 247, .1) 1px, transparent 1px) 0 0 / 120px 120px;
+  color-scheme: dark;
+}
+html { background: var(--bg); }
+body { min-height: 100%; color: var(--ink); background: var(--page), var(--bg); background-attachment: fixed; font: 400 14px/1.5 var(--f-ui); -webkit-font-smoothing: antialiased; transition: background-color .5s, color .5s; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 40; background: var(--bg); }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
+.label { font: 500 10px/1.3 var(--f-data); letter-spacing: .15em; text-transform: var(--label-case); color: var(--dim); }
+.voice { font-family: var(--f-voice); font-style: var(--voice-style); }
+.num { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+.gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* Top bar */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; display: flex; align-items: center; gap: 12px 24px; flex-wrap: wrap; padding-block: 12px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 84%, transparent); backdrop-filter: blur(12px); }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.mark { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); align-self: center; box-shadow: 0 0 0 4px var(--accent-soft), 0 0 18px 4px color-mix(in srgb, var(--accent) calc(var(--halo) * 30%), transparent); }
+.word { font: 600 18px/1 var(--f-ui); letter-spacing: -.01em; }
+.slogan { font: var(--voice-style) 500 calc(15px * var(--voice-size))/1 var(--f-voice); color: var(--ink-2); }
+.crumbs { display: flex; align-items: center; gap: 6px; font: 500 11px/1 var(--f-data); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+.crumbs button { border: 0; background: none; padding: 4px 0; color: var(--ink-2); }
+.crumbs button:hover { color: var(--accent); }
+.crumbs b { font-weight: 500; color: var(--ink); }
+.designs { margin-left: auto; display: flex; gap: 4px; align-items: center; }
+.design-btn { border: 1px solid transparent; background: none; padding: 7px 10px; border-radius: var(--radius); font: 500 10.5px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); display: inline-flex; gap: 7px; align-items: center; }
+.design-btn i { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--line-2); }
+.design-btn[aria-pressed="true"] { color: var(--ink); border-color: var(--line-2); background: var(--accent-soft); }
+
+/* Shared surfaces */
+.panel { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(var(--blur)); }
+.reg { position: absolute; width: 10px; height: 10px; border: 0 solid var(--accent); pointer-events: none; opacity: calc(var(--mark) * .8); }
+.reg.tl { top: -1px; left: -1px; border-top-width: 1px; border-left-width: 1px; }
+.reg.tr { top: -1px; right: -1px; border-top-width: 1px; border-right-width: 1px; }
+.reg.bl { bottom: -1px; left: -1px; border-bottom-width: 1px; border-left-width: 1px; }
+.reg.br { bottom: -1px; right: -1px; border-bottom-width: 1px; border-right-width: 1px; }
+.pill { display: inline-flex; align-items: center; gap: 7px; font: 500 9.5px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; padding: 5px 8px 5px 7px; border: 1px solid var(--line-2); border-radius: calc(var(--radius) * 4); white-space: nowrap; color: var(--ink); }
+.pill i, .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dim); display: inline-block; flex: none; }
+[data-level="alert"] > i, .dot[data-level="alert"] { background: var(--alert); box-shadow: 0 0 calc(var(--halo) * 9px) var(--alert); }
+[data-level="watch"] > i, .dot[data-level="watch"] { background: var(--watch); box-shadow: 0 0 calc(var(--halo) * 8px) var(--watch); }
+[data-level="good"] > i, .dot[data-level="good"] { background: var(--good); }
+[data-level="info"] > i, .dot[data-level="info"] { background: var(--accent); }
+.pill[data-level="alert"] { border-color: color-mix(in srgb, var(--alert) 50%, transparent); }
+.pill[data-level="watch"] { border-color: color-mix(in srgb, var(--watch) 50%, transparent); }
+.btn { border: 1px solid var(--line-2); background: none; border-radius: var(--radius); padding: 8px 12px; font: 500 10.5px/1 var(--f-data); letter-spacing: .13em; text-transform: uppercase; color: var(--ink-2); transition: color .2s, border-color .2s, background .2s; }
+.btn:hover { color: var(--ink); border-color: var(--ink-2); }
+.btn--accent { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+.btn--accent:hover, .btn[aria-pressed="true"] { background: var(--accent-soft); color: var(--ink); border-color: var(--accent); }
+.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: var(--radius); overflow: hidden; }
+.seg button { border: 0; background: none; padding: 7px 11px; font: 500 10px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+.seg button + button { border-left: 1px solid var(--line-2); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--ink); }
+
+/* Overview */
+.view { animation: view-in .7s cubic-bezier(.2, .8, .2, 1); }
+@keyframes view-in { from { opacity: .35; transform: scale(.985); } }
+.ov { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: 22px; padding-block: 18px 40px; align-items: start; }
+.stage { position: relative; width: 100%; max-width: min(860px, calc(100vh - 110px)); aspect-ratio: 1; margin: 0 auto; touch-action: none; container-type: inline-size; }
+.stage svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.hub { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 6px; text-align: center; pointer-events: none; }
+.hub > * { pointer-events: auto; }
+.hub-month { font: 400 clamp(11px, 3.3cqw, 28px)/1 var(--f-data); letter-spacing: -.02em; }
+.hub-sub { font: var(--voice-style) 500 calc(clamp(9px, 1.7cqw, 14px) * var(--voice-size))/1.2 var(--f-voice); color: var(--ink-2); }
+.hub-ctrl { display: flex; gap: 6px; margin-top: 4px; }
+.hub-ctrl button { width: clamp(24px, 4.2cqw, 34px); height: clamp(24px, 4.2cqw, 34px); border-radius: 50%; border: 1px solid var(--line-2); background: var(--surface); color: var(--accent); font: 500 11px/1 var(--f-data); display: grid; place-items: center; }
+.hub-ctrl button:hover { border-color: var(--accent); }
+.hub-ctrl button[aria-pressed="true"] { background: var(--accent-soft); }
+.flash { position: absolute; left: 50%; top: 3.5%; transform: translateX(-50%); text-align: center; pointer-events: none; animation: flash 2.6s ease-out forwards; white-space: nowrap; }
+.flash b { display: block; font: var(--voice-style) 500 calc(19px * var(--voice-size))/1.2 var(--f-voice); color: var(--ink); }
+.flash span { font: 500 10px/1 var(--f-data); letter-spacing: .15em; text-transform: uppercase; color: var(--accent); }
+@keyframes flash { 0% { opacity: 0; transform: translate(-50%, 8px); } 12% { opacity: 1; transform: translate(-50%, 0); } 75% { opacity: 1; } 100% { opacity: 0; } }
+.side { display: grid; gap: 14px; }
+.side .panel { padding: 16px 18px; display: grid; gap: 12px; }
+.brief { margin: 0; font: var(--voice-style) 500 calc(22px * var(--voice-size))/1.2 var(--f-voice); text-wrap: balance; }
+.brief .name { border: 0; background: none; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.brief .name--alert { color: var(--alert); text-decoration-color: color-mix(in srgb, var(--alert) 40%, transparent); }
+.sig { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; border: 0; border-top: 1px solid var(--line); background: none; padding: 10px 0 2px; text-align: left; }
+.sig:first-of-type { border-top: 0; padding-top: 0; }
+.sig b { font: var(--display-weight) 15px/1.2 var(--f-ui); }
+.sig .num { font-size: 13px; }
+.sig small { grid-column: 2 / -1; font: var(--voice-style) 500 calc(14px * var(--voice-size))/1.25 var(--f-voice); color: var(--ink-2); }
+.sig:hover b { color: var(--accent); }
+.dashes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dash-link { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); padding: 10px 11px; text-align: left; display: grid; gap: 6px; transition: border-color .2s, transform .2s; }
+.dash-link:hover { border-color: var(--accent); transform: translateY(-1px); }
+.dash-link b { font: var(--display-weight) 14px/1.1 var(--f-ui); }
+.dash-link .dots { display: flex; gap: 3px; min-height: 6px; }
+.dash-link--all { grid-column: 1 / -1; background: var(--accent-soft); }
+
+/* Dial (SVG classes read the design tokens) */
+.d-line { stroke: var(--ink); }
+.d-year { fill: var(--ink); fill-opacity: .035; stroke: var(--line-2); stroke-width: 1; cursor: pointer; transition: fill-opacity .3s; }
+.d-year:hover { fill-opacity: .09; }
+.d-year.is-now { fill: var(--accent); fill-opacity: .16; stroke: var(--accent); }
+.d-txt { font-family: var(--f-data); fill: var(--ink-2); }
+.d-month { font-family: var(--f-data); fill: var(--ink); }
+.d-pointer { fill: var(--accent); stroke: var(--accent); }
+.d-event { fill: var(--bg); stroke: var(--accent); stroke-width: 1.4; cursor: pointer; }
+.d-ring { fill: none; stroke: var(--line-2); stroke-dasharray: var(--dash); }
+.d-cluster { font-family: var(--f-voice); font-style: var(--voice-style); fill: var(--ink-2); cursor: pointer; transition: fill .2s; }
+.d-cluster:hover { fill: var(--accent); }
+.d-con { stroke: var(--ink); stroke-opacity: .16; fill: none; stroke-dasharray: var(--dash); }
+.st { cursor: pointer; }
+.st .halo { opacity: var(--halo); }
+.st .core { fill: var(--ink); }
+:root[data-design="zifferblatt"] .st .core { filter: drop-shadow(0 1px 2px rgba(21, 34, 61, .35)); }
+.st .track { fill: none; stroke: var(--ink); stroke-opacity: .12; }
+.st .lab { font-family: var(--f-data); fill: var(--ink-2); }
+.st .val { font-family: var(--f-data); fill: var(--ink); }
+.st:hover .lab { fill: var(--ink); }
+.trail { fill: none; stroke-linecap: round; }
+.cross { stroke: var(--accent); stroke-width: 1; opacity: 0; }
+:root[data-design="messtisch"] .cross { opacity: .8; }
+:root[data-design="messtisch"] .st .core { fill: none; stroke: var(--ink); stroke-width: 1.4; }
+
+/* Dashboard */
+.dash { padding-block: 18px 80px; display: grid; gap: 16px; }
+.dash-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; }
+.dash-title { margin: 0; font: var(--display-weight) clamp(30px, 4vw, 46px)/1 var(--f-display); letter-spacing: -.015em; }
+:root:not([data-design]) .dash-title, :root[data-design="atlas"] .dash-title { font-style: italic; font-weight: 500; }
+.dash-sub { margin: 8px 0 0; font: var(--voice-style) 500 calc(19px * var(--voice-size))/1.3 var(--f-voice); color: var(--ink-2); max-width: 60ch; }
+.dash-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.strip { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 12px 16px; }
+.strip-play { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line-2); background: none; color: var(--accent); font: 500 10px/1 var(--f-data); }
+.strip-play[aria-pressed="true"] { background: var(--accent-soft); }
+.strip-track { position: relative; height: 44px; touch-action: none; cursor: ew-resize; }
+.strip-track svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.strip-handle { position: absolute; top: -2px; bottom: 0; width: 2px; background: var(--accent); transform: translateX(-1px); box-shadow: 0 0 calc(var(--halo) * 12px) var(--accent); pointer-events: none; }
+.strip-handle span { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font: 500 10px/1 var(--f-data); letter-spacing: .06em; color: var(--ink); background: var(--surface); border: 1px solid var(--line-2); border-radius: var(--radius); padding: 3px 6px; white-space: nowrap; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.tile { padding: 14px 16px 12px; display: grid; gap: 8px; text-align: left; transition: border-color .4s, box-shadow .4s; }
+.tile[data-level="alert"] { border-color: color-mix(in srgb, var(--alert) 40%, transparent); box-shadow: var(--shadow), 0 0 calc(var(--halo) * 40px) calc(var(--halo) * -12px) var(--alert); }
+.tile[data-level="watch"] { border-color: color-mix(in srgb, var(--watch) 35%, transparent); }
+.tile.is-focus { outline: 1px solid var(--accent); outline-offset: 3px; }
+.tile-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tile-name { font: var(--display-weight) 15px/1.2 var(--f-ui); }
+.tile-val { font: 400 30px/1 var(--f-data); letter-spacing: -.04em; white-space: nowrap; }
+.tile-val small { font-size: 10px; letter-spacing: .1em; color: var(--ink-2); margin-left: 5px; }
+.tile-delta { font: 400 10.5px/1.2 var(--f-data); color: var(--ink-2); }
+.tile svg { width: 100%; height: 30px; display: block; overflow: visible; }
+.note { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: space-between; }
+.note p { margin: 0; font: var(--voice-style) 500 calc(18px * var(--voice-size))/1.3 var(--f-voice); color: var(--ink); }
+.charts { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px; grid-auto-flow: dense; align-items: start; }
+.chart-card { grid-column: span 6; padding: 16px 18px 14px; display: grid; gap: 10px; min-width: 0; align-content: start; }
+.chart-card.size-L { grid-column: span 8; } .chart-card.size-S { grid-column: span 4; } .chart-card.size-XL { grid-column: span 12; }
+.chart-card.enter { animation: condense .7s cubic-bezier(.2, .8, .2, 1) backwards; }
+@keyframes condense { from { opacity: .25; transform: translateY(12px) scale(.985); } }
+.chart-card.is-dragging { opacity: .3; }
+.cc-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.cc-title { margin: 0; font: var(--display-weight) 17px/1.2 var(--f-ui); }
+.cc-why { margin: 3px 0 0; font: var(--voice-style) 500 calc(15px * var(--voice-size))/1.3 var(--f-voice); color: var(--ink-2); }
+.cc-tools { display: none; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.is-edit .cc-tools { display: flex; }
+.cc-tools button { border: 1px solid var(--line); background: none; border-radius: var(--radius); color: var(--ink-2); font: 500 9.5px/1 var(--f-data); letter-spacing: .08em; padding: 5px 7px; text-transform: uppercase; }
+.cc-tools button[aria-pressed="true"], .cc-tools button:hover { color: var(--ink); border-color: var(--accent); }
+.is-edit .chart-card { cursor: grab; }
+.is-edit .chart-card::after { content: ""; position: absolute; inset: 4px; border: 1px dashed var(--line-2); border-radius: var(--radius); pointer-events: none; }
+.plot { position: relative; height: 200px; }
+.size-S .plot { height: 160px; }
+.size-XL .plot, .size-L .plot { height: 230px; }
+.plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.plot-lab { position: absolute; font: 500 9.5px/1 var(--f-data); letter-spacing: .06em; color: var(--dim); white-space: nowrap; pointer-events: none; }
+.plot-dot { position: absolute; width: 8px; height: 8px; border-radius: 50%; transform: translate(-50%, -50%); background: currentColor; box-shadow: 0 0 0 2px var(--bg), 0 0 calc(var(--halo) * 12px) currentColor; pointer-events: none; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font: 500 10px/1.2 var(--f-data); letter-spacing: .06em; color: var(--ink-2); }
+.legend i { display: inline-block; width: 10px; height: 3px; margin-right: 6px; vertical-align: middle; border-radius: 2px; }
+.tray { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 12px 16px; }
+.chip { border: 1px dashed var(--line-2); border-radius: calc(var(--radius) * 4); background: none; padding: 7px 11px; font: 500 12px/1.2 var(--f-ui); color: var(--ink-2); }
+.chip:hover { border-style: solid; border-color: var(--accent); color: var(--ink); background: var(--accent-soft); }
+.morph { position: fixed; z-index: 35; pointer-events: none; border: 1px solid var(--accent); background: var(--surface); border-radius: 50%; }
+
+.tip { position: fixed; z-index: 45; pointer-events: none; max-width: 280px; background: var(--surface); backdrop-filter: blur(12px); border: 1px solid var(--line-2); border-radius: var(--radius); box-shadow: var(--shadow); padding: 9px 12px; font: var(--voice-style) 500 calc(15px * var(--voice-size))/1.3 var(--f-voice); color: var(--ink); }
+.tip small { display: block; font: 500 9.5px/1 var(--f-data); font-style: normal; letter-spacing: .15em; text-transform: uppercase; color: var(--dim); margin-bottom: 5px; }
+.toast { position: fixed; z-index: 50; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 22px); transform: translateX(-50%); margin: 0; max-width: calc(100% - 32px); background: var(--surface); backdrop-filter: blur(12px); border: 1px solid var(--line-2); border-radius: var(--radius); box-shadow: var(--shadow); padding: 10px 16px; font: var(--voice-style) 500 calc(16px * var(--voice-size))/1.3 var(--f-voice); animation: rise .3s; }
+@keyframes rise { from { opacity: 0; transform: translate(-50%, 8px); } }
+
+
+@keyframes ignite { from { opacity: .2; } }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .6s; }
+.season { display: grid; gap: 3px; }
+.season-row { display: grid; grid-template-columns: 40px repeat(12, minmax(0, 1fr)); gap: 3px; align-items: center; }
+.season-row > span:first-child { font: 500 9.5px/1 var(--f-data); color: var(--ink-2); }
+.cell { aspect-ratio: 1.7; border-radius: calc(var(--radius) / 3); background: var(--c, transparent); outline: 1px solid transparent; outline-offset: 1px; transition: background .5s, opacity .5s, outline-color .3s; }
+.cell.is-now { outline-color: var(--ink); }
+.cell.is-future { opacity: .1; }
+.season-axis { display: grid; grid-template-columns: 40px repeat(12, minmax(0, 1fr)); gap: 3px; font: 500 8.5px/1.4 var(--f-data); color: var(--dim); text-align: center; }
+.buf { display: grid; gap: 16px; padding-top: 10px; }
+.buf-row { display: grid; grid-template-columns: minmax(120px, 34%) minmax(0, 1fr); gap: 14px; align-items: center; }
+.buf-name { font: var(--display-weight) 14px/1.25 var(--f-ui); }
+.buf-name b { font-weight: 400; font-size: 13px; color: var(--ink); margin-left: 4px; }
+.buf-name small { display: block; font: 500 9.5px/1.35 var(--f-data); color: var(--ink-2); letter-spacing: .04em; margin-top: 3px; }
+.buf-track { position: relative; height: 22px; background: var(--surface-2); border-radius: calc(var(--radius) / 2); }
+.buf-bar { position: absolute; left: 0; top: 8px; height: 6px; border-radius: 3px; background: var(--c); box-shadow: 0 0 calc(var(--halo) * 12px) var(--c); }
+.buf-mark { position: absolute; top: -2px; bottom: -2px; width: 2px; transform: translateX(-1px); }
+.buf-mark span { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); font: 500 8.5px/1 var(--f-data); white-space: nowrap; letter-spacing: .06em; }
+.fun { display: grid; gap: 10px; padding-top: 6px; }
+.fun-row { display: grid; grid-template-columns: 74px minmax(0, 1fr) 110px; gap: 10px; align-items: center; font: 500 11px/1 var(--f-data); color: var(--ink-2); }
+.fun-bar { height: 26px; margin: 0 auto; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--c) 45%, transparent), transparent); border-left: 1px solid var(--c); border-right: 1px solid var(--c); border-radius: calc(var(--radius) / 3); transition: width .2s linear; }
+.fun-row b { font-weight: 500; color: var(--ink); text-align: right; }
+.empty-note { position: absolute; inset: 0; display: grid; place-items: center; font: var(--voice-style) 500 calc(16px * var(--voice-size))/1.3 var(--f-voice); color: var(--ink-2); }
+.tile { width: 100%; }
+
+.plot svg { overflow: hidden; }
+.name { display: inline; border: 0; background: none; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent); cursor: pointer; }
+.name--alert { color: var(--alert); text-decoration-color: color-mix(in srgb, var(--alert) 40%, transparent); }
+.name:hover { text-decoration-color: currentColor; }
+.tile { min-width: 0; overflow: hidden; }
+.tile-top { flex-wrap: wrap; row-gap: 6px; }
+.cc-swap { border: 0; background: none; padding: 2px 0; font: 500 10px/1 var(--f-data); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); white-space: nowrap; }
+.cc-swap:hover { color: var(--accent); }
+.chip--hot { border-style: solid; border-color: var(--accent); color: var(--ink); background: var(--accent-soft); }
+.scrim { position: fixed; inset: 0; z-index: 41; background: rgba(2, 4, 10, .5); animation: fade .2s; }
+@keyframes fade { from { opacity: 0; } }
+.drawer { position: fixed; z-index: 42; top: 0; right: 0; bottom: 0; width: min(520px, 100%); overflow-y: auto; background: var(--bg-2); border-left: 1px solid var(--line-2); box-shadow: var(--shadow);
+  padding: calc(env(safe-area-inset-top, 0px) + 24px) max(24px, env(safe-area-inset-right, 0px)) 32px 24px; display: grid; gap: 16px; align-content: start; animation: slide .3s cubic-bezier(.2, .8, .2, 1); }
+@keyframes slide { from { transform: translateX(24px); opacity: .3; } }
+.drawer h2 { margin: 0; font: var(--display-weight) 26px/1.1 var(--f-display); }
+.drawer > p { margin: 0; font: var(--voice-style) 500 calc(17px * var(--voice-size))/1.35 var(--f-voice); color: var(--ink-2); }
+.pr { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 4px; }
+.pr b { font: var(--display-weight) 15px/1.25 var(--f-ui); }
+.pr span { font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
+.pr a { font: 500 10px/1.4 var(--f-data); letter-spacing: .06em; color: var(--accent); text-decoration: none; }
+.pr a:hover { text-decoration: underline; }
+@media (max-width: 1100px) {
+  .ov { grid-template-columns: minmax(0, 1fr); }
+  .chart-card, .chart-card.size-L, .chart-card.size-S { grid-column: span 12; }
+}
+@media (max-width: 700px) {
+  .designs { margin-left: 0; width: 100%; }
+  .design-btn { padding: 6px 7px; letter-spacing: .06em; }
+  .dashes { grid-template-columns: 1fr; }
+  .tiles { grid-template-columns: 1fr 1fr; }
+  .tile-val { font-size: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<header class="top gutter" lang="de">
+  <div class="brand"><span class="mark" aria-hidden="true"></span><span class="word">lumantic</span><span class="slogan">Quiet until it matters.</span></div>
+  <nav class="crumbs" id="crumbs" aria-label="Ort"></nav>
+  <div class="designs" role="group" aria-label="Designsprache">
+    <button class="design-btn" type="button" data-design="atlas" aria-pressed="true"><i style="background:#0b1122;border-color:#d6b06a"></i>Atlas</button>
+    <button class="design-btn" type="button" data-design="zifferblatt" aria-pressed="false"><i style="background:#ffffff;border-color:#2348b5"></i>Zifferblatt</button>
+    <button class="design-btn" type="button" data-design="messtisch" aria-pressed="false"><i style="background:#0b1f36;border-color:#7fd3f7"></i>Messtisch</button>
+    <button class="btn" type="button" id="btn-why" style="margin-left:6px">Warum so?</button>
+  </div>
+</header>
+<main id="app" class="gutter"></main>
+<div class="tip" id="tip" hidden></div>
+<p class="toast" id="toast" role="status" hidden></p>
+
+<script>
+
+"use strict";
+// ───────────── Helpers ─────────────
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const sum = (xs) => xs.reduce((a, b) => a + b, 0);
+const mean = (xs) => (xs.length ? sum(xs) / xs.length : 0);
+function rng(seed) {
+  return () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+const R = rng(1914);
+
+// ───────────── Time: monthly from January 2019 to October 2026 ─────────────
+const N = 94;
+const MON = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+const MONTH = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+const ym = (y, m) => (y - 2019) * 12 + (m - 1);
+const mOf = (t) => ((t % 12) + 12) % 12;
+
+// Smooth keyframe series with seeded noise; the last months (quietFrom on) are exact.
+function keys(points, noise = 0, quietFrom = N) {
+  const out = new Array(N);
+  for (let t = 0; t < N; t++) {
+    let k = 0;
+    while (k < points.length - 2 && t > points[k + 1][0]) k++;
+    const [t0, v0] = points[k], [t1, v1] = points[k + 1];
+    const f = t1 === t0 ? 0 : clamp((t - t0) / (t1 - t0), 0, 1);
+    const n = (R() * 2 - 1) * noise;
+    out[t] = v0 + (v1 - v0) * f * f * (3 - 2 * f) + (t < quietFrom ? n : 0);
+  }
+  return out;
+}
+function flows(base, amp, overrides) {
+  const out = Array.from({ length: N }, () => base + (R() * 2 - 1) * amp);
+  for (const [y, m, v] of overrides) out[ym(y, m)] = v;
+  return out;
+}
+
+// ───────────── The demo ALCO gold layer (all figures invented) ─────────────
+const LCR = keys([[0, 142], [ym(2019, 12), 144], [ym(2020, 2), 143], [ym(2020, 6), 162], [ym(2021, 1), 168], [ym(2021, 6), 158], [ym(2021, 12), 150],
+  [ym(2022, 6), 146], [ym(2022, 12), 140], [ym(2023, 2), 141], [ym(2023, 3), 155], [ym(2023, 6), 147], [ym(2023, 12), 144], [ym(2024, 12), 141],
+  [ym(2025, 12), 135], [ym(2026, 6), 130], [ym(2026, 7), 127], [ym(2026, 8), 124], [ym(2026, 9), 121], [ym(2026, 10), 118]], 1.6, ym(2026, 6));
+const OUTFLOW = keys([[0, 2600], [ym(2026, 6), 3020], [ym(2026, 10), 3210]], 18, ym(2026, 6));
+const HQLA = LCR.map((v, t) => (v * OUTFLOW[t]) / 100);
+const NSFR = keys([[0, 121], [ym(2020, 6), 128], [ym(2021, 6), 126], [ym(2022, 12), 120], [ym(2023, 6), 122], [ym(2024, 12), 123], [ym(2025, 12), 120], [ym(2026, 10), 117]], 0.7, ym(2026, 9));
+const CET1 = keys([[0, 15.1], [ym(2024, 12), 16.6], [ym(2025, 1), 16.1], [ym(2026, 10), 16.3]], 0.07);
+const LEV = keys([[0, 6.3], [ym(2020, 3), 6.35], [ym(2020, 6), 6.0], [ym(2021, 6), 6.4], [ym(2026, 10), 6.9]], 0.04);
+const EVE = keys([[0, 9.0], [ym(2021, 6), 10.5], [ym(2022, 9), 8.2], [ym(2024, 6), 10.8], [ym(2025, 12), 12.1], [ym(2026, 6), 12.6],
+  [ym(2026, 7), 12.7], [ym(2026, 8), 12.8], [ym(2026, 9), 12.9], [ym(2026, 10), 13.2]], 0.18, ym(2026, 6));
+const NIM = keys([[0, 1.08], [ym(2021, 12), 1.02], [ym(2022, 9), 1.1], [ym(2023, 9), 1.38], [ym(2024, 6), 1.3], [ym(2025, 6), 1.12], [ym(2026, 10), 1.05]], 0.008);
+const BAL = keys([[0, 27800], [ym(2020, 3), 28400], [ym(2020, 5), 29300], [ym(2023, 2), 31000], [ym(2023, 4), 31700], [ym(2026, 7), 34150], [ym(2026, 10), 33900]], 55, ym(2026, 7));
+const SAVE = keys([[0, 11200], [ym(2020, 5), 11800], [ym(2022, 6), 12300], [ym(2023, 12), 11000], [ym(2026, 7), 11300], [ym(2026, 8), 11160], [ym(2026, 9), 10900], [ym(2026, 10), 10660]], 40, ym(2026, 7));
+const CURR = keys([[0, 7200], [ym(2020, 5), 7700], [ym(2022, 6), 8000], [ym(2023, 12), 7200], [ym(2026, 10), 7350]], 35);
+const TERM = keys([[0, 2000], [ym(2022, 6), 1900], [ym(2023, 3), 2900], [ym(2023, 12), 4300], [ym(2025, 6), 4900], [ym(2026, 10), 5200]], 25);
+const DEP = SAVE.map((v, t) => v + CURR[t] + TERM[t]);
+const MORT = keys([[0, 18100], [ym(2022, 6), 20900], [ym(2023, 6), 21300], [ym(2026, 10), 23500]], 30);
+const NNM_P = flows(24, 10, [[2020, 3, 70], [2020, 4, 50], [2023, 3, 150], [2023, 4, 90], [2026, 8, 8], [2026, 9, 2], [2026, 10, -6]]);
+const NNM_V = flows(22, 14, [[2020, 3, 80], [2023, 3, 210], [2023, 4, 130], [2023, 5, 60], [2026, 6, 8], [2026, 7, 0], [2026, 8, -12], [2026, 9, -40], [2026, 10, -58]]);
+const NNM_F = flows(9, 9, [[2023, 3, 60], [2026, 9, 3], [2026, 10, 2]]);
+const NNM = NNM_P.map((v, t) => v + NNM_V[t] + NNM_F[t]);
+const PIPE = keys([[0, 620], [ym(2021, 12), 700], [ym(2022, 9), 600], [ym(2023, 6), 520], [ym(2024, 12), 690], [ym(2025, 12), 760],
+  [ym(2026, 5), 820], [ym(2026, 6), 900], [ym(2026, 7), 980], [ym(2026, 8), 1050], [ym(2026, 9), 1100], [ym(2026, 10), 1150]], 22, ym(2026, 5))
+  .map((v, t) => (t < ym(2026, 5) ? v + 35 * Math.sin((2 * Math.PI * (mOf(t) - 2)) / 12) : v));
+const PIPE_A = PIPE.map((v, t) => v * (0.42 + 0.03 * Math.sin(t / 7)));
+const PIPE_O = PIPE.map((v) => v * 0.33);
+const PIPE_Z = PIPE.map((v, t) => v - PIPE_A[t] - PIPE_O[t]);
+
+const GROUPS = { liq: "Liquidität", kap: "Kapital", zins: "Zinsrisiko", bil: "Bilanz", wachs: "Wachstum" };
+const KPIS = [
+  { id: "lcr", group: "liq", name: "LCR", long: "Liquidity Coverage Ratio", unit: "%", dec: 0, kind: "stock", dir: 1, reg: 100, target: 125,
+    series: LCR, parts: { "HQLA": HQLA, "Nettomittelabflüsse": OUTFLOW }, partsMode: "ratio", table: "liquiditaet_monat",
+    desc: "Hochliquide Aktiva im Verhältnis zu den Nettomittelabflüssen der nächsten 30 Tage." },
+  { id: "nsfr", group: "liq", name: "NSFR", long: "Net Stable Funding Ratio", unit: "%", dec: 0, kind: "stock", dir: 1, reg: 100, target: 110,
+    series: NSFR, table: "liquiditaet_monat", desc: "Verfügbare stabile Refinanzierung im Verhältnis zur erforderlichen." },
+  { id: "cet1", group: "kap", name: "CET1-Quote", long: "Hartes Kernkapital", unit: "%", dec: 1, kind: "stock", dir: 1, reg: 10.5, target: 14,
+    series: CET1, table: "eigenmittel_monat", desc: "Hartes Kernkapital in Prozent der risikogewichteten Positionen." },
+  { id: "lev", group: "kap", name: "Leverage Ratio", long: "Ungewichtete Eigenmittelquote", unit: "%", dec: 1, kind: "stock", dir: 1, reg: 3, target: 5,
+    series: LEV, table: "eigenmittel_monat", desc: "Kernkapital im Verhältnis zum Gesamtengagement.", hidden: true },
+  { id: "eve", group: "zins", name: "Zinsrisiko ΔEVE", long: "Barwertsensitivität", unit: "%", dec: 1, kind: "stock", dir: -1, reg: 15, target: 13,
+    regName: "FINMA-Ausreissertest", targetName: "Frühwarnung", series: EVE, table: "zinsrisiko_monat",
+    desc: "Verlust des Barwerts bei einem Zinsschock, in Prozent des Kernkapitals." },
+  { id: "nim", group: "zins", name: "Zinsmarge", long: "Nettozinsmarge", unit: "%", dec: 2, kind: "stock", dir: 1, reg: null, target: null,
+    series: NIM, table: "erfolg_monat", desc: "Zinserfolg im Verhältnis zu den zinstragenden Aktiven, annualisiert." },
+  { id: "bal", group: "bil", name: "Bilanzsumme", long: "Total Aktiven", unit: "Mrd", kind: "stock", dir: 0, reg: null, target: null,
+    series: BAL, table: "bilanz_monat", desc: "Total der Aktiven per Monatsende." },
+  { id: "dep", group: "bil", name: "Kundeneinlagen", long: "Verpflichtungen aus Kundeneinlagen", unit: "Mrd", kind: "stock", dir: 1, reg: null, target: null,
+    series: DEP, parts: { "Sparkonten": SAVE, "Kontokorrente": CURR, "Festgeld": TERM }, table: "bilanz_monat", desc: "Einlagen von Kundinnen und Kunden per Monatsende." },
+  { id: "mort", group: "bil", name: "Hypotheken", long: "Hypothekarforderungen", unit: "Mrd", kind: "stock", dir: 0, reg: null, target: null,
+    series: MORT, table: "bilanz_monat", desc: "Ausstehende Hypotheken per Monatsende.", hidden: true },
+  { id: "nnm", group: "wachs", name: "Netto-Neugeld", long: "Zuflüsse minus Abflüsse", unit: "Mio", kind: "flow", dir: 1, reg: null, target: 30,
+    series: NNM, parts: { "Privatkunden": NNM_P, "Vermögensverwaltung": NNM_V, "Firmenkunden": NNM_F }, table: "neugeld_monat",
+    desc: "Neu zugeflossene minus abgeflossene Kundenvermögen. Ziel: 30 Mio. CHF pro Monat." },
+  { id: "pipe", group: "wachs", name: "Hypotheken-Pipeline", long: "Anfragen, Offerten und Zusagen", unit: "Mio", kind: "stock", dir: 1, reg: null, target: 500,
+    series: PIPE, parts: { "Anfrage": PIPE_A, "Offerte": PIPE_O, "Zusage": PIPE_Z }, funnel: true, table: "pipeline_monat",
+    desc: "Volumen der Hypotheken, die angefragt, offeriert oder zugesagt, aber noch nicht ausbezahlt sind." },
+];
+const K = Object.fromEntries(KPIS.map((k) => [k.id, k]));
+const EVENTS = [
+  { t: ym(2020, 3), title: "Pandemie", text: "Die Bank baut Liquiditätsreserven auf, Kundengelder fliessen zu." },
+  { t: ym(2022, 9), title: "SNB beendet Negativzinsen", text: "Der Leitzins steigt auf 0.5 %. Die Zinsmarge beginnt zu steigen." },
+  { t: ym(2023, 3), title: "Marktturbulenzen", text: "Innert weniger Wochen fliessen ungewöhnlich viele Kundengelder zu." },
+  { t: ym(2023, 6), title: "Leitzins 1.75 %", text: "Höhepunkt der Zinswende. Festgeld wird attraktiv, Sparkonten verlieren." },
+  { t: ym(2025, 1), title: "Basel III final", text: "Neue Eigenmittelvorschriften gelten. Die CET1-Quote sinkt einmalig." },
+  { t: ym(2025, 6), title: "Leitzins 0 %", text: "Die SNB senkt auf null. Druck auf die Zinsmarge." },
+  { t: ym(2026, 8), title: "Mandate gekündigt", text: "Zwei grosse Vermögensverwaltungs-Mandate gehen. Das wirkt auf Netto-Neugeld und LCR." },
+];
+
+// ───────────── Periods ─────────────
+const PERIODS = { jahr: [], quartal: [], monat: [] };
+for (let y = 2019; y <= 2026; y++) {
+  const from = ym(y, 1), to = Math.min(ym(y, 12), N - 1), partial = to < ym(y, 12);
+  PERIODS.jahr.push({ g: "jahr", y, from, to, partial, label: String(y), long: partial ? `${y} bis ${MONTH[mOf(to)]}` : `${y}` });
+  for (let q = 1; q <= 4; q++) {
+    const f = ym(y, 3 * q - 2);
+    if (f > N - 1) break;
+    const tt = Math.min(ym(y, 3 * q), N - 1), part = tt < ym(y, 3 * q);
+    PERIODS.quartal.push({ g: "quartal", y, q, from: f, to: tt, partial: part, label: `Q${q} ${y}`, short: `Q${q}`, long: part ? `Q${q} ${y} bis ${MONTH[mOf(tt)]}` : `Q${q} ${y}` });
+  }
+}
+for (let t = 0; t < N; t++) {
+  const y = 2019 + Math.floor(t / 12), m = mOf(t);
+  PERIODS.monat.push({ g: "monat", y, m, q: Math.floor(m / 3) + 1, from: t, to: t, partial: false, label: `${MON[m]} ${y}`, short: MON[m], long: `${MONTH[m]} ${y}` });
+}
+for (const g of Object.keys(PERIODS)) PERIODS[g].forEach((p, i) => (p.i = i));
+const NOUN = { jahr: "Vorjahr", quartal: "Vorquartal", monat: "Vormonat" };
+const G_NAME = { jahr: "Jahr", quartal: "Quartal", monat: "Monat" };
+const indexOfMonth = (g, t) => PERIODS[g].findIndex((p) => p.from <= t && t <= p.to);
+const monthsIn = (p) => p.to - p.from + 1;
+const valueAt = (k, p, s = k.series) => (k.kind === "flow" ? sum(s.slice(p.from, p.to + 1)) : s[p.to]);
+const targetAt = (k, p) => (k.target == null ? null : k.kind === "flow" ? k.target * monthsIn(p) : k.target);
+function endDate(p) { const y = 2019 + Math.floor(p.to / 12), m = mOf(p.to); const d = new Date(Date.UTC(y, m + 1, 0)); return `${d.getUTCDate()}.${m + 1}.${y}`; }
+
+// ───────────── Format (Swiss) ─────────────
+const thousands = (v) => Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "’");
+const pct = (d) => { const p = Math.abs(d * 100); return (p < 10 ? String(Number(p.toFixed(1))) : String(Math.round(p))) + " %"; };
+function split(k, v) {
+  if (k.unit === "%") return [v.toFixed(k.dec), "%"];
+  if (k.unit === "Mrd") return [(v / 1000).toFixed(1), "Mrd. CHF"];
+  return [(v < 0 ? "−" : "") + thousands(Math.abs(v)), "Mio. CHF"];
+}
+const F = (k, v) => split(k, v).join(" ");
+const compact = (k, v) => (k.unit === "%" ? v.toFixed(k.dec) + "%" : k.unit === "Mrd" ? (v / 1000).toFixed(1) + " Mrd" : thousands(v) + " Mio");
+const arrow = (d) => (d > 0 ? "↑" : d < 0 ? "↓" : "→");
+function fdelta(k, d, base) {
+  if (k.unit === "%") {
+    const p = Math.abs(d), min = Math.pow(10, -(k.dec || 0)) / 2;
+    return p < min ? "unverändert" : `${arrow(d)} ${p.toFixed(k.dec)} Pp.`;
+  }
+  if (k.kind === "flow") return `${arrow(d)} ${thousands(Math.abs(d))} Mio. CHF`;
+  const rel = d / Math.abs(base);
+  return Math.abs(rel) < 0.0005 ? "unverändert" : `${arrow(d)} ${pct(rel)}`;
+}
+
+// ───────────── Engine: same rules as the Go server, plus regulatory minimums ─────────────
+const evalCache = new Map();
+function evaluate(k, g, i) {
+  const key = k.id + "|" + g + "|" + i;
+  if (evalCache.has(key)) return evalCache.get(key);
+  const P = PERIODS[g], p = P[i];
+  const series = P.slice(0, i + 1).map((pp) => valueAt(k, pp));
+  const cur = series[i];
+  let prev = i > 0 ? series[i - 1] : null, prevNoun = NOUN[g];
+  const yi = g === "quartal" ? i - 4 : g === "monat" ? i - 12 : -1;
+  let yoy = yi >= 0 ? series[yi] : null;
+  // A period still running (2026 until October) is compared with the same months a year earlier.
+  const ytd = k.kind === "flow" && p.partial && p.from >= 12;
+  if (ytd) { prev = sum(k.series.slice(p.from - 12, p.to - 11)); prevNoun = "Vorjahr, gleiche Monate"; yoy = null; }
+  const past = series.slice(Math.max(0, i - 8), i);
+  const mu = mean(past), sd = Math.sqrt(mean(past.map((x) => (x - mu) ** 2)));
+  let z = 0;
+  if (past.length >= 4 && sd > 1e-9 && !(k.kind === "flow" && p.partial) && Math.abs(cur - mu) / Math.max(Math.abs(mu), 2 * sd) >= 0.05) z = (cur - mu) / sd;
+  const tgt = targetAt(k, p), reg = k.reg;
+  const mT = tgt != null && k.dir ? ((cur - tgt) / Math.abs(tgt)) * k.dir : null;
+  const mR = reg != null && k.dir ? ((cur - reg) / Math.abs(reg)) * k.dir : null;
+  let level = "calm", label = "Ruhig", tone = "neutral", move = false, breach = false;
+  if (mR !== null && mR < 0) { level = "alert"; tone = "bad"; label = "Regulatorisch verletzt"; breach = true; }
+  else if (mT !== null && mT < -0.03) { level = "alert"; tone = "bad"; label = k.dir > 0 ? "Unter internem Ziel" : "Über Frühwarnung"; }
+  else if (mT !== null && mT < 0) { level = "watch"; tone = "bad"; label = "Knapp verfehlt"; }
+  else if (Math.abs(z) >= 2 && k.dir && Math.sign(z) !== k.dir) { level = "watch"; tone = "bad"; label = "Auffällige Bewegung"; move = true; }
+  else if (Math.abs(z) >= 2) { level = "notable"; move = true; tone = k.dir ? "good" : "neutral"; label = k.dir ? "Gute Nachricht" : "Ungewöhnlich"; }
+  // SPC run rule: six or more consecutive moves in the adverse direction are a signal, even inside the limits.
+  let run = 0, special = null;
+  if (k.dir) for (let x = i; x > 0 && run < 36; x--) { if ((series[x] - series[x - 1]) * k.dir < 0) run++; else break; }
+  if ((level === "calm" || (level === "notable" && tone !== "good")) && run >= 6) { level = "watch"; tone = "bad"; label = "Anhaltender Trend"; special = "trend"; move = false; }
+  // Hysteresis: after an alert, the all-clear needs a 2 % recovery margin, so status does not flicker.
+  if (level === "calm" && i > 0 && mT !== null && mT < 0.02 && evaluate(k, g, i - 1).level === "alert") { level = "watch"; tone = "bad"; label = "Erholung, noch knapp"; special = "recover"; }
+  const kind = level === "notable" ? (tone === "good" ? "good" : "info") : level;
+  const m = Math.abs(mR !== null && mR < 0 ? mR : mT || 0);
+  const score = (breach ? 1600 : 0) + (level === "alert" ? 1000 + m * 100 : level === "watch" ? 600 + (m * 100 || Math.abs(z)) : level === "notable" ? 500 + Math.abs(z) : 100);
+  const mag = level === "alert" ? Math.min(1, 0.86 + m * 0.3) : level === "watch" ? 0.6 : level === "notable" ? 0.52 : 0.2;
+  const r = { k, g, i, p, series, cur, prev, yoy, tgt, reg, mT, mR, z, level, label, tone, kind, score: score + (special ? run : 0), mag, breach, ytd, prevNoun, run, special };
+  r.delta = prev !== null ? `${fdelta(k, cur - prev, prev)} ggü. ${prevNoun}` : "";
+  r.yoyText = yoy !== null ? `${fdelta(k, cur - yoy, yoy)} ggü. Vorjahr` : "";
+  r.answer = answerFor(r, move);
+  r.why = (level === "alert" || level === "watch") && i > 0 ? driverFor(r) : "";
+  if ((level === "alert" || level === "watch") && run >= 4 && special !== "trend") r.why = (r.why ? r.why + ". " : "") + `Seit ${run} ${RUN_NOUN[g]} in Folge ${k.dir > 0 ? "rückläufig" : "steigend"}`;
+  evalCache.set(key, r);
+  return r;
+}
+const RUN_NOUN = { monat: "Monaten", quartal: "Quartalen", jahr: "Jahren" };
+function answerFor(r, move) {
+  const { k, cur, tgt, reg, level, g, i } = r, v = F(k, cur);
+  if (r.special === "trend") return `${v}, seit ${r.run} ${RUN_NOUN[g]} in Folge ${k.dir > 0 ? "rückläufig" : "steigend"}`;
+  if (r.special === "recover") return `${v}, wieder im Ziel, aber noch ohne Sicherheitsabstand`;
+  if (r.breach) return k.dir > 0 ? `${v}, unter dem regulatorischen Minimum von ${F(k, reg)}` : `${v}, über dem Limit von ${F(k, reg)}`;
+  if ((level === "alert" || level === "watch") && !move) return k.dir > 0 ? `${v}, unter dem internen Ziel von ${F(k, tgt)}` : `${v}, über der Frühwarnschwelle von ${F(k, tgt)}`;
+  if (move) {
+    const before = r.series.slice(0, -1), up = r.z > 0;
+    let j = -1;
+    for (let x = before.length - 1; x >= 0; x--) if (up ? before[x] >= cur : before[x] <= cur) { j = x; break; }
+    if (j < 0 && before.length >= 4) return `${v}, ${up ? "höchster" : "tiefster"} Wert seit Beginn der Reihe 2019`;
+    if (j >= 0 && i - j >= 4) return `${v}, ${up ? "höchster" : "tiefster"} Wert seit ${PERIODS[g][j].long}`;
+    return `${v}, deutlich ${up ? "höher" : "tiefer"} als üblich`;
+  }
+  if (tgt != null) return k.dir > 0 ? `${v}, über dem Ziel von ${F(k, tgt)}` : `${v}, unter der Frühwarnschwelle von ${F(k, tgt)}`;
+  return r.delta ? `${v}, ${r.delta}` : v;
+}
+// Names a part only when it clearly explains the deviation.
+function driverFor(r) {
+  const { k, g, i } = r;
+  if (!k.parts) return "";
+  const p = PERIODS[g][i], q = r.ytd ? { from: p.from - 12, to: p.to - 12 } : PERIODS[g][i - 1];
+  if (k.partsMode === "ratio") {
+    const [num, den] = Object.keys(k.parts);
+    const dn = valueAt(k, p, k.parts[num]) / valueAt(k, q, k.parts[num]) - 1, dd = valueAt(k, p, k.parts[den]) / valueAt(k, q, k.parts[den]) - 1;
+    const top = [{ name: num, s: -dn * k.dir, d: dn }, { name: den, s: dd * k.dir, d: dd }].sort((a, b) => b.s - a.s)[0];
+    return top.s > 0 ? `Grund: ${top.name} ${top.d > 0 ? "+" : "−"}${pct(top.d)}` : "";
+  }
+  const ch = Object.entries(k.parts).map(([name, s]) => { const d = valueAt(k, p, s) - valueAt(k, q, s); return { name, d, s: -d * (k.dir || 1) }; }).sort((a, b) => b.s - a.s);
+  if (!ch.length || ch[0].s <= 0 || (ch[1] && ch[0].s < 1.5 * Math.max(0, ch[1].s))) return "";
+  return `Grund: ${ch[0].name} ${ch[0].d > 0 ? "+" : "−"}${thousands(Math.abs(ch[0].d))} Mio. CHF ggü. ${r.prevNoun}`;
+}
+const evalAll = (g, i) => KPIS.map((k) => evaluate(k, g, i)).sort((a, b) => b.score - a.score);
+
+// ───────────── DOM helpers ─────────────
+function h(tag, attrs = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k.startsWith("on") && typeof v === "function") el.addEventListener(k.slice(2), v);
+    else if (k === "text") el.textContent = v;
+    else if (k === "style") el.style.cssText = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) if (c !== null && c !== undefined && c !== false && c !== "") el.append(c instanceof Node ? c : String(c));
+  return el;
+}
+const SVGNS = "http://www.w3.org/2000/svg";
+function sv(tag, attrs = {}, ...kids) {
+  const el = document.createElementNS(SVGNS, tag);
+  for (const [k, v] of Object.entries(attrs)) if (v !== null && v !== undefined) el.setAttribute(k, v);
+  for (const c of kids) if (c) el.append(typeof c === "string" ? document.createTextNode(c) : c);
+  return el;
+}
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+function animate(dur, fn, ease = easeOut) {
+  if (reduced) { fn(1); return () => {}; }
+  const t0 = performance.now();
+  let stop = false;
+  const step = () => { if (stop) return; const k = clamp((performance.now() - t0) / dur, 0, 1); fn(ease(k)); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+  return () => { stop = true; };
+}
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const KIND_VAR = { alert: "--alert", watch: "--watch", good: "--good", info: "--accent", calm: "--ink-2" };
+const kindVar = (kind) => `var(${KIND_VAR[kind] || "--ink-2"})`;
+
+
+// ───────────── State and time ─────────────
+const GROUP_ORDER = ["liq", "kap", "zins", "bil", "wachs"];
+const SCOPES = { all: "ALCO gesamt", liq: "Liquidität", kap: "Kapital", zins: "Zinsrisiko", bil: "Bilanz", wachs: "Wachstum" };
+const SLUG = { all: "alco-gesamt", liq: "liquiditaet", kap: "kapital", zins: "zinsrisiko", bil: "bilanz", wachs: "wachstum" };
+const S = { design: "atlas", view: "overview", scope: null, focus: null, t: N - 1, playing: false, g: "monat", dash: {}, edit: false };
+const month = () => clamp(Math.round(S.t), 0, N - 1);
+const valAt = (k, t, s) => { const src = s || k.series, a = clamp(Math.floor(t), 0, N - 1), b = Math.min(N - 1, a + 1); return lerp(src[a], src[b], clamp(t - a, 0, 1)); };
+const scopeKpis = (scope) => (scope === "all" ? KPIS : KPIS.filter((k) => k.group === scope));
+const MONTH_DEG = 360 / 96;
+
+let lastMonth = month();
+const timeHooks = new Set();
+function setTime(t) {
+  const before = lastMonth;
+  S.t = clamp(t, 0, N - 1);
+  const m = month();
+  if (m !== before) { lastMonth = m; for (const e of EVENTS) if ((before < e.t && e.t <= m) || (m <= e.t && e.t < before)) eventFlash(e); }
+  for (const fn of timeHooks) fn(m !== before);
+}
+let glideStop = null;
+function glideTo(t, dur = 900) {
+  if (glideStop) glideStop();
+  const from = S.t;
+  S.gliding = true;
+  const stop = animate(dur, (e) => { setTime(lerp(from, t, e)); if (e >= 1) S.gliding = false; }, easeInOut);
+  glideStop = () => { stop(); S.gliding = false; };
+}
+let playRaf = 0;
+function play() {
+  if (S.playing) return;
+  if (glideStop) glideStop();
+  if (S.t >= N - 1.01) setTime(0);
+  S.playing = true;
+  syncPlay();
+  let last = performance.now();
+  const step = () => {
+    if (!S.playing) return;
+    const now = performance.now(), dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    setTime(S.t + dt * 7.5);
+    if (S.t >= N - 1) { stopPlay(); return; }
+    playRaf = requestAnimationFrame(step);
+  };
+  playRaf = requestAnimationFrame(step);
+}
+function stopPlay() { S.playing = false; cancelAnimationFrame(playRaf); syncPlay(); }
+const togglePlay = () => (S.playing ? stopPlay() : play());
+function syncPlay() {
+  document.querySelectorAll("[data-play]").forEach((b) => { b.setAttribute("aria-pressed", String(S.playing)); b.textContent = S.playing ? "❚❚" : "▶"; b.setAttribute("aria-label", S.playing ? "Anhalten" : "Geschichte abspielen"); });
+}
+
+// ───────────── Small UI helpers ─────────────
+const tipEl = document.getElementById("tip"), toastEl = document.getElementById("toast");
+function showTip(head, body, x, y) {
+  tipEl.replaceChildren(h("small", { text: head }), body);
+  tipEl.hidden = false;
+  tipEl.style.left = clamp(x + 16, 8, innerWidth - tipEl.offsetWidth - 8) + "px";
+  tipEl.style.top = clamp(y + 16, 8, innerHeight - tipEl.offsetHeight - 8) + "px";
+}
+const hideTip = () => { tipEl.hidden = true; };
+let toastTimer = 0;
+function toast(msg) {
+  toastEl.textContent = msg; toastEl.hidden = false;
+  toastEl.style.animation = "none"; void toastEl.offsetWidth; toastEl.style.animation = "";
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => (toastEl.hidden = true), 4200);
+}
+function flip(container, selector, mutate) {
+  const before = new Map();
+  container.querySelectorAll(selector).forEach((el) => before.set(el.dataset.id, el.getBoundingClientRect()));
+  mutate();
+  if (reduced) return;
+  container.querySelectorAll(selector).forEach((el) => {
+    const b = before.get(el.dataset.id);
+    if (!b) return;
+    const a = el.getBoundingClientRect(), dx = b.left - a.left, dy = b.top - a.top;
+    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }], { duration: 560, easing: "cubic-bezier(.2,.8,.2,1)" });
+  });
+}
+const levelCounts = (m, scope = "all") => {
+  const ev = scopeKpis(scope).map((k) => evaluate(k, "monat", m));
+  return { alert: ev.filter((r) => r.level === "alert").length, watch: ev.filter((r) => r.level === "watch").length, good: ev.filter((r) => r.kind === "good").length };
+};
+function dots(c) {
+  return h("span", { class: "dots" }, ...Array.from({ length: c.alert }, () => h("i", { class: "dot", "data-level": "alert" })),
+    ...Array.from({ length: c.watch }, () => h("i", { class: "dot", "data-level": "watch" })), ...Array.from({ length: c.good }, () => h("i", { class: "dot", "data-level": "good" })));
+}
+
+// Lumina's sentence for a month and scope.
+function briefParts(m, scope, onName) {
+  const ev = scopeKpis(scope).map((k) => evaluate(k, "monat", m)).sort((a, b) => b.score - a.score);
+  const alerts = ev.filter((r) => r.level === "alert"), watches = ev.filter((r) => r.level === "watch"), goods = ev.filter((r) => r.kind === "good");
+  const breach = alerts.filter((r) => r.breach);
+  const name = (r) => h("button", { class: "name" + (r.level === "alert" ? " name--alert" : ""), type: "button", onclick: () => onName(r.k) }, r.k.name);
+  const join = (rs) => rs.flatMap((r, n) => (n === 0 ? [name(r)] : [n === rs.length - 1 ? " und " : ", ", name(r)]));
+  const words = ["", "Eine", "Zwei", "Drei", "Vier", "Fünf", "Sechs"];
+  let p;
+  if (breach.length) p = ["Regulatorische Grenze verletzt: ", ...join(breach), ". Das hat Vorrang."];
+  else if (!alerts.length && !watches.length) p = ["Alles ruhig. ", ...(goods.length ? ["Gute Nachricht: ", ...join(goods), "."] : ["Nichts braucht dich."])];
+  else if (!alerts.length) p = ["Fast alles ruhig. Behalte ", ...join(watches), " im Auge."];
+  else if (alerts.length === 1 && !watches.length) p = ["Ruhige Lage. Nur eine Sache braucht dich: ", name(alerts[0]), "."];
+  else if (alerts.length === 1) p = ["Eine Sache braucht dich: ", name(alerts[0]), ". Im Auge behalten: ", ...join(watches), "."];
+  else p = [`${words[alerts.length] || alerts.length} Dinge brauchen dich: `, ...join(alerts), ".", ...(watches.length ? [" Im Auge behalten: ", ...join(watches), "."] : [])];
+  if (!breach.length && (alerts.length || watches.length) && goods.length) p.push(" Gute Nachricht: ", ...join(goods), ".");
+  return p;
+}
+
+// ───────────── Overview: the dial ─────────────
+function arcPath(r0, r1, a0, a1) {
+  const p = (r, a) => [(r * Math.sin((a * Math.PI) / 180)).toFixed(2), (-r * Math.cos((a * Math.PI) / 180)).toFixed(2)];
+  const large = a1 - a0 > 180 ? 1 : 0;
+  const [x0, y0] = p(r1, a0), [x1, y1] = p(r1, a1), [x2, y2] = p(r0, a1), [x3, y3] = p(r0, a0);
+  return `M${x0},${y0} A${r1},${r1} 0 ${large} 1 ${x1},${y1} L${x2},${y2} A${r0},${r0} 0 ${large} 0 ${x3},${y3} Z`;
+}
+const polar = (r, deg) => [r * Math.sin((deg * Math.PI) / 180), -r * Math.cos((deg * Math.PI) / 180)];
+
+const MAP_NAME = { pipe: "Pipeline", eve: "ΔEVE", lev: "Leverage", dep: "Einlagen", cet1: "CET1", nnm: "Netto-Neugeld" };
+const OV = {
+  built: false,
+  trails: {},
+  build() {
+    this.built = true;
+    const kinds = { alert: "--alert", watch: "--watch", good: "--good", info: "--accent", calm: "--ink" };
+    const defs = sv("defs", {}, ...Object.entries(kinds).map(([k, v]) => sv("radialGradient", { id: "halo-" + k },
+      sv("stop", { offset: 0, "stop-color": `var(${v})`, "stop-opacity": k === "calm" ? 0.3 : 0.75 }),
+      sv("stop", { offset: 0.35, "stop-color": `var(${v})`, "stop-opacity": k === "calm" ? 0.06 : 0.2 }),
+      sv("stop", { offset: 1, "stop-color": `var(${v})`, "stop-opacity": 0 }))));
+    this.dial = sv("g");
+    this.map = sv("g");
+    this.svg = sv("svg", { viewBox: "-540 -540 1080 1080", role: "group", "aria-label": "Zeitrad und Sternkarte der ALCO-Kennzahlen" }, defs, this.dial, this.buildFixed(), this.map);
+    this.buildDial();
+    this.buildMap();
+    this.hubMonth = h("div", { class: "hub-month num" });
+    this.hubSub = h("div", { class: "hub-sub" });
+    this.hub = h("div", { class: "hub" }, this.hubMonth, this.hubSub, h("div", { class: "hub-ctrl" },
+      h("button", { type: "button", "aria-label": "Zum Anfang", onclick: () => { stopPlay(); glideTo(0, 1400); } }, "⏮"),
+      h("button", { type: "button", "data-play": "", onclick: togglePlay }, "▶"),
+      h("button", { type: "button", "aria-label": "Zur Gegenwart", onclick: () => { stopPlay(); glideTo(N - 1, 1400); } }, "⏭")));
+    this.stage = h("div", { class: "stage" }, this.svg, this.hub);
+    this.brief = h("p", { class: "brief" });
+    this.briefLabel = h("span", { class: "label" });
+    this.sigs = h("div", { style: "display:grid" });
+    this.dashes = h("div", { class: "dashes" });
+    this.el = h("section", { class: "ov", "aria-label": "Übersicht" }, this.stage,
+      h("aside", { class: "side" },
+        h("div", { class: "panel" }, h("span", { class: "reg tl" }), h("span", { class: "reg br" }), this.briefLabel, this.brief),
+        h("div", { class: "panel" }, h("span", { class: "label", text: "Signale" }), this.sigs),
+        h("div", { class: "panel" }, h("span", { class: "label", text: "Dashboards öffnen" }), this.dashes),
+        h("p", { class: "label", text: "Rad ziehen oder Mausrad: durch die Zeit · ▶ spielt die Geschichte ab · ← → Monate, Leertaste Abspielen" })));
+    this.wire();
+  },
+  buildFixed() {
+    const g = sv("g", { "aria-hidden": "true" });
+    g.append(sv("circle", { class: "d-ring", r: 514, "stroke-opacity": 0.6 }), sv("circle", { class: "d-ring", r: 404, "stroke-opacity": 0.5 }),
+      sv("line", { class: "d-pointer", x1: 0, x2: 0, y1: -512, y2: -398, "stroke-width": 1.4, style: "filter: drop-shadow(0 0 calc(var(--halo) * 6px) var(--accent))" }),
+      sv("path", { class: "d-pointer", d: "M-9,-534 L9,-534 L0,-517 Z" }));
+    for (let n = 0; n < 4; n++) { const [x, y] = polar(526, n * 90 + 45); g.append(sv("circle", { cx: x, cy: y, r: 2, class: "d-pointer", opacity: 0.5 })); }
+    return g;
+  },
+  buildDial() {
+    const kids = [];
+    this.yearLabels = [];
+    for (let k = 0; k < 8; k++) {
+      const y = 2019 + k, a0 = k * 45 + 0.6, a1 = (k + 1) * 45 - 0.6;
+      const arc = sv("path", { class: "d-year", d: arcPath(474, 504, a0, a1) });
+      arc.addEventListener("click", () => { stopPlay(); glideTo(Math.min(N - 1, ym(y, 12)), 1200); });
+      arc.addEventListener("pointerenter", (e) => showTip(String(y), `Klick: zum Jahresende ${y}`, e.clientX, e.clientY));
+      arc.addEventListener("pointerleave", hideTip);
+      const [lx, ly] = polar(489, k * 45 + 22.5);
+      const label = sv("text", { class: "d-txt", x: lx.toFixed(1), y: (ly + 5).toFixed(1), "text-anchor": "middle", "font-size": 15, "letter-spacing": 1.5, "pointer-events": "none" }, y === 2026 ? "2026" : String(y));
+      this.yearLabels.push({ el: label, x: lx, y: ly + 5, arc, year: y });
+      kids.push(arc, label);
+    }
+    this.monthLabels = [];
+    for (let m = 0; m < 96; m++) {
+      const a = m * MONTH_DEG, q = m % 3 === 0, future = m > N - 1;
+      const [x0, y0] = polar(q ? 446 : 454, a), [x1, y1] = polar(466, a);
+      kids.push(sv("line", { class: "d-line", x1: x0.toFixed(1), y1: y0.toFixed(1), x2: x1.toFixed(1), y2: y1.toFixed(1), "stroke-opacity": future ? 0.06 : q ? 0.42 : 0.2, "stroke-width": q ? 1.4 : 1 }));
+      const [lx, ly] = polar(432, (m + 0.5) * MONTH_DEG);
+      const lab = sv("text", { class: "d-month", x: lx.toFixed(1), y: (ly + 4).toFixed(1), "text-anchor": "middle", "font-size": 11, opacity: 0, "pointer-events": "none" }, MON[m % 12]);
+      this.monthLabels.push({ el: lab, x: lx, y: ly + 4, m });
+      kids.push(lab);
+    }
+    for (let m = 0; m < 96; m++) {
+      const a0 = m * MONTH_DEG + 0.25, a1 = (m + 1) * MONTH_DEG - 0.25;
+      if (m > N - 1) { kids.push(sv("path", { d: arcPath(408, 420, a0, a1), fill: "var(--ink)", "fill-opacity": 0.03 })); continue; }
+      const c = levelCounts(m);
+      const fill = c.alert ? "var(--alert)" : c.watch ? "var(--watch)" : "var(--ink)";
+      const op = c.alert ? Math.min(0.85, 0.28 + c.alert * 0.22) : c.watch ? 0.35 : 0.08;
+      const seg = sv("path", { d: arcPath(408, 420, a0, a1), fill, "fill-opacity": op });
+      seg.addEventListener("pointerenter", (e) => showTip(PERIODS.monat[m].long, c.alert || c.watch ? `${c.alert} brauchten Aufmerksamkeit, ${c.watch} im Auge behalten. Klick springt hin.` : "Ruhiger Monat. Klick springt hin.", e.clientX, e.clientY));
+      seg.addEventListener("pointerleave", hideTip);
+      seg.addEventListener("click", () => { stopPlay(); glideTo(m, 900); });
+      seg.style.cursor = "pointer";
+      kids.push(seg);
+    }
+    for (const e of EVENTS) {
+      const [x, y] = polar(480 - 52, (e.t + 0.5) * MONTH_DEG);
+      const d = sv("path", { class: "d-event", d: "M0,-6 L6,0 L0,6 L-6,0 Z", transform: `translate(${x.toFixed(1)},${y.toFixed(1)})` });
+      d.addEventListener("pointerenter", (ev) => showTip(PERIODS.monat[e.t].long, `${e.title}. ${e.text}`, ev.clientX, ev.clientY));
+      d.addEventListener("pointerleave", hideTip);
+      d.addEventListener("click", () => { stopPlay(); glideTo(e.t, 1200); });
+      kids.push(d);
+    }
+    this.dial.replaceChildren(...kids);
+  },
+  buildMap() {
+    this.stars = {};
+    const kids = [];
+    this.trailLayer = sv("g");
+    kids.push(this.trailLayer);
+    GROUP_ORDER.forEach((gk, gi) => {
+      const ang = ((-90 + gi * 72) * Math.PI) / 180;
+      const rv = [Math.cos(ang), Math.sin(ang)], tv = [-Math.sin(ang), Math.cos(ang)], c = [218 * rv[0], 218 * rv[1]];
+      const members = KPIS.filter((k) => k.group === gk);
+      const offs = members.length === 3 ? [[0, -30], [-80, 34], [80, 34]] : [[-62, -8], [62, 12]];
+      const pts = members.map((k, j) => { const [t, r] = offs[j]; return [c[0] + tv[0] * t + rv[0] * r, c[1] + tv[1] * t + rv[1] * r]; });
+      kids.push(sv("line", { class: "d-con", x1: 0, y1: 0, x2: c[0].toFixed(1), y2: c[1].toFixed(1), "stroke-dasharray": "2 6" }));
+      this[`con-${gk}`] = sv("path", { class: "d-con", d: "M" + pts.map((p) => p.map((x) => x.toFixed(1)).join(",")).join(" L") + (pts.length > 2 ? " Z" : "") });
+      kids.push(this[`con-${gk}`]);
+      const lr = rv[1] > 0.3 ? 134 : 100;
+      const label = sv("text", { class: "d-cluster", x: (c[0] + rv[0] * lr).toFixed(1), y: (c[1] + rv[1] * lr + 7).toFixed(1), "text-anchor": "middle", "font-size": 25, tabindex: "0", role: "button", "aria-label": `Dashboard ${GROUPS[gk]} öffnen` }, GROUPS[gk]);
+      label.addEventListener("click", () => openDashboard(gk));
+      label.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDashboard(gk); } });
+      kids.push(label);
+      members.forEach((k, j) => {
+        const [x, y] = pts[j], dx = x - c[0], dy = y - c[1], len = Math.hypot(dx, dy) || 1;
+        const out = len > 8 ? [dx / len, dy / len] : rv;
+        const halo = sv("circle", { class: "halo", r: 20, fill: "url(#halo-calm)" });
+        const pulse = sv("circle", { r: 20, fill: "none", stroke: "var(--alert)", "stroke-opacity": 0, visibility: "hidden" },
+          ...(reduced ? [] : [sv("animate", { attributeName: "r", values: "22;48", dur: "2.4s", repeatCount: "indefinite" }), sv("animate", { attributeName: "stroke-opacity", values: "0.6;0", dur: "2.4s", repeatCount: "indefinite" })]));
+        const track = sv("circle", { class: "track", r: 22, "stroke-width": 1.2 });
+        const prog = sv("circle", { r: 22, fill: "none", "stroke-width": 2, "stroke-linecap": "round", pathLength: 100, "stroke-dasharray": "0 100", transform: "rotate(-90)" });
+        const tick = sv("line", { x1: 0, y1: -17, x2: 0, y2: -30, stroke: "var(--accent)", "stroke-width": 1.5, visibility: "hidden" });
+        const core = sv("circle", { class: "core", r: 3 });
+        const cross = sv("path", { class: "cross", d: "M-32,0 h12 M20,0 h12 M0,-32 v12 M0,20 v6" });
+        // Centred under the star: no label can run into a neighbour, the hub or the rings.
+        const name = sv("text", { class: "lab", x: 0, y: 38, "text-anchor": "middle", "font-size": 10.5, "letter-spacing": 1.2 }, (MAP_NAME[k.id] || k.name).toUpperCase());
+        const val = sv("text", { class: "val", x: 0, y: 53, "text-anchor": "middle", "font-size": 12.5 }, "");
+        const g = sv("g", { class: "st", tabindex: "0", role: "button", "aria-label": `${k.long}: Dashboard ${GROUPS[gk]} öffnen`, style: reduced ? "" : `animation: ignite .9s ${0.25 + (gi * 3 + j) * 0.07}s cubic-bezier(.2,.8,.2,1) backwards` }, halo, pulse, track, prog, tick, cross, core, name, val);
+        g.addEventListener("click", () => openDashboard(gk, k.id));
+        g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDashboard(gk, k.id); } });
+        g.addEventListener("pointerenter", (e) => { const r = evaluate(k, "monat", month()); showTip(`${GROUPS[gk]} · ${r.label}`, `${k.name}: ${r.answer}.`, e.clientX, e.clientY); });
+        g.addEventListener("pointerleave", hideTip);
+        const trail = sv("path", { class: "trail", "stroke-width": 1.6 });
+        this.trailLayer.append(trail);
+        this.stars[k.id] = { k, g, halo, pulse, prog, tick, core, val, trail, base: [x, y], out, pts: [] };
+        kids.push(g);
+      });
+    });
+    this.map.replaceChildren(...kids);
+  },
+  frame() {
+    const t = S.t, m = month(), ang = -(t + 0.5) * MONTH_DEG + (this.spin || 0);
+    this.dial.setAttribute("transform", `rotate(${ang.toFixed(3)})`);
+    for (const L of this.yearLabels) L.el.setAttribute("transform", `rotate(${(-ang).toFixed(3)} ${L.x.toFixed(1)} ${L.y.toFixed(1)})`);
+    for (const L of this.monthLabels) {
+      const d = Math.abs(L.m - t);
+      const o = L.m > N - 1 ? 0 : d < 0.5 ? 1 : d < 5 ? 0.75 - d * 0.14 : 0;
+      L.el.setAttribute("opacity", o.toFixed(2));
+      if (o > 0) { L.el.setAttribute("transform", `rotate(${(-ang).toFixed(3)} ${L.x.toFixed(1)} ${L.y.toFixed(1)})`); L.el.setAttribute("font-weight", d < 0.5 ? 600 : 400); }
+    }
+    for (const L of this.yearLabels) L.arc.classList.toggle("is-now", L.year === 2019 + Math.floor(m / 12));
+    let moving = false;
+    for (const st of Object.values(this.stars)) {
+      const k = st.k, a = Math.floor(t), b = Math.min(N - 1, a + 1), f = t - a;
+      const ra = evaluate(k, "monat", a), rb = evaluate(k, "monat", b), r = evaluate(k, "monat", m);
+      const mag = lerp(ra.mag, rb.mag, f), v = valAt(k, t);
+      let dev = 0;
+      // Distance from the goal pushes a star outward; calm stars settle toward their constellation.
+      if (k.dir && (k.target !== null || k.reg !== null)) {
+        const tgt = k.target !== null ? k.target : k.reg;
+        dev = k.kind === "flow" ? clamp((tgt - v) / 120, -0.08, 0.35) : clamp((-(v - tgt) / Math.abs(tgt)) * k.dir, -0.08, 0.35);
+      }
+      const px = st.base[0] + st.out[0] * dev * 120, py = st.base[1] + st.out[1] * dev * 120;
+      st.g.setAttribute("transform", `translate(${px.toFixed(1)},${py.toFixed(1)})`);
+      st.halo.setAttribute("r", (16 + 60 * mag).toFixed(1));
+      st.halo.setAttribute("fill", `url(#halo-${r.kind})`);
+      st.core.setAttribute("r", (2.2 + 4 * mag).toFixed(2));
+      st.pulse.setAttribute("visibility", r.level === "alert" ? "visible" : "hidden");
+      const peak = Math.max(...k.series);
+      const D = k.dir > 0 ? Math.max(Math.abs(v), r.tgt || 0, k.reg || 0) * 1.28 : k.dir < 0 ? (k.reg || v) * 1.3 : peak * 1.1;
+      st.prog.setAttribute("stroke-dasharray", `${(clamp(v / D, 0, 1) * 100).toFixed(1)} 100`);
+      st.prog.setAttribute("stroke", kindVar(r.kind === "calm" ? "info" : r.kind));
+      st.tick.setAttribute("visibility", r.tgt !== null ? "visible" : "hidden");
+      if (r.tgt !== null) st.tick.setAttribute("transform", `rotate(${((r.tgt / D) * 360).toFixed(1)})`);
+      st.val.textContent = compact(k, v);
+      const last = st.pts[st.pts.length - 1];
+      if (S.playing || this.scrubbing || S.gliding) {
+        if (!last || Math.hypot(last[0] - px, last[1] - py) > 0.6) st.pts.push([px, py]);
+        if (st.pts.length > 40) st.pts.shift();
+      } else if (st.pts.length) st.pts.shift();
+      if (st.pts.length > 1) { moving = true; st.trail.setAttribute("d", "M" + st.pts.map((p) => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" L")); }
+      else st.trail.setAttribute("d", "");
+      st.trail.setAttribute("stroke", kindVar(r.kind === "calm" ? "info" : r.kind));
+      st.trail.setAttribute("stroke-opacity", (0.25 + 0.35 * mag).toFixed(2));
+    }
+    this.hubMonth.textContent = PERIODS.monat[m].long;
+    return moving;
+  },
+  loop() {
+    if (this.raf) return;
+    const tick = () => {
+      this.raf = 0;
+      if (S.view !== "overview") return;
+      const moving = this.frame();
+      if (moving || S.playing) this.raf = requestAnimationFrame(tick);
+    };
+    this.raf = requestAnimationFrame(tick);
+  },
+  monthUpdate() {
+    const m = month(), c = levelCounts(m);
+    this.hubSub.textContent = c.alert || c.watch ? `${c.alert ? c.alert + " brauchen dich" : ""}${c.alert && c.watch ? " · " : ""}${c.watch ? c.watch + " im Auge" : ""}` : "Alles ruhig";
+    this.briefLabel.textContent = `Lagebericht · ${PERIODS.monat[m].long}${m < N - 1 ? " · Rückblick" : ""}`;
+    this.brief.replaceChildren(...briefParts(m, "all", (k) => openDashboard(k.group, k.id)));
+    const ev = evalAll("monat", m).filter((r) => r.level !== "calm").slice(0, 5);
+    this.sigs.replaceChildren(...(ev.length ? ev.map((r) => h("button", { class: "sig", type: "button", onclick: () => openDashboard(r.k.group, r.k.id) },
+      h("i", { class: "dot", "data-level": r.kind }), h("b", { text: r.k.name }), h("span", { class: "num", text: F(r.k, r.cur) }), h("small", { text: r.answer + "." })))
+      : [h("p", { class: "voice", style: "margin:0;color:var(--ink-2)", text: "Keine Signale in diesem Monat." })]));
+    this.dashes.replaceChildren(...["all", ...GROUP_ORDER].map((sc) => h("button", { class: "dash-link" + (sc === "all" ? " dash-link--all" : ""), type: "button", onclick: () => openDashboard(sc) },
+      h("b", { text: SCOPES[sc] }), dots(levelCounts(m, sc)), h("span", { class: "label", text: `${scopeKpis(sc).length} Kennzahlen` }))));
+  },
+  onTime(monthChanged) {
+    if (S.view !== "overview") return;
+    if (monthChanged) this.monthUpdate();
+    this.frame();
+    this.loop();
+  },
+  wire() {
+    let drag = null;
+    const angleAt = (e) => { const b = this.svg.getBoundingClientRect(); return (Math.atan2(e.clientX - (b.left + b.width / 2), -(e.clientY - (b.top + b.height / 2))) * 180) / Math.PI; };
+    const radiusAt = (e) => { const b = this.svg.getBoundingClientRect(); return (Math.hypot(e.clientX - (b.left + b.width / 2), e.clientY - (b.top + b.height / 2)) / b.width) * 1080; };
+    this.svg.addEventListener("pointerdown", (e) => {
+      if (radiusAt(e) < 400 || e.button > 0) return;
+      drag = { a: angleAt(e), moved: 0, id: e.pointerId, captured: false };
+    });
+    this.svg.addEventListener("pointermove", (e) => {
+      if (!drag) return;
+      const a = angleAt(e);
+      let d = a - drag.a;
+      if (d > 180) d -= 360; else if (d < -180) d += 360;
+      drag.a = a; drag.moved += Math.abs(d);
+      if (drag.moved > 1.5) {
+        if (!drag.captured) { drag.captured = true; this.svg.setPointerCapture(drag.id); stopPlay(); if (glideStop) glideStop(); this.scrubbing = true; }
+        hideTip(); setTime(S.t - d / MONTH_DEG);
+      }
+    });
+    const end = () => {
+      if (!drag) return;
+      const moved = drag.moved;
+      drag = null; this.scrubbing = false;
+      if (moved > 1.5) glideTo(Math.round(S.t), 420);
+      this.loop();
+    };
+    this.svg.addEventListener("pointerup", end);
+    this.svg.addEventListener("pointercancel", end);
+    this.stage.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      stopPlay();
+      const target = clamp(Math.round(S.t) + (e.deltaY > 0 ? 1 : -1) * (Math.abs(e.deltaY) > 80 ? 3 : 1), 0, N - 1);
+      glideTo(target, 380);
+    }, { passive: false });
+  },
+  mount(app, intro) {
+    if (!this.built) this.build();
+    this.svg.getAnimations().forEach((a) => a.cancel());
+    this.hub.getAnimations().forEach((a) => a.cancel());
+    app.replaceChildren(this.el);
+    this.el.classList.remove("view"); void this.el.offsetWidth; this.el.classList.add("view");
+    this.monthUpdate();
+    if (intro && !reduced) {
+      this.spin = 140;
+      animate(1800, (e) => { this.spin = 140 * (1 - e); this.frame(); }, easeOut);
+    } else { this.spin = 0; this.frame(); }
+    syncPlay();
+  },
+};
+timeHooks.add((mc) => OV.onTime(mc));
+
+function eventFlash(e) {
+  if (S.view !== "overview" || !OV.stage) return;
+  const f = h("div", { class: "flash" }, h("span", { text: PERIODS.monat[e.t].long }), h("b", { text: e.title }));
+  OV.stage.append(f);
+  setTimeout(() => f.remove(), 2700);
+}
+
+// ───────────── Lumina's chart recommendations ─────────────
+// Every candidate is generated from the data; the score ranks urgency and explanatory value.
+function candidatesFor(scope, m) {
+  const out = [], ks = scopeKpis(scope);
+  const ev = Object.fromEntries(KPIS.map((k) => [k.id, evaluate(k, "monat", m)]));
+  const heat = (r) => (r.level === "alert" ? 3 : r.level === "watch" ? 2 : r.kind === "good" ? 1.6 : 1);
+  for (const k of ks) {
+    const r = ev[k.id];
+    out.push({ id: "trend:" + k.id, kind: "trend", k: k.id, title: `${k.name}: Verlauf${k.reg !== null || k.target !== null ? " gegen " + (k.reg !== null ? "Grenzen" : "Ziel") : ""}`,
+      why: r.kind === "good" ? `${k.name}: ${r.label}, ${r.answer.replace(/^[^,]*, /, "")}. Der Verlauf zeigt, wie sich der Wert vom Ziel absetzt.`
+        : r.level !== "calm" ? `${k.name}: ${r.label} seit ${PERIODS.monat[streakStart(k, m)].long}. Darum der Verlauf mit Grenzbändern; er zeigt, wann es kippte, nicht warum.`
+        : k.reg !== null ? `${k.name} ist ruhig, ${headroom(k, r)} Puffer zum Minimum. Der Verlauf zeigt, ob dieser Abstand schrumpft.`
+        : k.target !== null ? `${k.name} ist ruhig und im Ziel. Der Verlauf zeigt, wie stabil das ist.` : `Für ${k.name} ist kein Ziel hinterlegt. Der Verlauf zeigt die Bewegung über die Zeit.`,
+      score: 20 * heat(r) + (k.reg !== null ? 6 : 0), types: k.kind === "flow" ? ["balken", "linie"] : ["flaeche", "linie", "balken"], ranges: ["1J", "3J", "Alles"], range: "3J", type: k.kind === "flow" ? "balken" : "flaeche" });
+    if (k.kind === "flow") out.push({ id: "cum:" + k.id, kind: "cum", k: k.id, title: `${k.name}: kumuliert im Jahr`, why: "Monatsflüsse schwanken. Kumuliert gegen das Jahresziel sieht man, ob das Jahr noch aufgeht.", score: 23 * heat(r), types: [], ranges: [] });
+    if (k.parts && !k.funnel && k.partsMode !== "ratio") {
+      out.push({ id: "parts:" + k.id, kind: "parts", k: k.id, title: `${k.name}: Zusammensetzung`, why: `${r.why ? r.why + ". " : ""}Die Zusammensetzung zeigt, welcher Teil die Bewegung trägt, nicht die Ursache dahinter.`,
+        score: (r.why ? 25 : 9) * heat(r), types: k.kind === "flow" ? ["balken"] : ["flaeche", "anteile"], ranges: ["1J", "3J", "Alles"], range: "3J", type: k.kind === "flow" ? "balken" : "flaeche" });
+      out.push({ id: "bridge:" + k.id, kind: "bridge", k: k.id, title: `${k.name}: Brücke über zwölf Monate`, why: m >= 12 ? `Zerlegt die Veränderung seit ${PERIODS.monat[m - 12].long} in ihre Teile.` : "Zerlegt die Veränderung über zwölf Monate in ihre Teile.", score: (r.level !== "calm" ? 21 : 6) * heat(r), types: [], ranges: [] });
+    }
+    if (k.partsMode === "ratio") out.push({ id: "drivers:" + k.id, kind: "drivers", k: k.id, title: `${k.name}: Zähler und Nenner`, why: `${k.name} ist ein Verhältnis. Getrennt sieht man, ob die Reserve sinkt oder die Abflüsse steigen.`, score: (r.level !== "calm" ? 24 : 8) * heat(r), types: [], ranges: ["1J", "3J", "Alles"], range: "3J" });
+    if (k.funnel) out.push({ id: "funnel:" + k.id, kind: "funnel", k: k.id, title: `${k.name}: nach Stufe`, why: "Was in der Pipeline steht, nach Stufe. Zeigt Volumen, keine Abschlusswahrscheinlichkeit.", score: 17 * heat(r), types: [], ranges: [] });
+    if (k.kind === "flow" || k.funnel || k.id === "nim") out.push({ id: "season:" + k.id, kind: "season", k: k.id, title: `${k.name}: Saisonmuster`, why: "Jedes Jahr eine Zeile. So sieht man, ob ein Monat typisch ist oder heraussticht.", score: 9 * heat(r), types: [], ranges: [] });
+  }
+  const regKs = ks.filter((k) => k.reg !== null && k.reg !== undefined);
+  if (regKs.length) out.push({ id: "buffer:" + scope, kind: "buffer", ks: regKs.map((k) => k.id), title: "Puffer zu den Grenzen", why: `Abstand jeder Quote zu Minimum und Ziel. Am wenigsten Puffer hat gerade ${[...regKs].sort((a, b) => ((ev[a.id].cur - a.reg) * a.dir) / Math.abs(a.reg) - ((ev[b.id].cur - b.reg) * b.dir) / Math.abs(b.reg))[0].name}.`, score: 26 + 12 * Math.max(...regKs.map((k) => heat(ev[k.id]))), types: [], ranges: [] });
+  if (["all", "liq", "bil"].includes(scope)) out.push({ id: "compare:lcr-dep", kind: "compare", ks: ["lcr", "dep"], title: "LCR und Kundeneinlagen", why: "Beide Reihen auf 100 indexiert. Gleichlauf zeigt einen Zusammenhang, keine Ursache.", score: ev.lcr.level !== "calm" ? 44 : 11, types: [], ranges: ["3J", "Alles"], range: "Alles" });
+  return out.sort((a, b) => b.score - a.score);
+}
+const SIZES_BY_RANK = ["L", "S", "M", "M", "S", "S", "S", "M"];
+function streakStart(k, m) { let x = m; while (x > 0 && evaluate(k, "monat", x - 1).level !== "calm") x--; return x; }
+function headroom(k, r) { const b = (r.cur - k.reg) * k.dir; return k.unit === "%" ? `${b.toFixed(k.dec)} Pp.` : F(k, b); }
+function lumaSelect(scope) {
+  const cands = candidatesFor(scope, month());
+  const n = scope === "all" ? 6 : 5;
+  const sel = cands.slice(0, n).map((c) => c.id);
+  const size = {};
+  sel.forEach((id, i) => { size[id] = id.startsWith("buffer:") && scope === "all" ? "L" : SIZES_BY_RANK[i]; });
+  S.dash[scope] = { sel, size, type: {}, range: {} };
+}
+
+// ───────────── Dashboard ─────────────
+const DB = {
+  mount(origins) {
+    const scope = S.scope;
+    if (!S.dash[scope]) lumaSelect(scope);
+    const m = month();
+    this.title = h("h1", { class: "dash-title", text: SCOPES[scope] });
+    this.sub = h("p", { class: "dash-sub" });
+    this.editBtn = h("button", { class: "btn", type: "button", "aria-pressed": "false", onclick: () => this.toggleEdit() }, "Anpassen");
+    this.seg = h("div", { class: "seg", role: "group", "aria-label": "Auflösung" }, ...[["monat", "Monat"], ["quartal", "Quartal"], ["jahr", "Jahr"]].map(([g, l]) =>
+      h("button", { type: "button", "aria-pressed": String(S.g === g), onclick: () => { S.g = g; this.seg.querySelectorAll("button").forEach((b, i) => b.setAttribute("aria-pressed", String(["monat", "quartal", "jahr"][i] === g))); this.refresh(true); } }, l)));
+    this.tilesEl = h("div", { class: "tiles" });
+    this.note = h("p");
+    this.chartsEl = h("div", { class: "charts" });
+    this.tray = h("div", { class: "panel tray" });
+    this.buildStrip();
+    this.el = h("section", { class: "dash view", "aria-label": `Dashboard ${SCOPES[scope]}` },
+      h("div", { class: "dash-head" },
+        h("div", {}, h("span", { class: "label", text: "Dashboard · vorbereitet von Lumina" }), this.title, this.sub),
+        h("div", { class: "dash-tools" }, this.seg, this.editBtn,
+          h("button", { class: "btn btn--accent", type: "button", onclick: () => { lumaSelect(scope); this.renderCharts(true); toast("Lumina hat die Diagramme für diesen Monat neu gewählt."); } }, "✦ Lumina wählt neu"),
+          h("button", { class: "btn", type: "button", onclick: () => closeDashboard() }, "← Übersicht"))),
+      this.strip,
+      this.tilesEl,
+      h("div", { class: "note panel", style: "padding:12px 16px" }, h("span", { class: "reg tl" }), h("span", { class: "reg br" }), this.note),
+      this.chartsEl,
+      this.tray);
+    document.getElementById("app").replaceChildren(this.el);
+    this.renderTiles(origins);
+    this.renderCharts(true);
+    this.monthUpdate();
+    this.frame();
+    if (S.focus) setTimeout(() => this.focusTile(S.focus), 650);
+    syncPlay();
+    this.kick();
+    window.scrollTo({ top: 0 });
+  },
+  toggleEdit() {
+    if (!this.editBtn) return;
+    S.edit = !S.edit;
+    this.editBtn.setAttribute("aria-pressed", String(S.edit));
+    this.editBtn.textContent = S.edit ? "Fertig" : "Anpassen";
+    this.chartsEl.classList.toggle("is-edit", S.edit);
+    this.chartsEl.querySelectorAll(".chart-card").forEach((c) => (c.draggable = S.edit));
+    this.renderTray();
+  },
+  focusTile(id) {
+    const t = this.tilesEl.querySelector(`[data-id="${id}"]`);
+    if (!t) return;
+    t.classList.add("is-focus");
+    t.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+    setTimeout(() => t.classList.remove("is-focus"), 2200);
+  },
+  buildStrip() {
+    const svg = sv("svg", { viewBox: "0 0 1000 44", preserveAspectRatio: "none", "aria-hidden": "true" });
+    for (let m = 0; m < N; m++) {
+      const c = levelCounts(m, S.scope), x = (m / N) * 1000, w = 1000 / N - 1.2;
+      const hgt = c.alert ? 10 + c.alert * 8 : c.watch ? 8 : 3;
+      svg.append(sv("rect", { x: x.toFixed(1), y: 30 - hgt, width: w.toFixed(1), height: hgt, fill: c.alert ? "var(--alert)" : c.watch ? "var(--watch)" : "var(--ink)", "fill-opacity": c.alert ? 0.85 : c.watch ? 0.6 : 0.18 }));
+    }
+    svg.append(sv("line", { x1: 0, x2: 1000, y1: 30.5, y2: 30.5, stroke: "var(--line-2)", "vector-effect": "non-scaling-stroke" }));
+    const labels = [];
+    for (let y = 2019; y <= 2026; y++) { const x = (ym(y, 1) / N) * 100; labels.push(h("span", { class: "plot-lab", style: `left:${x}%;top:34px`, text: String(y) })); }
+    const evs = EVENTS.map((e) => {
+      const b = h("span", { class: "plot-lab", style: `left:calc(${((e.t + 0.5) / N) * 100}% - 4px);top:-2px;width:8px;height:8px;border:1px solid var(--accent);background:var(--bg);transform:rotate(45deg);pointer-events:auto;cursor:pointer` });
+      b.addEventListener("pointerenter", (ev) => showTip(PERIODS.monat[e.t].long, `${e.title}. ${e.text}`, ev.clientX, ev.clientY));
+      b.addEventListener("pointerleave", hideTip);
+      return b;
+    });
+    this.handleLab = h("span");
+    this.handle = h("div", { class: "strip-handle" }, this.handleLab);
+    this.track = h("div", { class: "strip-track", role: "slider", tabindex: "0", "aria-label": "Monat wählen", "aria-valuemin": "0", "aria-valuemax": String(N - 1) }, svg, ...labels, ...evs, this.handle);
+    this.strip = h("div", { class: "panel strip" }, h("span", { class: "reg tl" }), h("span", { class: "reg br" }),
+      h("button", { class: "strip-play", type: "button", "data-play": "", onclick: togglePlay }, "▶"), this.track);
+    let drag = false;
+    const tAt = (e) => { const b = this.track.getBoundingClientRect(); return clamp(((e.clientX - b.left) / b.width) * N - 0.5, 0, N - 1); };
+    this.track.addEventListener("pointerdown", (e) => { drag = true; stopPlay(); if (glideStop) glideStop(); this.track.setPointerCapture(e.pointerId); setTime(tAt(e)); });
+    this.track.addEventListener("pointermove", (e) => { if (drag) setTime(tAt(e)); });
+    const end = () => { if (!drag) return; drag = false; glideTo(Math.round(S.t), 300); };
+    this.track.addEventListener("pointerup", end);
+    this.track.addEventListener("pointercancel", end);
+    this.track.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); e.stopPropagation(); glideTo(clamp(month() + (e.key === "ArrowRight" ? 1 : -1) * (e.shiftKey ? 12 : 1), 0, N - 1), 300); }
+    });
+  },
+  renderTiles(origins) {
+    const ks = scopeKpis(S.scope);
+    this.tiles = ks.map((k, i) => {
+      const val = h("span", { class: "tile-val" }), pill = h("span", { class: "pill" }), delta = h("span", { class: "tile-delta" });
+      const line = sv("path", { fill: "none", "stroke-width": 1.6, "vector-effect": "non-scaling-stroke" }), area = sv("path", { "fill-opacity": 0.12 });
+      const spark = sv("svg", { viewBox: "0 0 100 30", preserveAspectRatio: "none", "aria-hidden": "true" }, area, line);
+      const el = h("button", { class: "panel tile", type: "button", "data-id": k.id, onclick: () => this.highlight(k.id) },
+        h("span", { class: "reg tl" }), h("span", { class: "reg br" }),
+        h("span", { class: "tile-top" }, h("span", { class: "tile-name", text: k.name }), pill), val, delta, spark);
+      return { k, el, val, pill, delta, line, area, i };
+    });
+    this.tilesEl.replaceChildren(...this.tiles.map((t) => t.el));
+    if (reduced) return;
+    this.tiles.forEach((t) => {
+      const o = origins && origins[t.k.id];
+      if (o && o.width) {
+        const b = t.el.getBoundingClientRect();
+        t.el.animate([
+          { transform: `translate(${o.left + o.width / 2 - (b.left + b.width / 2)}px, ${o.top + o.height / 2 - (b.top + b.height / 2)}px) scale(${Math.max(0.04, o.width / b.width)}, ${Math.max(0.04, o.height / b.height)})`, borderRadius: "50%", opacity: 0.4 },
+          { transform: "none", borderRadius: getComputedStyle(t.el).borderRadius, opacity: 1 }],
+          { duration: 650, delay: t.i * 35, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" });
+      } else {
+        t.el.animate([{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }], { duration: 600, delay: t.i * 45, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" });
+      }
+    });
+  },
+  highlight(id) {
+    const cards = [...this.chartsEl.querySelectorAll(".chart-card")];
+    const hit = cards.find((c) => c.dataset.id.endsWith(":" + id));
+    if (hit) { hit.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" }); hit.animate([{ boxShadow: "0 0 0 1px var(--accent), 0 0 40px -6px var(--accent)" }, { boxShadow: "none" }], { duration: 1600 }); return; }
+    const cand = candidatesFor(S.scope, month()).find((c) => c.k === id);
+    if (cand) { this.addChart(cand.id); toast(`Lumina hat «${cand.title}» ergänzt.`); }
+  },
+  addChart(id) {
+    const d = S.dash[S.scope];
+    if (d.sel.includes(id)) return;
+    d.sel.push(id);
+    d.size[id] = d.size[id] || "M";
+    this.renderCharts(false, id);
+    this.renderTray();
+    const el = this.chartsEl.querySelector(`[data-id="${id}"]`);
+    if (el) el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+  },
+  renderCharts(fresh, added) {
+    const d = S.dash[S.scope], cands = candidatesFor(S.scope, month());
+    this.cands = cands;
+    const byId = Object.fromEntries(cands.map((c) => [c.id, c]));
+    d.sel = d.sel.filter((id) => byId[id]);
+    this.cards = d.sel.map((id) => chartCard({ ...byId[id], type: d.type[id] || byId[id].type, range: d.range[id] || byId[id].range, size: d.size[id] || "M" }, this));
+    flip(this.chartsEl, ".chart-card", () => this.chartsEl.replaceChildren(...this.cards.map((c) => c.el)));
+    this.cards.forEach((c, i) => {
+      if (fresh || c.spec.id === added) { c.el.classList.add("enter"); c.el.style.animationDelay = fresh ? `${150 + i * 60}ms` : "0ms"; c.intro = true; }
+      c.el.draggable = S.edit;
+      c.update(true);
+    });
+    this.chartsEl.classList.toggle("is-edit", S.edit);
+    this.note.replaceChildren(h("span", { class: "voice", text: `Lumina hat aus ${cands.length} möglichen Diagrammen ${d.sel.length} vorausgewählt, nach Dringlichkeit und Aussagekraft. ` }),
+      h("span", { class: "label", text: S.edit ? "Ziehen ordnet neu · Typ, Zeitraum und Grösse oben rechts in jeder Karte" : "«Anpassen» öffnet alle Werkzeuge" }));
+    this.renderTray();
+    if (!this.dragWired) this.wireDrag();
+    this.kick();
+  },
+  kick() {
+    if (this.raf) return;
+    const tick = () => { this.raf = 0; if (S.view === "dashboard" && this.frame()) this.raf = requestAnimationFrame(tick); };
+    this.raf = requestAnimationFrame(tick);
+  },
+  renderTray() {
+    const d = S.dash[S.scope];
+    const rest = (this.cands || []).filter((c) => !d.sel.includes(c.id));
+    const selScores = (this.cands || []).filter((c) => d.sel.includes(c.id)).map((c) => c.score);
+    const floor = selScores.length ? Math.min(...selScores) : -Infinity;
+    // A better candidate than the weakest card is announced, never swapped in silently (HAX G14, G18).
+    this.tray.replaceChildren(h("span", { class: "label", text: rest.length ? "Weitere Vorschläge von Lumina" : "Alle Vorschläge sind auf dem Dashboard" }),
+      ...rest.slice(0, 8).map((c, i) => { const hot = i === 0 && c.score > floor; return h("button", { class: "chip" + (hot ? " chip--hot" : ""), type: "button", title: c.why, onclick: () => this.addChart(c.id) }, (hot ? "✦ Neu empfohlen: " : "+ ") + c.title); }));
+  },
+  wireDrag() {
+    this.dragWired = true;
+    let dragId = null, last = "";
+    this.chartsEl.addEventListener("dragstart", (e) => {
+      const c = e.target.closest(".chart-card");
+      if (!c || !S.edit) return;
+      dragId = c.dataset.id; c.classList.add("is-dragging");
+      e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", dragId);
+    });
+    this.chartsEl.addEventListener("dragover", (e) => {
+      if (!dragId) return;
+      e.preventDefault();
+      const tgt = e.target.closest(".chart-card");
+      if (!tgt || tgt.dataset.id === dragId) return;
+      const b = tgt.getBoundingClientRect(), after = e.clientX > b.left + b.width / 2, sig = tgt.dataset.id + after;
+      if (sig === last) return;
+      last = sig;
+      const dragged = this.chartsEl.querySelector(`[data-id="${dragId}"]`), ref = after ? tgt.nextSibling : tgt;
+      if (ref !== dragged && ref !== dragged.nextSibling) flip(this.chartsEl, ".chart-card", () => this.chartsEl.insertBefore(dragged, ref));
+    });
+    this.chartsEl.addEventListener("dragend", () => {
+      if (!dragId) return;
+      S.dash[S.scope].sel = [...this.chartsEl.querySelectorAll(".chart-card")].map((c) => c.dataset.id);
+      this.chartsEl.querySelector(`[data-id="${dragId}"]`)?.classList.remove("is-dragging");
+      dragId = null; last = "";
+    });
+  },
+  monthUpdate() {
+    const m = month();
+    this.cands = candidatesFor(S.scope, m);
+    this.sub.replaceChildren(...briefParts(m, S.scope, (k) => { if (k.group === S.scope || S.scope === "all") this.focusTile(k.id); else openDashboard(k.group, k.id); }));
+    for (const t of this.tiles) {
+      const p = PERIODS[S.g][indexOfMonth(S.g, m)], r = evaluate(t.k, S.g, p.i);
+      t.el.setAttribute("data-level", r.kind);
+      t.pill.setAttribute("data-level", r.kind);
+      t.pill.replaceChildren(h("i"), r.label);
+      t.delta.textContent = r.delta || "Erste Periode";
+      t.r = r;
+    }
+    this.handleLab.textContent = PERIODS.monat[m].label;
+    this.track.setAttribute("aria-valuenow", String(m));
+    this.track.setAttribute("aria-valuetext", PERIODS.monat[m].long);
+  },
+  frame() {
+    const t = S.t;
+    this.handle.style.left = ((t + 0.5) / N) * 100 + "%";
+    for (const tl of this.tiles) {
+      const k = tl.k;
+      const v = S.g === "monat" ? valAt(k, t) : tl.r ? tl.r.cur : valAt(k, t);
+      const [n, u] = split(k, v);
+      tl.val.replaceChildren(n, h("small", { text: u }));
+      const a = Math.max(0, t - 23), pts = [];
+      for (let m = Math.floor(a); m <= Math.floor(t); m++) pts.push([m, k.series[m]]);
+      pts.push([t, valAt(k, t)]);
+      const vs = pts.map((p) => p[1]), lo = Math.min(...vs), hi = Math.max(...vs) || 1;
+      const X = (m) => ((m - a) / Math.max(1, t - a)) * 100, Y = (v2) => 28 - ((v2 - lo) / (hi - lo || 1)) * 26;
+      const d = "M" + pts.map((p) => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" L");
+      const col = kindVar(tl.r ? (tl.r.kind === "calm" ? "info" : tl.r.kind) : "info");
+      tl.line.setAttribute("d", d); tl.line.setAttribute("stroke", col);
+      tl.area.setAttribute("d", `${d} L100,30 L0,30 Z`); tl.area.setAttribute("fill", col);
+    }
+    let again = false;
+    for (const c of this.cards) again = c.update(false) || again;
+    return again;
+  },
+  refresh(monthChanged) { if (monthChanged) this.monthUpdate(); for (const c of this.cards) c.update(true); this.frame(); },
+  onTime(mc) {
+    if (S.view !== "dashboard" || !this.el || !this.el.isConnected) return;
+    if (mc) { this.monthUpdate(); for (const c of this.cards) c.update(true); }
+    if (this.frame()) this.kick();
+  },
+};
+timeHooks.add((mc) => DB.onTime(mc));
+
+// ───────────── Navigation between overview and dashboards ─────────────
+function clusterScreen(scope) {
+  const gi = GROUP_ORDER.indexOf(scope), b = OV.svg.getBoundingClientRect();
+  if (gi < 0 || !b.width) return null;
+  const ang = ((-90 + gi * 72) * Math.PI) / 180;
+  return { x: ((218 * Math.cos(ang) + 540) / 1080) * b.width, y: ((218 * Math.sin(ang) + 540) / 1080) * b.height };
+}
+let navigating = false;
+function openDashboard(scope, focusId) {
+  stopPlay(); hideTip();
+  const origins = {};
+  const fromOverview = S.view === "overview" && OV.built && OV.el.isConnected;
+  if (fromOverview) for (const k of scopeKpis(scope)) { const st = OV.stars[k.id]; if (st) origins[k.id] = st.core.getBoundingClientRect(); }
+  // Navigation must happen exactly once, even if the zoom animation is interrupted.
+  if (navigating) return;
+  navigating = true;
+  let done = false;
+  const go = () => { if (done) return; done = true; navigating = false; S.view = "dashboard"; S.scope = scope; S.focus = focusId || null; S.edit = false; DB.mount(origins); renderCrumbs(); setHash(SLUG[scope]); };
+  const c = fromOverview ? clusterScreen(scope) : null;
+  if (fromOverview && !reduced) {
+    OV.svg.style.transformOrigin = c ? `${c.x}px ${c.y}px` : "50% 50%";
+    OV.hub.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: "forwards" });
+    OV.svg.animate([{ transform: "none", opacity: 1, filter: "none" }, { transform: "scale(2.1)", opacity: 0, filter: "blur(2px)" }], { duration: 480, easing: "cubic-bezier(.5,0,.75,0)", fill: "forwards" }).finished.then(go, go);
+    setTimeout(go, 700);
+  } else go();
+}
+function closeDashboard() {
+  const scope = S.scope;
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    S.view = "overview"; S.scope = null;
+    OV.mount(document.getElementById("app"), false);
+    renderCrumbs(); setHash("uebersicht");
+    if (!reduced) {
+      const c = clusterScreen(scope);
+      OV.svg.style.transformOrigin = c ? `${c.x}px ${c.y}px` : "50% 50%";
+      OV.svg.animate([{ transform: "scale(2.1)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 650, easing: "cubic-bezier(.2,.8,.2,1)" });
+      OV.hub.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay: 250, fill: "backwards" });
+    }
+  };
+  stopPlay(); hideTip();
+  if (!reduced && DB.el) { DB.el.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.985)" }], { duration: 220, fill: "forwards" }).finished.then(finish, finish); setTimeout(finish, 450); }
+  else finish();
+}
+function renderCrumbs() {
+  const c = document.getElementById("crumbs");
+  c.replaceChildren(...(S.view === "overview" ? [h("b", { text: "Übersicht" })]
+    : [h("button", { type: "button", onclick: closeDashboard }, "Übersicht"), h("span", { text: "›" }), h("b", { text: SCOPES[S.scope] })]));
+}
+function setHash(slug) { if (location.hash.slice(1) !== slug) history.replaceState(null, "", "#" + slug); }
+
+// ───────────── Chart cards ─────────────
+let uidN = 0;
+const uid = () => "u" + ++uidN;
+const NSS = { "vector-effect": "non-scaling-stroke" };
+const PART_COLORS = ["var(--c1)", "var(--c2)", "var(--c3)"];
+const TYPE_NAME = { flaeche: "Fläche", linie: "Linie", balken: "Balken", anteile: "Anteile" };
+function windowFor(spec) {
+  const r = spec.range || "Alles";
+  if (r === "Alles") return [0, N - 1];
+  const w = r === "1J" ? 12 : 36, x1 = Math.max(S.t, w - 1);
+  return [x1 - (w - 1), x1];
+}
+function smooth(st, key, target, first) {
+  // During playback an axis may only grow, never jump (Heer & Robertson 2007).
+  if (S.playing && st[key] !== undefined) target = key === "lo" ? Math.min(target, st[key]) : Math.max(target, st[key]);
+  if (st[key] === undefined || first || reduced) { st[key] = target; return false; }
+  const d = target - st[key];
+  st[key] += d * 0.22;
+  return Math.abs(d) > Math.max(Math.abs(target) * 0.002, 1e-6);
+}
+function introFactor(card, st) {
+  if (!card.intro || reduced) return 1;
+  st.i0 = st.i0 || performance.now() + 180;
+  const e = easeOut(clamp((performance.now() - st.i0) / 1100, 0, 1));
+  if (e >= 1) card.intro = false;
+  return e;
+}
+const pl = (plot, cls = "plot-lab") => { const s = h("span", { class: cls }); plot.append(s); return s; };
+const kindOf = (k) => { const r = evaluate(k, "monat", month()); return r.kind === "calm" ? "info" : r.kind; };
+
+function chartCard(spec, db) {
+  const plot = h("div", { class: "plot" }), legend = h("div", { class: "legend" }), why = h("p", { class: "cc-why", text: spec.why });
+  const d = S.dash[S.scope], set = (field, v) => { d[field][spec.id] = v; db.renderCharts(false); };
+  const tb = (label, pressed, on, title) => h("button", { type: "button", "aria-pressed": String(pressed), title, onclick: on }, label);
+  const tools = h("div", { class: "cc-tools" },
+    ...spec.types.map((t) => tb(TYPE_NAME[t], t === spec.type, () => set("type", t), "Darstellung")),
+    ...spec.ranges.map((r) => tb(r, r === spec.range, () => set("range", r), "Zeitraum")),
+    ...["S", "M", "L", "XL"].map((s) => tb(s, s === spec.size, () => set("size", s), "Grösse")),
+    tb("×", false, () => { d.sel = d.sel.filter((x) => x !== spec.id); db.renderCharts(false); toast(`«${spec.title}» entfernt. Unten bei den Vorschlägen kommt es zurück.`); }, "Entfernen"));
+  // One-click alternative on every card (HAX G9: efficient correction).
+  const swap = () => {
+    const free = (db.cands || candidatesFor(S.scope, month())).filter((c) => !d.sel.includes(c.id));
+    const alt = free.find((c) => spec.k && (c.k === spec.k || (c.ks && c.ks.includes(spec.k)))) || free[0];
+    if (!alt) { toast("Lumina hat keine weitere Ansicht für diese Karte."); return; }
+    d.sel[d.sel.indexOf(spec.id)] = alt.id;
+    d.size[alt.id] = d.size[spec.id] || "M";
+    db.renderCharts(false, alt.id);
+    toast(`Lumina zeigt stattdessen «${alt.title}». Die vorherige Ansicht liegt bei den Vorschlägen.`);
+  };
+  const el = h("article", { class: `panel chart-card size-${spec.size}`, "data-id": spec.id },
+    h("span", { class: "reg tl" }), h("span", { class: "reg br" }),
+    h("div", { class: "cc-head" }, h("div", {}, h("h3", { class: "cc-title", text: spec.title }), why),
+      h("div", { style: "display:grid;gap:6px;justify-items:end" }, h("button", { class: "cc-swap", type: "button", title: "Lumina schlägt eine andere Ansicht vor", onclick: swap }, "↻ Andere Ansicht"), tools)), plot, legend);
+  const card = { spec, el, intro: false, first: true };
+  const draw = RENDERERS[spec.kind](spec, plot, legend);
+  card.update = (mc) => {
+    if (mc && db.cands) { const c = db.cands.find((x) => x.id === spec.id); if (c) why.textContent = c.why; }
+    const again = draw(mc, card);
+    card.first = false;
+    return again;
+  };
+  return card;
+}
+
+// Time-series frame: shared by trend, drivers and compare.
+function seriesFrame(plot) {
+  const id = uid();
+  const clip = sv("rect", { x: 0, y: -20, width: 0, height: 240 });
+  const grad = sv("linearGradient", { id: id + "g", x1: 0, y1: 0, x2: 0, y2: 1 }, sv("stop", { offset: 0, "stop-opacity": 0.3 }), sv("stop", { offset: 1, "stop-opacity": 0 }));
+  const svg = sv("svg", { viewBox: "0 0 600 200", preserveAspectRatio: "none", "aria-hidden": "true" }, sv("defs", {}, grad, sv("clipPath", { id: id + "c" }, clip)));
+  const grid = sv("g"), zones = sv("g"), ghosts = sv("g"), solid = sv("g", { "clip-path": `url(#${id}c)` }), over = sv("g");
+  svg.append(grid, zones, ghosts, solid, over);
+  for (let n = 1; n <= 3; n++) grid.append(sv("line", { x1: 0, x2: 600, y1: 12 + n * 44, y2: 12 + n * 44, stroke: "var(--ink)", "stroke-opacity": 0.06, "stroke-dasharray": "var(--dash)", ...NSS }));
+  grid.append(sv("line", { x1: 0, x2: 600, y1: 188, y2: 188, stroke: "var(--line-2)", ...NSS }));
+  plot.replaceChildren(svg);
+  const hi = pl(plot), lo = pl(plot), x0 = pl(plot), x1 = pl(plot), dot = pl(plot, "plot-dot");
+  hi.style.left = lo.style.left = "0"; hi.style.top = "2px"; lo.style.bottom = "16px";
+  x0.style.left = "0"; x0.style.bottom = "-2px"; x1.style.right = "0"; x1.style.bottom = "-2px";
+  return { id, svg, clip, grad, grid, zones, ghosts, solid, over, hi, lo, x0, x1, dot, plot };
+}
+function setGrad(fr, color) { fr.grad.querySelectorAll("stop").forEach((s) => s.setAttribute("stop-color", color)); }
+const lineD = (pts, X, Y) => "M" + pts.map((p) => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(2)}`).join(" L");
+
+const RENDERERS = {
+  trend(spec, plot, legend) {
+    const k = K[spec.k], fr = seriesFrame(plot), st = {};
+    const tLab = pl(plot), rLab = pl(plot);
+    const keys = [`<i style="background:currentColor"></i>${k.name}`];
+    if (k.target !== null) keys.push(`<i style="background:var(--accent)"></i>${k.targetName || "Internes Ziel"}`);
+    if (k.reg !== null) keys.push(`<i style="background:var(--alert)"></i>${k.regName || "Regulatorisches Minimum"}`);
+    legend.innerHTML = keys.map((x) => `<span>${x}</span>`).join("");
+    return (mc, card) => {
+      const [w0, w1] = windowFor(spec), t = S.t, flow = k.kind === "flow";
+      const X = (m) => ((m - w0) / Math.max(1e-6, w1 - w0)) * 600;
+      const a = Math.max(0, Math.floor(w0)), b = Math.min(N - 1, Math.ceil(w1));
+      const bars = spec.type === "balken";
+      const periods = bars ? PERIODS[S.g].filter((p) => p.to >= a && p.from <= b) : null;
+      const pts = [];
+      for (let m = a; m <= b; m++) pts.push([m, k.series[m]]);
+      const vals = bars ? periods.map((p) => valueAt(k, p)) : pts.map((p) => p[1]);
+      let lo = Math.min(...vals), hi = Math.max(...vals);
+      if (flow || bars) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+      const span = hi - lo || Math.abs(hi) * 0.1 || 1;
+      for (const th of [k.reg, flow && bars ? null : k.target]) if (th !== null && th !== undefined && th > lo - span * 0.8 && th < hi + span * 0.8) { lo = Math.min(lo, th); hi = Math.max(hi, th); }
+      const pad = (hi - lo) * 0.1 || 1;
+      let again = smooth(st, "lo", lo - pad, card.first) | smooth(st, "hi", hi + pad, card.first);
+      const Y = (v) => 188 - ((v - st.lo) / (st.hi - st.lo)) * 176;
+      const col = kindVar(kindOf(k));
+      setGrad(fr, col);
+      fr.zones.replaceChildren();
+      if (k.reg !== null && k.reg !== undefined) {
+        const ry = Y(k.reg);
+        fr.zones.append(k.dir > 0 ? sv("rect", { x: 0, y: ry, width: 600, height: Math.max(0, 188 - ry), fill: "var(--alert)", "fill-opacity": 0.09 }) : sv("rect", { x: 0, y: 0, width: 600, height: Math.max(0, ry), fill: "var(--alert)", "fill-opacity": 0.09 }),
+          sv("line", { x1: 0, x2: 600, y1: ry, y2: ry, stroke: "var(--alert)", "stroke-width": 1.2, ...NSS }));
+        rLab.textContent = `Min. ${F(k, k.reg)}`; rLab.style.right = "0"; rLab.style.top = `calc(${(ry / 200) * 100}% - 13px)`; rLab.style.color = "var(--alert)"; rLab.hidden = ry < 0 || ry > 200;
+      } else rLab.hidden = true;
+      if (k.target !== null && !(flow && bars && S.g !== "monat")) {
+        const tv = flow ? k.target * (bars ? monthsIn(PERIODS[S.g][0]) : 1) : k.target, ty = Y(tv);
+        fr.zones.append(sv("line", { x1: 0, x2: 600, y1: ty, y2: ty, stroke: "var(--accent)", "stroke-width": 1.2, "stroke-dasharray": "var(--dash)", ...NSS }));
+        tLab.textContent = `Ziel ${F(k, tv)}`; tLab.style.right = "0"; tLab.style.top = `calc(${(ty / 200) * 100}% - 13px)`; tLab.style.color = "var(--accent)"; tLab.hidden = ty < 0 || ty > 200;
+      } else tLab.hidden = true;
+      fr.ghosts.replaceChildren(); fr.solid.replaceChildren(); fr.over.replaceChildren();
+      if (bars) {
+        const y0 = Y(0);
+        periods.forEach((p, j) => {
+          const xa = X(p.from - 0.5), xb = X(p.to + 0.5), gap = Math.min(5, (xb - xa) * 0.18), v = vals[j], y = Y(v);
+          const done = p.to <= t + 0.001;
+          const pt = flow ? targetAt(k, p) : null;
+          if (pt !== null) fr.over.append(sv("rect", { x: xa + gap * 0.6, y: Math.min(Y(pt), y0), width: Math.max(0.5, xb - xa - 1.2 * gap), height: Math.max(0.6, Math.abs(y0 - Y(pt))), fill: "none", stroke: "var(--ink)", "stroke-opacity": 0.45, "stroke-width": 1, ...NSS }));
+          fr.over.append(sv("rect", { x: xa + gap, y: Math.min(y, y0), width: Math.max(0.5, xb - xa - 2 * gap), height: Math.max(0.6, Math.abs(y0 - y)),
+            fill: !done ? "var(--ink)" : v < 0 || (pt !== null ? v < pt : k.target !== null && k.dir && (v - k.target) * k.dir < 0) ? "var(--alert)" : "var(--ink-2)",
+            "fill-opacity": !done ? 0.08 : p.from <= t && t <= p.to + 0.999 ? 1 : 0.55 }));
+        });
+        fr.over.append(sv("line", { x1: 0, x2: 600, y1: y0, y2: y0, stroke: "var(--ink)", "stroke-opacity": 0.3, ...NSS }));
+      } else {
+        const d = lineD(pts, X, Y);
+        fr.ghosts.append(sv("path", { d, fill: "none", stroke: "var(--ink)", "stroke-opacity": 0.13, "stroke-width": 1.2, ...NSS }));
+        if (spec.type === "flaeche") fr.solid.append(sv("path", { d: `${d} L${X(b).toFixed(1)},188 L${X(a).toFixed(1)},188 Z`, fill: `url(#${fr.id}g)` }));
+        fr.solid.append(sv("path", { d, fill: "none", stroke: col, "stroke-width": 2, "stroke-linejoin": "round", ...NSS }));
+      }
+      const e = introFactor(card, st);
+      if (e < 1) again = true;
+      fr.clip.setAttribute("width", Math.max(0, X(t) * e + 1).toFixed(1));
+      const v = valAt(k, t);
+      fr.dot.hidden = bars || e < 1;
+      fr.dot.style.left = (X(t) / 6).toFixed(2) + "%"; fr.dot.style.top = (Y(v) / 2).toFixed(2) + "%"; fr.dot.style.color = col;
+      fr.hi.textContent = F(k, st.hi); fr.lo.textContent = F(k, st.lo);
+      fr.x0.textContent = PERIODS.monat[a].label; fr.x1.textContent = PERIODS.monat[b].label;
+      return again;
+    };
+  },
+
+  parts(spec, plot, legend) {
+    const k = K[spec.k], names = Object.keys(k.parts), fr = seriesFrame(plot), st = {};
+    return (mc, card) => {
+      const [w0, w1] = windowFor(spec), t = S.t, flow = k.kind === "flow", share = spec.type === "anteile";
+      const X = (m) => ((m - w0) / Math.max(1e-6, w1 - w0)) * 600;
+      const a = Math.max(0, Math.floor(w0)), b = Math.min(N - 1, Math.ceil(w1));
+      fr.ghosts.replaceChildren(); fr.solid.replaceChildren(); fr.over.replaceChildren(); fr.zones.replaceChildren();
+      let again = false;
+      if (flow) {
+        const periods = PERIODS[S.g].filter((p) => p.to >= a && p.from <= b);
+        const stacks = periods.map((p) => names.map((n) => valueAt(k, p, k.parts[n])));
+        const lo = Math.min(0, ...stacks.map((s) => sum(s.filter((v) => v < 0)))), hi = Math.max(0, ...stacks.map((s) => sum(s.filter((v) => v > 0))));
+        again = smooth(st, "lo", lo * 1.1, card.first) | smooth(st, "hi", hi * 1.1 || 1, card.first);
+        const Y = (v) => 188 - ((v - st.lo) / (st.hi - st.lo)) * 176, y0 = Y(0);
+        periods.forEach((p, j) => {
+          const xa = X(p.from - 0.5), xb = X(p.to + 0.5), gap = Math.min(5, (xb - xa) * 0.18), done = p.from <= t;
+          let up = 0, down = 0;
+          stacks[j].forEach((v, n) => {
+            const from = v >= 0 ? up : down, to = from + v;
+            if (v >= 0) up = to; else down = to;
+            fr.solid.append(sv("rect", { x: xa + gap, y: Math.min(Y(from), Y(to)), width: Math.max(0.5, xb - xa - 2 * gap), height: Math.abs(Y(from) - Y(to)), fill: PART_COLORS[n], "fill-opacity": done ? 0.9 : 0.08 }));
+          });
+        });
+        fr.over.append(sv("line", { x1: 0, x2: 600, y1: y0, y2: y0, stroke: "var(--ink)", "stroke-opacity": 0.3, ...NSS }));
+        fr.hi.textContent = F(k, st.hi); fr.lo.textContent = F(k, st.lo);
+      } else {
+        const rows = [];
+        for (let m = a; m <= b; m++) { const vs = names.map((n) => k.parts[n][m]), tot = sum(vs); rows.push([m, share ? vs.map((v) => (v / tot) * 100) : vs]); }
+        const hi = share ? 100 : Math.max(...rows.map((r) => sum(r[1])));
+        again = smooth(st, "lo", 0, card.first) | smooth(st, "hi", hi * (share ? 1 : 1.08), card.first);
+        const Y = (v) => 188 - ((v - st.lo) / (st.hi - st.lo)) * 176;
+        let base = rows.map(() => 0);
+        names.forEach((n, i) => {
+          const top = rows.map((r, j) => base[j] + r[1][i]);
+          const up = rows.map((r, j) => [r[0], top[j]]), dn = rows.map((r, j) => [r[0], base[j]]).reverse();
+          fr.solid.append(sv("path", { d: lineD(up, X, Y) + " L" + dn.map((p) => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(2)}`).join(" L") + " Z", fill: PART_COLORS[i], "fill-opacity": 0.55 }),
+            sv("path", { d: lineD(up, X, Y), fill: "none", stroke: PART_COLORS[i], "stroke-width": 1.4, ...NSS }));
+          fr.ghosts.append(sv("path", { d: lineD(up, X, Y), fill: "none", stroke: "var(--ink)", "stroke-opacity": 0.1, ...NSS }));
+          base = top;
+        });
+        fr.hi.textContent = share ? "100 %" : F(k, st.hi); fr.lo.textContent = share ? "0 %" : F(k, 0);
+      }
+      const e = introFactor(card, st);
+      if (e < 1) again = true;
+      fr.clip.setAttribute("width", Math.max(0, (flow ? 600 : X(t)) * e + 1).toFixed(1));
+      fr.dot.hidden = true;
+      fr.x0.textContent = PERIODS.monat[a].label; fr.x1.textContent = PERIODS.monat[b].label;
+      if (mc || card.first) {
+        const m = month(), vs = names.map((n) => valAt(k, m, k.parts[n])), tot = sum(vs.map(Math.abs)) || 1;
+        legend.innerHTML = names.map((n, i) => `<span><i style="background:${PART_COLORS[i]}"></i>${n} ${flow ? F(k, vs[i]) : Math.round((vs[i] / tot) * 100) + " %"}</span>`).join("");
+      }
+      return again;
+    };
+  },
+
+  drivers(spec, plot, legend) {
+    const k = K[spec.k], names = Object.keys(k.parts);
+    return indexed(spec, plot, legend, names.map((n, i) => ({ name: n, arr: k.parts[n], color: PART_COLORS[i] })), `${k.name} = ${names[0]} ÷ ${names[1]}`);
+  },
+  compare(spec, plot, legend) {
+    return indexed(spec, plot, legend, spec.ks.map((id, i) => ({ name: K[id].name, arr: K[id].series, color: PART_COLORS[i] })), "Beide Reihen = 100 am Anfang des Fensters");
+  },
+
+  cum(spec, plot, legend) {
+    const k = K[spec.k], fr = seriesFrame(plot), st = {}, tLab = pl(plot), cLab = pl(plot);
+    legend.innerHTML = `<span><i style="background:currentColor"></i>Monat</span><span><i style="background:var(--c2)"></i>Kumuliert</span><span><i style="background:var(--accent)"></i>Jahresziel</span>`;
+    return (mc, card) => {
+      const t = S.t, m = month(), y0m = m - (m % 12), X = (mm) => ((mm - y0m + 0.5) / 12) * 600;
+      const monthsDone = [];
+      for (let mm = y0m; mm <= Math.min(N - 1, y0m + 11); mm++) monthsDone.push([mm, k.series[mm]]);
+      const cum = [];
+      let acc = 0;
+      for (const [mm, v] of monthsDone) { acc += v; cum.push([mm, acc]); }
+      const target = k.target * 12;
+      const lo = Math.min(0, ...monthsDone.map((p) => p[1]), ...cum.map((p) => p[1])), hi = Math.max(target, ...cum.map((p) => p[1]), ...monthsDone.map((p) => p[1]));
+      let again = smooth(st, "lo", lo * 1.1, card.first) | smooth(st, "hi", hi * 1.08, card.first);
+      const Y = (v) => 188 - ((v - st.lo) / (st.hi - st.lo)) * 176, yz = Y(0);
+      fr.zones.replaceChildren(sv("line", { x1: X(y0m - 0.5), y1: Y(0), x2: X(y0m + 11.5), y2: Y(target), stroke: "var(--accent)", "stroke-width": 1.2, "stroke-dasharray": "var(--dash)", ...NSS }));
+      fr.ghosts.replaceChildren(); fr.solid.replaceChildren(); fr.over.replaceChildren();
+      const col = kindVar(kindOf(k));
+      monthsDone.forEach(([mm, v]) => {
+        const x = X(mm), y = Y(v), done = mm <= t + 0.001;
+        fr.over.append(sv("rect", { x: x - 14, y: Math.min(y, yz), width: 28, height: Math.max(0.6, Math.abs(yz - y)), fill: v < 0 ? "var(--alert)" : col, "fill-opacity": done ? 0.55 : 0.07 }));
+      });
+      fr.over.append(sv("line", { x1: 0, x2: 600, y1: yz, y2: yz, stroke: "var(--ink)", "stroke-opacity": 0.3, ...NSS }));
+      const shown = cum.filter((p) => p[0] <= t);
+      const cv = shown.length ? shown[shown.length - 1][1] : 0;
+      fr.solid.append(sv("path", { d: lineD([[y0m - 0.5, 0], ...cum], X, Y), fill: "none", stroke: "var(--c2)", "stroke-width": 2.2, ...NSS }));
+      const e = introFactor(card, st);
+      if (e < 1) again = true;
+      fr.clip.setAttribute("width", (X(Math.min(t, y0m + 11)) * e + 1).toFixed(1));
+      fr.dot.hidden = e < 1; fr.dot.style.color = "var(--c2)";
+      fr.dot.style.left = (X(m) / 6).toFixed(2) + "%"; fr.dot.style.top = (Y(cv) / 2).toFixed(2) + "%";
+      tLab.textContent = `Ziel ${F(k, target)}`; tLab.style.right = "0"; tLab.style.top = `calc(${(Y(target) / 200) * 100}% - 13px)`; tLab.style.color = "var(--accent)";
+      const n = m - y0m + 1, tgtNow = k.target * n;
+      cLab.hidden = true;
+      legend.innerHTML = `<span><i style="background:currentColor"></i>Monat</span><span><i style="background:var(--c2)"></i>Kumuliert</span><span><i style="background:var(--accent)"></i>Jahresziel</span><span style="color:${cv < tgtNow ? "var(--alert)" : "var(--good)"}">${PERIODS.monat[m].y}: ${F(k, cv)} von ${F(k, tgtNow)} bis ${MON[m % 12]}</span>`;
+      fr.hi.textContent = F(k, st.hi); fr.lo.textContent = "";
+      fr.x0.textContent = "Jan " + PERIODS.monat[m].y; fr.x1.textContent = "Dez";
+      return again;
+    };
+  },
+
+  bridge(spec, plot, legend) {
+    const k = K[spec.k], names = Object.keys(k.parts), st = { prev: null };
+    const svg = sv("svg", { viewBox: "0 0 600 200", preserveAspectRatio: "none", "aria-hidden": "true" });
+    plot.replaceChildren(svg);
+    const labs = [...Array(names.length + 2)].map(() => pl(plot)), cats = [...Array(names.length + 2)].map(() => pl(plot)), empty = pl(plot, "empty-note");
+    legend.innerHTML = `<span><i style="background:var(--good)"></i>hilft</span><span><i style="background:var(--alert)"></i>belastet</span>`;
+    legend.style.marginTop = "22px";
+    const sumRange = (arr, a, b) => sum(arr.slice(Math.max(0, a), b + 1));
+    return (mc, card) => {
+      if (!mc && !card.first) return false;
+      const m = month();
+      if (m < (k.kind === "flow" ? 23 : 12)) { svg.replaceChildren(); labs.concat(cats).forEach((l) => (l.hidden = true)); empty.hidden = false; empty.textContent = "Für die Brücke braucht es zwölf Monate Geschichte."; return false; }
+      empty.hidden = true;
+      const val = (arr, at) => (k.kind === "flow" ? sumRange(arr, at - 11, at) : arr[at]);
+      const start = val(k.series, m - 12), end = val(k.series, m);
+      const deltas = names.map((n) => val(k.parts[n], m) - val(k.parts[n], m - 12));
+      const steps = [{ name: k.kind === "flow" ? "12 Mt. davor" : PERIODS.monat[m - 12].label, from: 0, to: start, kind: "base" }];
+      let acc = start;
+      deltas.forEach((dl, i) => { steps.push({ name: names[i], from: acc, to: acc + dl, kind: dl * (k.dir || 1) >= 0 ? "good" : "alert" }); acc += dl; });
+      steps.push({ name: k.kind === "flow" ? "Letzte 12 Mt." : PERIODS.monat[m].label, from: 0, to: end, kind: "end" });
+      const lo = Math.min(0, ...steps.map((s) => Math.min(s.from, s.to))), hi = Math.max(...steps.map((s) => Math.max(s.from, s.to)));
+      const zoomLo = k.kind === "flow" ? lo : Math.max(0, Math.min(...steps.map((s) => Math.min(s.from || s.to, s.to))) * 0.92);
+      const prev = st.prev, next = steps;
+      st.prev = steps;
+      const n = steps.length, slot = 600 / n;
+      const render = (e) => {
+        const Y = (v) => 188 - ((v - zoomLo) / (hi * 1.05 - zoomLo || 1)) * 170;
+        const kids = [sv("line", { x1: 0, x2: 600, y1: 188, y2: 188, stroke: "var(--line-2)", ...NSS })];
+        next.forEach((s, i) => {
+          const p = prev && prev[i] ? prev[i] : { from: s.from, to: s.from };
+          const from = lerp(p.from, s.from, e), to = lerp(p.to, s.to, e);
+          const f2 = s.kind === "base" || s.kind === "end" ? zoomLo : from;
+          const y1 = Y(Math.max(f2, to)), y2 = Y(Math.min(f2, to));
+          kids.push(sv("rect", { x: i * slot + slot * 0.2, y: y1, width: slot * 0.6, height: Math.max(1, y2 - y1), fill: s.kind === "base" ? "var(--ink)" : s.kind === "end" ? kindVar(kindOf(k)) : `var(--${s.kind})`, "fill-opacity": s.kind === "base" ? 0.35 : 0.85 }));
+          if (i < n - 1) kids.push(sv("line", { x1: i * slot + slot * 0.8, x2: (i + 1) * slot + slot * 0.2, y1: Y(to), y2: Y(to), stroke: "var(--ink)", "stroke-opacity": 0.35, "stroke-dasharray": "3 3", ...NSS }));
+          labs[i].hidden = false; labs[i].style.left = `${((i + 0.5) / n) * 100}%`; labs[i].style.transform = "translateX(-50%)";
+          labs[i].style.top = `calc(${(y1 / 200) * 100}% - 14px)`; labs[i].style.color = "var(--ink)";
+          labs[i].textContent = s.kind === "base" || s.kind === "end" ? compact(k, to) : (to - from >= 0 ? "+" : "−") + compact(k, Math.abs(to - from));
+          cats[i].hidden = false; cats[i].style.left = `${((i + 0.5) / n) * 100}%`; cats[i].style.transform = "translateX(-50%)"; cats[i].style.top = "100%";
+          cats[i].style.width = `${100 / n}%`; cats[i].style.whiteSpace = "normal"; cats[i].style.overflowWrap = "anywhere"; cats[i].style.hyphens = "auto"; cats[i].style.textAlign = "center"; cats[i].style.lineHeight = "1.2"; cats[i].textContent = s.name;
+        });
+        svg.replaceChildren(...kids);
+      };
+      animate(card.first ? 900 : 600, render);
+      return false;
+    };
+  },
+
+  season(spec, plot, legend) {
+    const k = K[spec.k], flow = k.kind === "flow";
+    const all = k.series, lo = Math.min(...all), hi = Math.max(...all), mx = Math.max(Math.abs(lo), Math.abs(hi));
+    const cells = [];
+    const grid = h("div", { class: "season" }, ...[...Array(8)].map((_, yi) => h("div", { class: "season-row" }, h("span", { text: String(2019 + yi) }),
+      ...[...Array(12)].map((__, mi) => { const m = yi * 12 + mi, c = h("span", { class: "cell", title: m < N ? `${PERIODS.monat[m].long}: ${F(k, all[m])}` : "" }); cells[m] = c; return c; }))),
+      h("div", { class: "season-axis" }, h("span"), ...MON.map((x) => h("span", { text: x[0] }))));
+    plot.replaceChildren(grid);
+    plot.style.height = "auto";
+    legend.innerHTML = flow ? `<span><i style="background:var(--accent)"></i>Zufluss</span><span><i style="background:var(--alert)"></i>Abfluss</span>` : `<span><i style="background:var(--accent)"></i>heller heisst höher</span>`;
+    return (mc, card) => {
+      if (!mc && !card.first) return false;
+      const m = month();
+      for (let i = 0; i < 96; i++) {
+        const c = cells[i];
+        if (i >= N) { c.style.setProperty("--c", "transparent"); c.classList.add("is-future"); continue; }
+        const v = all[i];
+        const col = flow ? (v < 0 ? `color-mix(in srgb, var(--alert) ${Math.round(20 + (Math.abs(v) / mx) * 75)}%, transparent)` : `color-mix(in srgb, var(--accent) ${Math.round(12 + (v / mx) * 80)}%, transparent)`)
+          : `color-mix(in srgb, var(--accent) ${Math.round(10 + ((v - lo) / (hi - lo || 1)) * 80)}%, transparent)`;
+        c.style.setProperty("--c", col);
+        c.classList.toggle("is-future", i > m);
+        c.classList.toggle("is-now", i === m);
+      }
+      return false;
+    };
+  },
+
+  buffer(spec, plot, legend) {
+    const rows = spec.ks.map((id) => {
+      const k = K[id], bar = h("span", { class: "buf-bar" }), reg = h("span", { class: "buf-mark", style: "background:var(--alert)" }, h("span", { text: "Min", style: "color:var(--alert)" }));
+      const tgt = h("span", { class: "buf-mark", style: "background:var(--accent)" }, h("span", { text: k.dir < 0 ? "Warn" : "Ziel", style: "color:var(--accent);top:auto;bottom:-13px" }));
+      const note = h("small"), val = h("b", { class: "num" });
+      const el = h("div", { class: "buf-row" }, h("div", { class: "buf-name" }, k.name, " ", val, note), h("div", { class: "buf-track" }, bar, reg, tgt));
+      return { k, el, bar, reg, tgt, note, val };
+    });
+    plot.replaceChildren(h("div", { class: "buf" }, ...rows.map((r) => r.el)));
+    plot.style.height = "auto";
+    legend.innerHTML = `<span><i style="background:var(--alert)"></i>Regulatorisch</span><span><i style="background:var(--accent)"></i>Intern</span>`;
+    return () => {
+      for (const r of rows) {
+        const k = r.k, v = valAt(k, S.t), max = Math.max(k.reg, k.target || 0, ...k.series) * 1.15;
+        const kind = evaluate(k, "monat", month()).kind;
+        r.bar.style.width = `${clamp(v / max, 0, 1) * 100}%`;
+        r.bar.style.setProperty("--c", kindVar(kind === "calm" ? "info" : kind));
+        r.reg.style.left = `${(k.reg / max) * 100}%`;
+        r.tgt.style.left = `${(k.target / max) * 100}%`;
+        r.val.textContent = F(k, v);
+        const buf = (v - k.reg) * k.dir;
+        r.note.textContent = `${buf >= 0 ? "Puffer" : "Unterschreitung"} ${k.unit === "%" ? Math.abs(buf).toFixed(k.dec) + " Pp." : F(k, Math.abs(buf))} zum ${k.dir < 0 ? "Limit" : "Minimum"}`;
+      }
+      return false;
+    };
+  },
+
+  funnel(spec, plot, legend) {
+    const k = K[spec.k], names = Object.keys(k.parts);
+    const rows = names.map((n, i) => { const bar = h("span", { class: "fun-bar", style: `--c:${PART_COLORS[i]}` }), v = h("b", { class: "num" }); return { n, bar, v, el: h("div", { class: "fun-row" }, h("span", { text: n }), bar, v) }; });
+    const total = h("span", { class: "label" });
+    plot.replaceChildren(h("div", { class: "fun" }, ...rows.map((r) => r.el), total));
+    plot.style.height = "auto";
+    legend.innerHTML = "";
+    return () => {
+      const t = S.t, vs = names.map((n) => valAt(k, t, k.parts[n])), max = Math.max(...vs), tot = sum(vs);
+      rows.forEach((r, i) => { r.bar.style.width = `${(vs[i] / max) * 100}%`; r.v.textContent = F(k, vs[i]); });
+      const m = month(), prev = m >= 12 ? k.series[m - 12] : null;
+      total.textContent = `Total ${F(k, tot)} · Zusagen ${pct(vs[2] / tot)} des Volumens${prev ? ` · ${fdelta(k, k.series[m] - prev, prev)} ggü. Vorjahr` : ""}`;
+      return false;
+    };
+  },
+};
+
+function indexed(spec, plot, legend, series, caption) {
+  const fr = seriesFrame(plot), st = {}, base = pl(plot);
+  return (mc, card) => {
+    const [w0, w1] = windowFor(spec), t = S.t, X = (m) => ((m - w0) / Math.max(1e-6, w1 - w0)) * 600;
+    const a = Math.max(0, Math.floor(w0)), b = Math.min(N - 1, Math.ceil(w1));
+    const lines = series.map((s) => { const b0 = s.arr[a]; const pts = []; for (let m = a; m <= b; m++) pts.push([m, (s.arr[m] / b0) * 100]); return { ...s, pts }; });
+    const vals = lines.flatMap((l) => l.pts.map((p) => p[1])).concat([100]);
+    let again = smooth(st, "lo", Math.min(...vals) - 2, card.first) | smooth(st, "hi", Math.max(...vals) + 2, card.first);
+    const Y = (v) => 188 - ((v - st.lo) / (st.hi - st.lo)) * 176;
+    fr.zones.replaceChildren(sv("line", { x1: 0, x2: 600, y1: Y(100), y2: Y(100), stroke: "var(--ink)", "stroke-opacity": 0.35, "stroke-dasharray": "2 4", ...NSS }));
+    fr.ghosts.replaceChildren(...lines.map((l) => sv("path", { d: lineD(l.pts, X, Y), fill: "none", stroke: "var(--ink)", "stroke-opacity": 0.12, ...NSS })));
+    fr.solid.replaceChildren(...lines.map((l) => sv("path", { d: lineD(l.pts, X, Y), fill: "none", stroke: l.color, "stroke-width": 2, ...NSS })));
+    const e = introFactor(card, st);
+    if (e < 1) again = true;
+    fr.clip.setAttribute("width", (X(t) * e + 1).toFixed(1));
+    fr.dot.hidden = true;
+    base.textContent = "100"; base.style.right = "0"; base.style.top = `calc(${(Y(100) / 200) * 100}% - 13px)`;
+    fr.hi.textContent = Math.round(st.hi) + ""; fr.lo.textContent = Math.round(st.lo) + "";
+    fr.x0.textContent = PERIODS.monat[a].label; fr.x1.textContent = PERIODS.monat[b].label;
+    const m = Math.min(b, month());
+    legend.innerHTML = lines.map((l) => `<span><i style="background:${l.color}"></i>${l.name} ${Math.round(l.pts[clamp(m - a, 0, l.pts.length - 1)][1])}</span>`).join("") + `<span>${caption}</span>`;
+    return again;
+  };
+}
+
+// ───────────── Design languages ─────────────
+const DESIGN_NOTE = { atlas: "Atlas: Nacht, Messing, Sternenlicht.", zifferblatt: "Zifferblatt: Porzellan, Kobalt, Schweizer Präzision.", messtisch: "Messtisch: Blaupause, Raster, Plotterlinien." };
+function setDesign(d) {
+  const apply = () => {
+    if (d === "atlas") document.documentElement.removeAttribute("data-design"); else document.documentElement.setAttribute("data-design", d);
+    S.design = d;
+    document.querySelectorAll(".design-btn").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.design === d)));
+  };
+  if (document.startViewTransition && !reduced) document.startViewTransition(apply); else apply();
+  toast(DESIGN_NOTE[d]);
+}
+document.querySelectorAll(".design-btn").forEach((b) => b.addEventListener("click", () => setDesign(b.dataset.design)));
+
+
+// ───────────── Why it is built this way (research brief) ─────────────
+const PRINCIPLES = [
+  ["Ruhe ist der Normalzustand", "Nur was ein Signal auslöst, wird hell. Few: Wenn alles betont ist, sticht nichts hervor. Calm Technology: Information wandert vom Rand ins Zentrum und zurück.", "https://calmtech.com/papers/designing-calm-technology", "Weiser & Brown"],
+  ["Bewegung nur für Aufmerksamkeit", "Im Augenwinkel wird Bewegung viel zuverlässiger bemerkt als Farbe: Verpasste Farbsignale stiegen von 6 auf 25 %, bei Bewegung blieben sie unter 2 %. Darum pulsieren nur Signale, langsam und an Ort.", "https://www.interruptions.net/literature/Bartram-IJHCS03.pdf", "Bartram et al. 2003"],
+  ["Drei Linien statt Ampel", "Regulatorisches Minimum, internes Ziel und Trendsignal. Ampeln verbergen Trends. Die Trendregel aus der statistischen Prozesskontrolle meldet sechs Bewegungen in Folge, auch innerhalb der Grenzen.", "https://www.wsh.nhs.uk/asset-library/making-data-count-the-essentials.pdf", "NHS Making Data Count"],
+  ["Hysterese gegen Flackern", "Nach einem Alarm kommt die Entwarnung erst mit 2 % Sicherheitsabstand. Wiederholte Meldungen senken die Beachtung um rund 30 % pro Wiederholung.", "https://pmc.ncbi.nlm.nih.gov/articles/PMC5387195/", "Ancker et al. 2017"],
+  ["Das Rad navigiert, Diagramme messen", "Lineare Zeitachsen sind genauer und schneller als radiale (5.2 s statt 7.4 s, 14 % statt 41 % Fehler). Darum steht im Rad nur die Zeit; alle Werte liest man in linearen Diagrammen.", "https://arxiv.org/abs/1907.13534", "Waldner et al. 2019"],
+  ["Übergänge animieren, Achsen nicht springen lassen", "Animierte Übergänge verbessern das Verfolgen von Veränderungen; neu skalierte Achsen erschweren das Schätzen. Beim Abspielen dürfen Achsen nur wachsen.", "https://homes.cs.washington.edu/~jheer/files/2007-AnimatedTrans-InfoVis.pdf", "Heer & Robertson 2007"],
+  ["Abspielen zum Zeigen, Pausieren zum Analysieren", "Animation ist im Vortrag am schnellsten und beliebtesten, für die Analyse aber langsamer und ungenauer. Pause ist darum immer einen Klick entfernt.", "https://faculty.cc.gatech.edu/~stasko/papers/infovis08-anim.pdf", "Robertson et al. 2008"],
+  ["Lumina begründet und lässt sich korrigieren", "Jede Empfehlung sagt, warum, und behauptet keine Ursachen. Eine andere Ansicht ist einen Klick entfernt, neue Empfehlungen werden angekündigt statt still getauscht.", "https://www.microsoft.com/en-us/haxtoolkit/library/pattern/", "Microsoft HAX"],
+  ["Plan als Umriss", "Flüsse zeigen das Ziel pro Periode als Umrissbalken hinter dem Ist, wie in der IBCS-Notation.", "https://ibcs.com/standards/", "IBCS"],
+  ["Schönheit mit Mass", "Attraktive Oberflächen wirken nutzbarer und halten die Aufmerksamkeit länger, aber Dekoration ermüdet. Die Gestaltung schmückt die Daten selbst.", "https://www.nngroup.com/articles/aesthetic-usability-effect/", "NN/g, Tractinsky 2000"],
+];
+function openPrinciples() {
+  const scrim = h("div", { class: "scrim" });
+  const close = () => { scrim.remove(); drawer.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  const drawer = h("aside", { class: "drawer", role: "dialog", "aria-modal": "true", "aria-label": "Warum Lumantic so gebaut ist" },
+    h("div", { style: "display:flex;justify-content:space-between;align-items:flex-start;gap:12px" }, h("h2", { text: "Warum so?" }), h("button", { class: "btn", type: "button", onclick: close }, "Schliessen")),
+    h("p", { text: "Zehn Entscheidungen hinter diesem Entwurf, jede mit ihrer Quelle." }),
+    ...PRINCIPLES.map(([t, d, url, src]) => h("div", { class: "pr" }, h("b", { text: t }), h("span", { text: d }), h("a", { href: url, target: "_blank", rel: "noopener" }, src + " ↗"))));
+  scrim.addEventListener("click", close);
+  document.addEventListener("keydown", onKey);
+  document.body.append(scrim, drawer);
+  drawer.querySelector("button").focus();
+}
+document.getElementById("btn-why").addEventListener("click", openPrinciples);
+// ───────────── Keyboard and start ─────────────
+document.addEventListener("keydown", (e) => {
+  const tag = e.target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || e.target.getAttribute("role") === "slider") return;
+  if (e.key === " " && tag !== "BUTTON") { e.preventDefault(); togglePlay(); }
+  else if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); stopPlay(); glideTo(clamp(month() + (e.key === "ArrowRight" ? 1 : -1) * (e.shiftKey ? 12 : 1), 0, N - 1), 320); }
+  else if (e.key === "Escape" && S.view === "dashboard") closeDashboard();
+});
+const startSlug = location.hash.slice(1);
+const startScope = Object.keys(SLUG).find((s) => SLUG[s] === startSlug);
+OV.mount(document.getElementById("app"), !startScope);
+renderCrumbs();
+if (startScope) openDashboard(startScope);
+</script>

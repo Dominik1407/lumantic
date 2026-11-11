@@ -1,0 +1,59 @@
+{
+  "title": "Firmenkunden",
+  "source": "Goldlayer · Firmenkunden",
+  "groups": [
+    { "id": "vol", "name": "Volumen" },
+    { "id": "ertrag", "name": "Ertrag" },
+    { "id": "risiko", "name": "Risiko" }
+  ],
+  "kpis": [
+    {
+      "id": "vol", "group": "vol", "name": "Kreditvolumen", "long": "Kredite an Firmenkunden", "short": "Kredite",
+      "unit": "Mrd", "dec": 1, "kind": "stock", "dir": 1, "target": 9400,
+      "desc": "Ausstehende Kredite an Firmenkunden per Monatsende.",
+      "monthly": { "table": "gold.kredite_monat", "value": "kreditvolumen_mio_chf" },
+      "parts": { "mode": "sum", "split": "segment", "order": ["KMU", "Grossfirmen", "Immobilien"] }
+    },
+    {
+      "id": "neu", "group": "vol", "name": "Neugeschäft", "long": "Neu ausbezahlte Kredite", "short": "Neugeschäft",
+      "unit": "Mio", "dec": 0, "kind": "flow", "dir": 1, "target": 180, "targetName": "Monatsziel",
+      "desc": "Neu ausbezahlte Kredite im Monat, über alle Segmente.",
+      "monthly": { "table": "gold.kredite_monat", "value": "neugeschaeft_mio_chf" },
+      "parts": { "mode": "sum", "split": "segment", "order": ["KMU", "Grossfirmen", "Immobilien"] }
+    },
+    {
+      "id": "einl", "group": "vol", "name": "Firmeneinlagen", "long": "Einlagen der Firmenkunden", "short": "Einlagen",
+      "unit": "Mrd", "dec": 1, "kind": "stock", "dir": 1,
+      "desc": "Verpflichtungen gegenüber Firmenkunden per Monatsende.",
+      "monthly": { "table": "gold.einlagen_monat", "value": "firmeneinlagen_mio_chf" }
+    },
+    {
+      "id": "marge", "group": "ertrag", "name": "Kreditmarge", "long": "Marge über dem Refinanzierungssatz", "short": "Marge",
+      "unit": "%", "dec": 2, "kind": "stock", "dir": 1, "target": 1.6,
+      "desc": "Durchschnittliche Marge des Kreditbuchs über dem Refinanzierungssatz.",
+      "monthly": { "table": "gold.qualitaet_monat", "value": "kreditmarge_pct" }
+    },
+    {
+      "id": "npl", "group": "risiko", "name": "Ausfallquote", "long": "Anteil notleidender Kredite", "short": "Ausfallquote",
+      "unit": "%", "dec": 2, "kind": "stock", "dir": -1, "target": 1.2, "limit": 2, "targetName": "Frühwarnung", "limitName": "Risikolimit",
+      "desc": "Notleidende Kredite in Prozent des Kreditvolumens.",
+      "monthly": { "table": "gold.qualitaet_monat", "value": "ausfallquote_pct" }
+    },
+    {
+      "id": "limit", "group": "risiko", "name": "Limitenauslastung", "long": "Beanspruchte Kreditlimiten", "short": "Auslastung",
+      "unit": "%", "dec": 0, "kind": "stock", "dir": -1, "target": 75, "targetName": "Frühwarnung",
+      "desc": "Beanspruchte Kreditlimiten in Prozent der zugesagten. Steigt sie rasch, brauchen Kunden Liquidität.",
+      "monthly": { "table": "gold.qualitaet_monat", "value": "limitenauslastung_pct" }
+    },
+    {
+      "id": "wb", "group": "risiko", "name": "Wertberichtigungen", "long": "Bestand an Wertberichtigungen", "short": "Wertber.",
+      "unit": "Mio", "dec": 0, "kind": "stock", "dir": 0,
+      "desc": "Bestand an Wertberichtigungen für Ausfallrisiken per Monatsende.",
+      "monthly": { "table": "gold.qualitaet_monat", "value": "wertberichtigungen_mio_chf" }
+    }
+  ],
+  "events": [
+    { "month": "2020-04", "title": "Überbrückungskredite", "text": "Im Frühling 2020 werden ungewöhnlich viele Kredite neu ausbezahlt, die Limiten sind stark beansprucht." },
+    { "month": "2023-06", "title": "Höhepunkt der Zinswende", "text": "Die Kreditmarge erreicht ihren höchsten Stand." }
+  ]
+}

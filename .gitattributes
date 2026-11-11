@@ -1,0 +1,2 @@
+# Textdateien liegen im Repo mit LF; Git wandelt beim Auschecken je nach System um.
+* text=auto

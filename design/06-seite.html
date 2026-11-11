@@ -1,0 +1,2240 @@
+<title>Lumantic Seite</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400..650;1,6..72,400..600&display=swap">
+<style>
+/* Layout: a letter. One text column of about 62 characters, a narrow gutter on its left for the handles,
+   a margin on its right for notes. No boxes: structure comes from type, space and a few hairlines. */
+:root {
+  --bg: #eef1ec; --ink: #131c2a; --ink-2: #44516a; --dim: #657082;
+  --line: rgba(19, 28, 42, .15); --line-2: rgba(19, 28, 42, .36);
+  --accent: #1d3db8; --accent-soft: rgba(29, 61, 184, .1);
+  --alert: #bf3a22; --watch: #996600; --good: #17764c;
+  --c1: #1d3db8; --c2: #b3842c; --c3: #6f8f8a;
+  --wm: .085; --lift: rgba(19, 28, 42, .2);
+  --f-text: "Newsreader", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --f-mono: "Geist Mono", ui-monospace, "SF Mono", Consolas, monospace;
+  --gut: 2.6rem; --measure: 35rem; --mgw: 14.5rem; --gap: 2rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1412; --ink: #e7eae3; --ink-2: #a9b2a9; --dim: #7d887f;
+    --line: rgba(231, 234, 227, .16); --line-2: rgba(231, 234, 227, .38);
+    --accent: #9db0ff; --accent-soft: rgba(157, 176, 255, .14);
+    --alert: #ff7d61; --watch: #e5b04d; --good: #63cf9c;
+    --c1: #9db0ff; --c2: #d6a851; --c3: #7f9a94;
+    --wm: .11; --lift: rgba(0, 0, 0, .6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1412; --ink: #e7eae3; --ink-2: #a9b2a9; --dim: #7d887f;
+  --line: rgba(231, 234, 227, .16); --line-2: rgba(231, 234, 227, .38);
+  --accent: #9db0ff; --accent-soft: rgba(157, 176, 255, .14);
+  --alert: #ff7d61; --watch: #e5b04d; --good: #63cf9c;
+  --c1: #9db0ff; --c2: #d6a851; --c3: #7f9a94;
+  --wm: .11; --lift: rgba(0, 0, 0, .6);
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--bg); }
+body { background: var(--bg); color: var(--ink); font: 400 20px/1.55 var(--f-text); font-optical-sizing: auto; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+::selection { background: var(--accent-soft); }
+.page { position: relative; overflow-x: clip; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 1.5rem 8rem; }
+.mast, .sheet { max-width: calc(var(--gut) + var(--measure) + var(--mgw) + 2 * var(--gap)); margin-inline: auto; }
+.mast { display: flex; align-items: baseline; gap: .55rem; padding-left: calc(var(--gut) + var(--gap)); margin-bottom: 4.4rem; font: 400 11.5px/1.4 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.mark { width: .5rem; height: .5rem; border-radius: 50%; background: var(--accent); align-self: center; flex: none; }
+.word { font: 600 1.22rem/1 var(--f-text); letter-spacing: -.01em; text-transform: none; color: var(--ink); }
+.study { margin-left: auto; text-align: right; }
+.sheet { position: relative; isolation: isolate; }
+.gui { position: absolute; z-index: -1; top: -6.5rem; right: -8.5rem; width: 31rem; height: 31rem; opacity: var(--wm); pointer-events: none; transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
+.sub { white-space: nowrap; }
+
+/* Rows: gutter, text, margin */
+.row { display: grid; grid-template-columns: var(--gut) minmax(0, var(--measure)) minmax(0, var(--mgw)); column-gap: var(--gap); align-items: start; }
+.row > .gut { grid-column: 1; }
+.row > .col, .row > .body { grid-column: 2; min-width: 0; position: relative; }
+.row > .mg { grid-column: 3; min-width: 0; }
+.mg { font: 400 12px/1.6 var(--f-mono); letter-spacing: .01em; color: var(--dim); }
+.mg b { font-weight: 500; color: var(--ink-2); }
+
+/* Dateline: the month is a word you drag */
+.dl { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .7rem; font: 500 11.5px/1.5 var(--f-mono); letter-spacing: .13em; text-transform: uppercase; color: var(--ink-2); }
+.when { border: 0; border-bottom: 1px dotted var(--accent); background: none; padding: 0 .06em .03em; font: italic 500 1.6rem/1.15 var(--f-text); letter-spacing: -.005em; text-transform: none; color: var(--accent); cursor: ew-resize; touch-action: none; user-select: none; -webkit-user-select: none; white-space: nowrap; }
+.when:hover { border-bottom-style: solid; }
+.stepper { border: 0; background: none; padding: .25rem .2rem; margin: 0 -.35rem; color: var(--dim); font: 500 13px/1 var(--f-mono); opacity: 0; transition: opacity .2s, color .2s; }
+.dl:hover .stepper, .dl:focus-within .stepper, .scrubbing .stepper { opacity: 1; }
+.stepper:hover { color: var(--accent); }
+.play { align-self: center; width: 1.6rem; height: 1.6rem; display: inline-grid; place-items: center; border: 1px solid var(--line-2); border-radius: 50%; background: none; padding: 0 0 0 1px; margin-left: .3rem; font: 500 8.5px/1 var(--f-mono); color: var(--ink-2); transition: color .2s, border-color .2s; }
+.play:hover, .play[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.play[aria-pressed="true"] { padding: 0; letter-spacing: 1px; }
+.state { color: var(--dim); }
+.back { border: 0; border-bottom: 1px solid currentColor; background: none; padding: 0; font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--accent); }
+.hint { align-self: center; color: var(--accent); }
+.scrubbing, .scrubbing * { cursor: ew-resize !important; user-select: none !important; -webkit-user-select: none !important; }
+
+/* The ruler under the dateline: years, quarters, months that needed attention, events */
+.rr { opacity: 0; transform: translateY(-4px); transition: opacity .3s, transform .3s; pointer-events: none; }
+.rr[data-open="true"] { opacity: 1; transform: none; pointer-events: auto; }
+.ruler { position: relative; height: 3.35rem; margin-top: .55rem; cursor: ew-resize; touch-action: none; user-select: none; -webkit-user-select: none; }
+.ruler .base { position: absolute; left: 0; right: 0; bottom: 1.05rem; height: 1px; background: var(--line-2); }
+.tk { position: absolute; bottom: 1.05rem; width: 1px; height: 5px; background: var(--dim); }
+.tk.y { height: 12px; background: var(--ink-2); }
+.yl { position: absolute; bottom: 0; transform: translateX(3px); font: 400 10.5px/1 var(--f-mono); color: var(--dim); pointer-events: none; }
+.ht { position: absolute; bottom: calc(1.05rem + 1px); width: 3px; margin-left: -1px; background: var(--alert); }
+.ht.w { height: 3px; background: var(--watch); }
+.evd { position: absolute; top: .95rem; width: 7px; height: 7px; margin-left: -3.5px; padding: 0; border: 1px solid var(--accent); background: var(--bg); transform: rotate(45deg); cursor: pointer; }
+.evd:hover { background: var(--accent); }
+.cur { position: absolute; top: .85rem; bottom: .95rem; width: 2px; margin-left: -1px; background: var(--accent); pointer-events: none; }
+.cur span { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); padding-bottom: 2px; font: 500 10.5px/1 var(--f-mono); letter-spacing: .04em; color: var(--accent); white-space: nowrap; }
+.cur[data-edge="l"] span { left: -1px; transform: none; }
+.cur[data-edge="r"] span { left: auto; right: -1px; transform: none; }
+
+/* Headline and lede */
+.head { margin-top: 1.1rem; }
+.hl { margin: 0; font: 400 clamp(2.5rem, 7.4vw, 4.3rem)/1.03 var(--f-text); letter-spacing: -.02em; text-wrap: balance; }
+.hw { display: inline-block; }
+.lede { margin: 1.15rem 0 0; max-width: 31em; font: italic 400 1.26rem/1.42 var(--f-text); color: var(--ink-2); text-wrap: pretty; }
+.lk { display: inline; border: 0; border-bottom: 1px dotted var(--line-2); background: none; padding: 0; font: inherit; color: var(--ink); cursor: pointer; }
+.lk:hover { color: var(--accent); border-bottom: 1px solid var(--accent); }
+.lede .lk { border-bottom-color: transparent; transition: color .15s, border-color .15s; }
+.lede:hover .lk, .lede .lk:focus-visible { border-bottom-color: var(--line-2); }
+.lede .lk:hover { color: var(--accent); border-bottom: 1px solid var(--accent); }
+.evm { padding-top: .7rem; }
+.evm strong { display: block; font-weight: 500; color: var(--ink-2); letter-spacing: .08em; text-transform: uppercase; font-size: 11px; margin-bottom: .2rem; }
+.evm strong::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: .5em; border: 1px solid var(--accent); transform: rotate(45deg) translateY(-1px); }
+.ghost { position: absolute; margin: 0; pointer-events: none; }
+
+/* Blocks: the modules of the letter */
+#blocks { position: relative; display: grid; gap: 2.35rem; margin-top: 3.1rem; }
+.blk.gone { position: absolute; left: 0; right: 0; pointer-events: none; }
+.blk.dragging { z-index: 3; }
+.blk.dragging > .body { background: var(--bg); box-shadow: 0 14px 34px -18px var(--lift), 0 0 0 .8rem var(--bg); }
+.grip { justify-self: end; display: grid; place-items: center; width: 1.7rem; height: 1.7rem; margin-top: -.34rem; border: 0; border-radius: 4px; background: none; color: var(--dim); opacity: 0; cursor: grab; touch-action: none; transition: opacity .15s, color .15s; }
+.grip svg { fill: currentColor; }
+.blk:hover .grip, .grip:focus-visible, .blk.menu-open .grip, .blk.dragging .grip { opacity: 1; }
+.grip:hover { color: var(--accent); }
+.more { display: none; margin-left: auto; border: 0; background: none; padding: 0 .2rem; color: var(--dim); font: 500 15px/1 var(--f-mono); letter-spacing: .1em; }
+.lbl { display: flex; flex-wrap: wrap; align-items: center; gap: .15rem .7rem; margin-bottom: .42rem; font: 500 11.5px/1.5 var(--f-mono); letter-spacing: .13em; text-transform: uppercase; color: var(--ink-2); }
+.nm { color: var(--ink); }
+.stw { letter-spacing: .09em; }
+.since { border: 0; border-bottom: 1px dotted transparent; background: none; padding: 0; font: inherit; letter-spacing: .09em; text-transform: inherit; color: var(--dim); transition: color .15s, border-color .15s; }
+.blk:hover .since, .since:focus-visible { border-bottom-color: var(--line-2); }
+.blk .since:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.pinned { letter-spacing: .09em; color: var(--dim); }
+.pinned::before { content: "· "; }
+/* Status marks: a shape for each state, so colour never stands alone */
+.mk { flex: none; width: .66em; height: .66em; border-radius: 50%; border: 1.5px solid var(--dim); }
+.mk[data-kind="alert"] { border-color: var(--alert); background: var(--alert); }
+.mk[data-kind="watch"] { border-color: var(--watch); background: linear-gradient(90deg, var(--watch) 50%, transparent 50%); }
+.mk[data-kind="good"] { border-color: var(--good); box-shadow: inset 0 0 0 1.5px var(--bg), inset 0 0 0 4px var(--good); }
+.mk[data-kind="info"] { border-radius: 0; border-color: var(--accent); transform: rotate(45deg) scale(.85); }
+.mk[data-kind="calm"] { width: .34em; height: .34em; border: 0; background: var(--dim); margin: 0 .16em; }
+.mk[data-kind="note"] { border-radius: 0; border-width: 0 0 1.5px 1.5px; height: .5em; }
+.para { margin: 0; text-wrap: pretty; hyphens: auto; hyphenate-limit-chars: 9 4 4; }
+.sn + .sn::before { content: " "; }
+.mg { padding-top: 1.72rem; }
+.hint, .evm { padding-top: 0; }
+.evm { padding-top: .7rem; }
+
+/* Figures roll digit by digit; the words around them stand still */
+.roll { white-space: pre; }
+.num { font-weight: 620; font-variant-numeric: tabular-nums lining-nums; }
+.rc { display: inline-block; position: relative; clip-path: inset(.14em -.03em); }
+.rcc { display: inline-block; }
+.rg { position: absolute; left: 0; top: 0; }
+
+/* Statements that show their evidence on click. At rest the letter is plain text: the dotted underlines
+   appear in the paragraph under the pointer and on a statement with keyboard focus. */
+.fact { border-bottom: 1px dotted transparent; cursor: pointer; transition: color .15s, border-color .15s; }
+.blk:hover .fact, .fact:focus-visible { border-bottom-color: var(--line-2); }
+.blk .fact:hover { color: var(--accent); border-bottom: 1px solid var(--accent); }
+.blk .fact[aria-expanded="true"] { border-bottom: 1px solid var(--accent); }
+.nw { white-space: nowrap; }
+.fhint { display: block; margin-top: .45rem; color: var(--accent); }
+button.fact { display: inline; border-width: 0 0 1px; background: none; padding: 0; font: inherit; color: inherit; }
+.spk { display: inline-block; margin: 0 .16em; padding: 0 .1em; border-radius: 3px; cursor: pointer; transition: background .15s; }
+.spk:hover, .spk[aria-expanded="true"] { background: var(--accent-soft); }
+.sp { display: inline-block; width: 3.1em; height: .9em; vertical-align: -.07em; overflow: visible; }
+.sg { fill: none; stroke: var(--ink); stroke-opacity: .2; stroke-width: 1.2; }
+.sl { fill: none; stroke: var(--ink); stroke-width: 1.45; stroke-linecap: round; stroke-linejoin: round; }
+.sd { fill: var(--ink); }
+.sb { fill: var(--ink-2); fill-opacity: .55; }
+.sb.now { fill: var(--ink); fill-opacity: 1; }
+.sb.neg { fill: var(--alert); fill-opacity: .8; }
+.sb.neg.now { fill-opacity: 1; }
+.blk[data-kind="alert"] .sd { fill: var(--alert); }
+.blk[data-kind="watch"] .sd { fill: var(--watch); }
+.blk[data-kind="good"] .sd { fill: var(--good); }
+.sp.draw .sl { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw .95s var(--dd, 0ms) cubic-bezier(.3, .7, .2, 1) forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.grow { position: fixed; z-index: 20; margin: 0; pointer-events: none; overflow: visible; }
+
+/* Forms of a block: sentence, number, chart */
+.big { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .7rem; font: 400 clamp(2.5rem, 9vw, 3.5rem)/1.08 var(--f-text); letter-spacing: -.025em; }
+.big .num { font-weight: 500; }
+.big .rc { clip-path: inset(-.02em -.03em); }
+.big .ru { font-size: .44em; font-weight: 400; letter-spacing: 0; color: var(--ink-2); }
+.big .sp { width: 2.3em; height: .5em; vertical-align: .06em; }
+.big .sl { stroke-width: 1.8; }
+.bigsub { margin: .35rem 0 0; font: 400 12px/1.6 var(--f-mono); color: var(--ink-2); }
+
+/* Evidence unfolds under the paragraph and pushes the text apart */
+.ev { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .46s cubic-bezier(.2, .8, .2, 1); }
+.ev[data-open="true"] { grid-template-rows: 1fr; }
+.ev-in { min-height: 0; overflow: hidden; }
+.ev-pad { margin-top: 1rem; padding-bottom: .3rem; border-top: 1px solid var(--line); }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 0 1.15rem; font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; }
+.chipb { border: 0; border-top: 1.5px solid transparent; background: none; margin-top: -1px; padding: .6rem 0 .3rem; font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--dim); }
+.chipb:hover { color: var(--ink); }
+.chipb[aria-pressed="true"] { color: var(--ink); border-top-color: var(--ink); }
+.evx { margin-left: auto; border: 0; background: none; padding: .5rem .1rem .3rem .6rem; font: 400 16px/1 var(--f-mono); color: var(--dim); }
+.evx:hover { color: var(--accent); }
+.cap { margin: .45rem 0 1.35rem; max-width: 36em; font: italic 400 .84em/1.45 var(--f-text); color: var(--ink-2); }
+.chart { margin: 0; }
+.plot { position: relative; height: 190px; }
+.plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+.gr { stroke: var(--ink); stroke-opacity: .07; }
+.ax { stroke: var(--line-2); }
+.c-ghost { fill: none; stroke: var(--ink); stroke-opacity: .2; stroke-width: 1.2; }
+.c-line { fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linejoin: round; }
+.c-area { fill: var(--ink); fill-opacity: .07; }
+.c-lim { stroke: var(--alert); stroke-width: 1.2; }
+.c-limband { fill: var(--alert); fill-opacity: .08; }
+.c-tgt { stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.c-run { fill: var(--ink); fill-opacity: .06; }
+.c-zero { stroke: var(--ink); stroke-opacity: .4; }
+.c-bar { fill: var(--ink-2); fill-opacity: .5; }
+.c-bar.now { fill-opacity: .95; }
+.c-bar.short { fill: var(--alert); fill-opacity: .55; }
+.c-bar.short.now { fill-opacity: 1; }
+.c-bar.later { fill: var(--ink); fill-opacity: .1; }
+.c-plan { fill: none; stroke: var(--ink); stroke-opacity: .42; stroke-width: 1; }
+.c-base { stroke: var(--ink); stroke-opacity: .4; stroke-dasharray: 2 4; }
+.c-link { stroke: var(--ink); stroke-opacity: .35; stroke-dasharray: 3 3; }
+.pl { position: absolute; font: 400 10.5px/1 var(--f-mono); letter-spacing: .02em; color: var(--ink-2); white-space: nowrap; pointer-events: none; text-shadow: 0 0 2px var(--bg), 0 0 3px var(--bg), 0 0 5px var(--bg); }
+.pl i, .lg i { display: inline-block; width: 10px; height: 2px; margin-right: 6px; vertical-align: middle; }
+.pm { padding: 1px 5px; background: var(--bg); color: var(--ink-2); }
+.prun { color: var(--ink-2); }
+.pv { transform: translateX(-50%); color: var(--ink); }
+.pcat { top: 100%; padding-top: 5px; transform: translateX(-50%); white-space: normal; overflow-wrap: anywhere; text-align: center; line-height: 1.25; }
+.pempty { inset: 0; display: grid; place-items: center; font: italic 400 16px/1.3 var(--f-text); color: var(--ink-2); white-space: normal; text-align: center; }
+.dot { width: 9px; height: 9px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--ink); box-shadow: 0 0 0 2.5px var(--bg); }
+.hair { position: absolute; top: 0; bottom: 6%; width: 1px; background: var(--ink); opacity: .35; pointer-events: none; }
+.ptip { top: -15px; transform: translateX(-50%); padding: 1px 6px; background: var(--bg); color: var(--ink); }
+.lg { display: flex; flex-wrap: wrap; gap: .15rem 1.1rem; margin-top: 1.35rem; font: 400 11px/1.6 var(--f-mono); color: var(--ink-2); }
+.lg i.box { height: 8px; }
+.lg i.out { height: 8px; background: none; border: 1px solid var(--ink-2); }
+.chart[data-kind="bridge"] .lg { margin-top: 2.7rem; }
+
+/* The quiet line: everything calm in one paragraph */
+.qline { margin: 0; line-height: 1.8; }
+.qi { display: inline-block; margin: 0 1.15em 0 0; border: 0; border-bottom: 1px solid transparent; background: none; padding: 0; font: inherit; color: var(--ink-2); white-space: nowrap; text-align: left; transition: color .15s, border-color .15s; }
+.qi:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.qi .num { font-weight: 560; color: var(--ink); }
+.qi:hover .num { color: inherit; }
+.qi .sp { width: 2.1em; height: .7em; margin-left: .3em; }
+.qi .sl { stroke-width: 1.25; }
+.qi .mk { display: inline-block; margin-right: .4em; font-size: .78em; }
+.quiet .mg { opacity: 0; transition: opacity .2s; }
+.quiet:hover .mg { opacity: 1; }
+
+/* Notes, live figures inside them, and the line where new blocks begin */
+.ed { outline: none; caret-color: var(--accent); }
+.ed:empty::before, .ins:empty::before { content: attr(data-ph); color: var(--dim); font-style: italic; pointer-events: none; }
+.note .para { hyphens: manual; }
+.chip { display: inline-block; padding: 0 .38em; margin: 0 .06em; border-radius: 3px; background: var(--accent-soft); white-space: nowrap; cursor: pointer; }
+.chip .cn { font: 500 .58em/1 var(--f-mono); letter-spacing: .09em; text-transform: uppercase; color: var(--ink-2); vertical-align: .14em; }
+.chip .sp { width: 1.9em; height: .68em; margin-left: .3em; }
+.insrow { margin-top: 2.6rem; }
+.ins { min-height: 2.25em; padding: .35rem 0; border-bottom: 1px solid var(--line-2); outline: none; caret-color: var(--accent); transition: border-color .2s; }
+.ins:focus { border-bottom-color: var(--accent); }
+.insay { margin: .6rem 0 0; min-height: 1.5em; font: italic 400 .86em/1.45 var(--f-text); color: var(--ink-2); }
+.colo { margin: 4.2rem 0 0; font: 400 11.5px/1.65 var(--f-mono); color: var(--dim); }
+.flash > .body { animation: flash 1.5s ease-out; }
+@keyframes flash { from { background: var(--accent-soft); box-shadow: 0 0 0 .6rem var(--accent-soft); } to { background: transparent; box-shadow: 0 0 0 .6rem transparent; } }
+
+/* Menus, tooltip, toast, the idea note: the only surfaces that float */
+.menu { position: absolute; z-index: 30; min-width: 15.5rem; max-width: min(23rem, calc(100% - 32px)); max-height: 21rem; overflow-y: auto; padding: .35rem; background: var(--bg); border: 1px solid var(--line-2); box-shadow: 0 16px 44px -16px var(--lift); font: 400 16px/1.3 var(--f-text); }
+.mh { padding: .55rem .6rem .25rem; font: 500 10.5px/1 var(--f-mono); letter-spacing: .13em; text-transform: uppercase; color: var(--dim); }
+.mi { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; width: 100%; border: 0; border-radius: 3px; background: none; padding: .42rem .6rem; text-align: left; color: var(--ink); }
+.mi small { font: 400 10.5px/1.3 var(--f-mono); color: var(--dim); text-align: right; }
+.mi[aria-selected="true"] { background: var(--accent-soft); }
+.seg { display: flex; gap: .3rem; padding: .3rem .6rem .5rem; }
+.segb { flex: 1; border: 1px solid var(--line-2); border-radius: 3px; background: none; padding: .32rem .2rem; font: 500 10.5px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+.segb[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: var(--bg); }
+.tip { position: absolute; z-index: 31; max-width: 17rem; padding: .5rem .7rem; background: var(--bg); border: 1px solid var(--line-2); box-shadow: 0 12px 30px -14px var(--lift); font: 400 12px/1.5 var(--f-mono); color: var(--ink-2); pointer-events: none; }
+.tip b { display: block; font-weight: 500; color: var(--ink); }
+.toast { position: fixed; z-index: 45; left: 50%; bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + .2rem); transform: translateX(-50%); margin: 0; max-width: calc(100% - 9rem); padding: .55rem .9rem; background: var(--ink); color: var(--bg); font: 400 12px/1.4 var(--f-mono); }
+.toast button { margin-left: .9rem; border: 0; border-bottom: 1px solid currentColor; background: none; padding: 0; color: inherit; }
+.idee-btn { position: fixed; z-index: 41; left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px)); border: 1px solid var(--line-2); border-radius: 2rem; background: var(--bg); padding: .5rem .9rem; font: 500 11px/1 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); transition: color .2s, border-color .2s; }
+.idee-btn:hover, .idee-btn[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
+.idee { position: fixed; z-index: 40; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + 2.9rem); width: min(27rem, calc(100% - 32px)); max-height: min(34rem, 72%); overflow-y: auto; padding: 1.35rem 1.5rem 1.2rem; background: var(--bg); border: 1px solid var(--line-2); box-shadow: 0 22px 60px -22px var(--lift); font-size: 16.5px; line-height: 1.5; animation: rise .28s cubic-bezier(.2, .8, .2, 1); }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+.idee h2 { margin: 0 0 .5rem; font: 400 1.9rem/1.1 var(--f-text); letter-spacing: -.015em; }
+.idee h3 { margin: 1.15rem 0 .35rem; font: 500 10.5px/1.4 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.idee p { margin: 0; }
+.idee ol, .idee ul { margin: 0; padding-left: 1.15rem; }
+.idee li { margin-bottom: .3rem; }
+.idee ul { list-style: none; padding: 0; font-size: 15px; }
+.idee a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+.idee a:hover { border-bottom-color: var(--accent); }
+.idee kbd { font: 500 11px/1 var(--f-mono); border: 1px solid var(--line-2); border-radius: 3px; padding: .1rem .3rem; }
+.idee .fine { margin-top: 1.1rem; font: 400 11px/1.6 var(--f-mono); color: var(--dim); }
+.idee .fine button { border: 0; border-bottom: 1px solid currentColor; background: none; padding: 0; font: inherit; color: var(--ink-2); }
+
+/* Narrow: the margin moves under the text, then the gutter goes */
+@media (max-width: 62rem) {
+  .mast, .sheet { max-width: calc(var(--gut) + var(--measure) + var(--gap)); }
+  .row { grid-template-columns: var(--gut) minmax(0, var(--measure)); }
+  .row > .mg { grid-column: 2; padding-top: .55rem; }
+  .row > .mg:empty { display: none; }
+  .quiet .mg { display: none; }
+  .gui { right: -11rem; }
+}
+@media (max-width: 44rem) {
+  :root { --gut: 0px; --gap: 0px; }
+  body { font-size: 18px; }
+  .mast { flex-wrap: wrap; row-gap: .15rem; margin-bottom: 2.6rem; }
+  .study { flex-basis: 100%; margin-left: 1.05rem; text-align: left; }
+  .grip { display: none; }
+  .more { display: block; }
+  .gui { width: 22rem; height: 22rem; top: -5rem; right: -9rem; }
+  .plot { height: 170px; }
+  .when { font-size: 1.45rem; }
+  .ruler { transition: height .3s, margin-top .3s; }
+  .rr[data-open="false"] .ruler { height: 0; margin-top: 0; overflow: hidden; }
+  .toast { max-width: calc(100% - 32px); bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + 3rem); }
+  .page { padding-block-end: calc(max(16px, env(safe-area-inset-bottom, 0px)) + 7.5rem); }
+}
+@media (hover: none) { .stepper { opacity: 1; } .quiet .mg { opacity: 1; } .fact, .since, .lede .lk { border-bottom-color: var(--line); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<div class="page" id="page" lang="de">
+  <header class="mast"><span class="mark" aria-hidden="true"></span><span class="word">lumantic</span><span class="sub">· Seite</span><span class="study">Studie · erfundene Zahlen</span></header>
+  <main class="sheet" id="sheet">
+    <canvas class="gui" id="gui" width="8" height="8" aria-hidden="true"></canvas>
+    <div class="row">
+      <div class="col">
+        <div class="dl" id="dl">
+          <span id="tag">ALCO-Brief</span>
+          <button class="stepper" id="prev" type="button" aria-label="Einen Monat zurück" title="Einen Monat zurück">◂</button>
+          <button class="when" id="when" type="button" title="Ziehen wechselt den Monat"><span id="whenM"></span> <span id="whenY"></span></button>
+          <button class="stepper" id="next" type="button" aria-label="Einen Monat vor" title="Einen Monat vor">▸</button>
+          <button class="play" id="play" type="button" aria-label="Geschichte abspielen" aria-pressed="false" title="Geschichte abspielen (Leertaste)">▶</button>
+          <span class="state" id="state">aktuell</span>
+          <button class="back" id="back" type="button" title="Zurück zu heute (Z)" hidden>zurück zu heute</button>
+        </div>
+        <div class="rr" id="rr" data-open="false"><div class="ruler" id="ruler" role="slider" tabindex="-1" aria-label="Zeitlineal: Monat wählen"></div></div>
+      </div>
+      <aside class="mg hint" id="hint"><span aria-hidden="true">← </span>Zieh am Monat. Der Brief schreibt sich um.</aside>
+    </div>
+    <div class="row head">
+      <div class="col"><h1 class="hl" id="hl"></h1><p class="lede" id="lede"></p></div>
+      <aside class="mg evm" id="evm"></aside>
+    </div>
+    <div id="blocks"></div>
+    <div class="row insrow">
+      <div class="col">
+        <div class="ins" id="ins" contenteditable="true" role="textbox" aria-multiline="false" aria-label="Neuer Baustein, Notiz oder Frage an Lumina" spellcheck="false" data-ph="Schreib / für einen Baustein, [[ für eine Kennzahl, oder frag einfach."></div>
+        <p class="insay" id="insay" aria-live="polite"></p>
+      </div>
+    </div>
+    <footer class="row"><p class="col colo">Lumina schreibt diesen Brief aus elf Kennzahlen im Goldlayer. Sie nennt, was sich bewegt hat, und behauptet keine Ursachen.</p></footer>
+  </main>
+  <button class="idee-btn" id="ideeBtn" type="button" aria-expanded="false" aria-controls="idee">Idee</button>
+  <aside class="idee" id="idee" aria-label="Die Idee hinter dieser Studie" hidden>
+    <h2>Das Dashboard ist ein Brief.</h2>
+    <p>Lumina schreibt in Sätzen, was dich braucht, und fasst alles Ruhige in einer Zeile zusammen. Jede Aussage zeigt auf Klick ihren Beleg, und jeder Absatz ist ein Baustein, den du verschieben, anheften und ersetzen kannst.</p>
+    <h3>Probier das</h3>
+    <ol>
+      <li>Zieh am Monat im Briefkopf nach links. Der Brief schreibt sich um. <kbd>Z</kbd> springt zurück.</li>
+      <li>Klick auf eine unterstrichene Aussage oder ein Mini-Diagramm. Der Beleg klappt darunter auf.</li>
+      <li>Fahr links neben einen Absatz und greif den Griff: verschieben, anheften, als Zahl oder Diagramm zeigen.</li>
+      <li>Schreib unten <kbd>/</kbd> für einen Baustein, <kbd>[[</kbd> für eine Kennzahl in deiner Notiz, oder frag: «Einlagen Zusammensetzung März 2023?»</li>
+    </ol>
+    <h3>Worauf es sich stützt</h3>
+    <ul>
+      <li><a href="https://worrydream.com/ExplorableExplanations/" target="_blank" rel="noopener">Victor 2011, «Explorable Explanations»</a>: Texte, die auf ihre Leser antworten.</li>
+      <li><a href="https://hal.archives-ouvertes.fr/hal-01024278" target="_blank" rel="noopener">Goffin, Willett, Fekete, Isenberg 2014, «Exploring the Placement and Design of Word-Scale Visualizations»</a>: wortgrosse Grafiken im Satz.</li>
+      <li><a href="https://www.microsoft.com/en-us/haxtoolkit/library/pattern/" target="_blank" rel="noopener">Microsoft HAX Toolkit</a>: erklären, warum, und Korrekturen leicht machen.</li>
+    </ul>
+    <p class="fine">Studie · erfundene Zahlen. Lumina arbeitet hier nach festen Regeln, ohne Sprachmodell. Deine Bausteine bleiben in diesem Browser. <button type="button" id="reset">Alles zurücksetzen</button></p>
+  </aside>
+  <div class="menu" id="menu" role="listbox" aria-label="Auswahl" hidden></div>
+  <div class="tip" id="tip" role="tooltip" hidden></div>
+  <p class="toast" id="toast" role="status" hidden></p>
+</div>
+<script>
+"use strict";
+// ═════ Lumantic core: invented ALCO data, rules engine, Lumina, small helpers. Shared by all concept studies. ═════
+// ───────────── Helpers ─────────────
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const sum = (xs) => xs.reduce((a, b) => a + b, 0);
+const mean = (xs) => (xs.length ? sum(xs) / xs.length : 0);
+function rng(seed) {
+  return () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+const R = rng(1914);
+
+// ───────────── Time: monthly from January 2019 to October 2026 ─────────────
+const N = 94;
+const MON = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+const MONTH = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+const ym = (y, m) => (y - 2019) * 12 + (m - 1);
+const mOf = (t) => ((t % 12) + 12) % 12;
+
+// Smooth keyframe series with seeded noise; the last months (quietFrom on) are exact.
+function keys(points, noise = 0, quietFrom = N) {
+  const out = new Array(N);
+  for (let t = 0; t < N; t++) {
+    let k = 0;
+    while (k < points.length - 2 && t > points[k + 1][0]) k++;
+    const [t0, v0] = points[k], [t1, v1] = points[k + 1];
+    const f = t1 === t0 ? 0 : clamp((t - t0) / (t1 - t0), 0, 1);
+    const n = (R() * 2 - 1) * noise;
+    out[t] = v0 + (v1 - v0) * f * f * (3 - 2 * f) + (t < quietFrom ? n : 0);
+  }
+  return out;
+}
+function flows(base, amp, overrides) {
+  const out = Array.from({ length: N }, () => base + (R() * 2 - 1) * amp);
+  for (const [y, m, v] of overrides) out[ym(y, m)] = v;
+  return out;
+}
+
+// ───────────── The demo ALCO gold layer (all figures invented) ─────────────
+const LCR = keys([[0, 142], [ym(2019, 12), 144], [ym(2020, 2), 143], [ym(2020, 6), 162], [ym(2021, 1), 168], [ym(2021, 6), 158], [ym(2021, 12), 150],
+  [ym(2022, 6), 146], [ym(2022, 12), 140], [ym(2023, 2), 141], [ym(2023, 3), 155], [ym(2023, 6), 147], [ym(2023, 12), 144], [ym(2024, 12), 141],
+  [ym(2025, 12), 135], [ym(2026, 6), 130], [ym(2026, 7), 127], [ym(2026, 8), 124], [ym(2026, 9), 121], [ym(2026, 10), 118]], 1.6, ym(2026, 6));
+const OUTFLOW = keys([[0, 2600], [ym(2026, 6), 3020], [ym(2026, 10), 3210]], 18, ym(2026, 6));
+const HQLA = LCR.map((v, t) => (v * OUTFLOW[t]) / 100);
+const NSFR = keys([[0, 121], [ym(2020, 6), 128], [ym(2021, 6), 126], [ym(2022, 12), 120], [ym(2023, 6), 122], [ym(2024, 12), 123], [ym(2025, 12), 120], [ym(2026, 10), 117]], 0.7, ym(2026, 9));
+const CET1 = keys([[0, 15.1], [ym(2024, 12), 16.6], [ym(2025, 1), 16.1], [ym(2026, 10), 16.3]], 0.07);
+const LEV = keys([[0, 6.3], [ym(2020, 3), 6.35], [ym(2020, 6), 6.0], [ym(2021, 6), 6.4], [ym(2026, 10), 6.9]], 0.04);
+const EVE = keys([[0, 9.0], [ym(2021, 6), 10.5], [ym(2022, 9), 8.2], [ym(2024, 6), 10.8], [ym(2025, 12), 12.1], [ym(2026, 6), 12.6],
+  [ym(2026, 7), 12.7], [ym(2026, 8), 12.8], [ym(2026, 9), 12.9], [ym(2026, 10), 13.2]], 0.18, ym(2026, 6));
+const NIM = keys([[0, 1.08], [ym(2021, 12), 1.02], [ym(2022, 9), 1.1], [ym(2023, 9), 1.38], [ym(2024, 6), 1.3], [ym(2025, 6), 1.12], [ym(2026, 10), 1.05]], 0.008);
+const BAL = keys([[0, 27800], [ym(2020, 3), 28400], [ym(2020, 5), 29300], [ym(2023, 2), 31000], [ym(2023, 4), 31700], [ym(2026, 7), 34150], [ym(2026, 10), 33900]], 55, ym(2026, 7));
+const SAVE = keys([[0, 11200], [ym(2020, 5), 11800], [ym(2022, 6), 12300], [ym(2023, 12), 11000], [ym(2026, 7), 11300], [ym(2026, 8), 11160], [ym(2026, 9), 10900], [ym(2026, 10), 10660]], 40, ym(2026, 7));
+const CURR = keys([[0, 7200], [ym(2020, 5), 7700], [ym(2022, 6), 8000], [ym(2023, 12), 7200], [ym(2026, 10), 7350]], 35);
+const TERM = keys([[0, 2000], [ym(2022, 6), 1900], [ym(2023, 3), 2900], [ym(2023, 12), 4300], [ym(2025, 6), 4900], [ym(2026, 10), 5200]], 25);
+const DEP = SAVE.map((v, t) => v + CURR[t] + TERM[t]);
+const MORT = keys([[0, 18100], [ym(2022, 6), 20900], [ym(2023, 6), 21300], [ym(2026, 10), 23500]], 30);
+const NNM_P = flows(24, 10, [[2020, 3, 70], [2020, 4, 50], [2023, 3, 150], [2023, 4, 90], [2026, 8, 8], [2026, 9, 2], [2026, 10, -6]]);
+const NNM_V = flows(22, 14, [[2020, 3, 80], [2023, 3, 210], [2023, 4, 130], [2023, 5, 60], [2026, 6, 8], [2026, 7, 0], [2026, 8, -12], [2026, 9, -40], [2026, 10, -58]]);
+const NNM_F = flows(9, 9, [[2023, 3, 60], [2026, 9, 3], [2026, 10, 2]]);
+const NNM = NNM_P.map((v, t) => v + NNM_V[t] + NNM_F[t]);
+const PIPE = keys([[0, 620], [ym(2021, 12), 700], [ym(2022, 9), 600], [ym(2023, 6), 520], [ym(2024, 12), 690], [ym(2025, 12), 760],
+  [ym(2026, 5), 820], [ym(2026, 6), 900], [ym(2026, 7), 980], [ym(2026, 8), 1050], [ym(2026, 9), 1100], [ym(2026, 10), 1150]], 22, ym(2026, 5))
+  .map((v, t) => (t < ym(2026, 5) ? v + 35 * Math.sin((2 * Math.PI * (mOf(t) - 2)) / 12) : v));
+const PIPE_A = PIPE.map((v, t) => v * (0.42 + 0.03 * Math.sin(t / 7)));
+const PIPE_O = PIPE.map((v) => v * 0.33);
+const PIPE_Z = PIPE.map((v, t) => v - PIPE_A[t] - PIPE_O[t]);
+
+const GROUPS = { liq: "Liquidität", kap: "Kapital", zins: "Zinsrisiko", bil: "Bilanz", wachs: "Wachstum" };
+const KPIS = [
+  { id: "lcr", group: "liq", name: "LCR", long: "Liquidity Coverage Ratio", unit: "%", dec: 0, kind: "stock", dir: 1, reg: 100, target: 125,
+    series: LCR, parts: { "HQLA": HQLA, "Nettomittelabflüsse": OUTFLOW }, partsMode: "ratio", table: "liquiditaet_monat",
+    desc: "Hochliquide Aktiva im Verhältnis zu den Nettomittelabflüssen der nächsten 30 Tage." },
+  { id: "nsfr", group: "liq", name: "NSFR", long: "Net Stable Funding Ratio", unit: "%", dec: 0, kind: "stock", dir: 1, reg: 100, target: 110,
+    series: NSFR, table: "liquiditaet_monat", desc: "Verfügbare stabile Refinanzierung im Verhältnis zur erforderlichen." },
+  { id: "cet1", group: "kap", name: "CET1-Quote", long: "Hartes Kernkapital", unit: "%", dec: 1, kind: "stock", dir: 1, reg: 10.5, target: 14,
+    series: CET1, table: "eigenmittel_monat", desc: "Hartes Kernkapital in Prozent der risikogewichteten Positionen." },
+  { id: "lev", group: "kap", name: "Leverage Ratio", long: "Ungewichtete Eigenmittelquote", unit: "%", dec: 1, kind: "stock", dir: 1, reg: 3, target: 5,
+    series: LEV, table: "eigenmittel_monat", desc: "Kernkapital im Verhältnis zum Gesamtengagement.", hidden: true },
+  { id: "eve", group: "zins", name: "Zinsrisiko ΔEVE", long: "Barwertsensitivität", unit: "%", dec: 1, kind: "stock", dir: -1, reg: 15, target: 13,
+    regName: "FINMA-Ausreissertest", targetName: "Frühwarnung", series: EVE, table: "zinsrisiko_monat",
+    desc: "Verlust des Barwerts bei einem Zinsschock, in Prozent des Kernkapitals." },
+  { id: "nim", group: "zins", name: "Zinsmarge", long: "Nettozinsmarge", unit: "%", dec: 2, kind: "stock", dir: 1, reg: null, target: null,
+    series: NIM, table: "erfolg_monat", desc: "Zinserfolg im Verhältnis zu den zinstragenden Aktiven, annualisiert." },
+  { id: "bal", group: "bil", name: "Bilanzsumme", long: "Total Aktiven", unit: "Mrd", kind: "stock", dir: 0, reg: null, target: null,
+    series: BAL, table: "bilanz_monat", desc: "Total der Aktiven per Monatsende." },
+  { id: "dep", group: "bil", name: "Kundeneinlagen", long: "Verpflichtungen aus Kundeneinlagen", unit: "Mrd", kind: "stock", dir: 1, reg: null, target: null,
+    series: DEP, parts: { "Sparkonten": SAVE, "Kontokorrente": CURR, "Festgeld": TERM }, table: "bilanz_monat", desc: "Einlagen von Kundinnen und Kunden per Monatsende." },
+  { id: "mort", group: "bil", name: "Hypotheken", long: "Hypothekarforderungen", unit: "Mrd", kind: "stock", dir: 0, reg: null, target: null,
+    series: MORT, table: "bilanz_monat", desc: "Ausstehende Hypotheken per Monatsende.", hidden: true },
+  { id: "nnm", group: "wachs", name: "Netto-Neugeld", long: "Zuflüsse minus Abflüsse", unit: "Mio", kind: "flow", dir: 1, reg: null, target: 30,
+    series: NNM, parts: { "Privatkunden": NNM_P, "Vermögensverwaltung": NNM_V, "Firmenkunden": NNM_F }, table: "neugeld_monat",
+    desc: "Neu zugeflossene minus abgeflossene Kundenvermögen. Ziel: 30 Mio. CHF pro Monat." },
+  { id: "pipe", group: "wachs", name: "Hypotheken-Pipeline", long: "Anfragen, Offerten und Zusagen", unit: "Mio", kind: "stock", dir: 1, reg: null, target: 500,
+    series: PIPE, parts: { "Anfrage": PIPE_A, "Offerte": PIPE_O, "Zusage": PIPE_Z }, funnel: true, table: "pipeline_monat",
+    desc: "Volumen der Hypotheken, die angefragt, offeriert oder zugesagt, aber noch nicht ausbezahlt sind." },
+];
+const K = Object.fromEntries(KPIS.map((k) => [k.id, k]));
+const EVENTS = [
+  { t: ym(2020, 3), title: "Pandemie", text: "Die Bank baut Liquiditätsreserven auf, Kundengelder fliessen zu." },
+  { t: ym(2022, 9), title: "SNB beendet Negativzinsen", text: "Der Leitzins steigt auf 0.5 %. Die Zinsmarge beginnt zu steigen." },
+  { t: ym(2023, 3), title: "Marktturbulenzen", text: "Innert weniger Wochen fliessen ungewöhnlich viele Kundengelder zu." },
+  { t: ym(2023, 6), title: "Leitzins 1.75 %", text: "Höhepunkt der Zinswende. Festgeld wird attraktiv, Sparkonten verlieren." },
+  { t: ym(2025, 1), title: "Basel III final", text: "Neue Eigenmittelvorschriften gelten. Die CET1-Quote sinkt einmalig." },
+  { t: ym(2025, 6), title: "Leitzins 0 %", text: "Die SNB senkt auf null. Druck auf die Zinsmarge." },
+  { t: ym(2026, 8), title: "Mandate gekündigt", text: "Zwei grosse Vermögensverwaltungs-Mandate gehen. Das wirkt auf Netto-Neugeld und LCR." },
+];
+
+// ───────────── Periods ─────────────
+const PERIODS = { jahr: [], quartal: [], monat: [] };
+for (let y = 2019; y <= 2026; y++) {
+  const from = ym(y, 1), to = Math.min(ym(y, 12), N - 1), partial = to < ym(y, 12);
+  PERIODS.jahr.push({ g: "jahr", y, from, to, partial, label: String(y), long: partial ? `${y} bis ${MONTH[mOf(to)]}` : `${y}` });
+  for (let q = 1; q <= 4; q++) {
+    const f = ym(y, 3 * q - 2);
+    if (f > N - 1) break;
+    const tt = Math.min(ym(y, 3 * q), N - 1), part = tt < ym(y, 3 * q);
+    PERIODS.quartal.push({ g: "quartal", y, q, from: f, to: tt, partial: part, label: `Q${q} ${y}`, short: `Q${q}`, long: part ? `Q${q} ${y} bis ${MONTH[mOf(tt)]}` : `Q${q} ${y}` });
+  }
+}
+for (let t = 0; t < N; t++) {
+  const y = 2019 + Math.floor(t / 12), m = mOf(t);
+  PERIODS.monat.push({ g: "monat", y, m, q: Math.floor(m / 3) + 1, from: t, to: t, partial: false, label: `${MON[m]} ${y}`, short: MON[m], long: `${MONTH[m]} ${y}` });
+}
+for (const g of Object.keys(PERIODS)) PERIODS[g].forEach((p, i) => (p.i = i));
+const NOUN = { jahr: "Vorjahr", quartal: "Vorquartal", monat: "Vormonat" };
+const G_NAME = { jahr: "Jahr", quartal: "Quartal", monat: "Monat" };
+const indexOfMonth = (g, t) => PERIODS[g].findIndex((p) => p.from <= t && t <= p.to);
+const monthsIn = (p) => p.to - p.from + 1;
+const valueAt = (k, p, s = k.series) => (k.kind === "flow" ? sum(s.slice(p.from, p.to + 1)) : s[p.to]);
+const targetAt = (k, p) => (k.target == null ? null : k.kind === "flow" ? k.target * monthsIn(p) : k.target);
+function endDate(p) { const y = 2019 + Math.floor(p.to / 12), m = mOf(p.to); const d = new Date(Date.UTC(y, m + 1, 0)); return `${d.getUTCDate()}.${m + 1}.${y}`; }
+
+// ───────────── Format (Swiss) ─────────────
+const thousands = (v) => Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "’");
+const pct = (d) => { const p = Math.abs(d * 100); return (p < 10 ? String(Number(p.toFixed(1))) : String(Math.round(p))) + " %"; };
+function split(k, v) {
+  if (k.unit === "%") return [v.toFixed(k.dec), "%"];
+  if (k.unit === "Mrd") return [(v / 1000).toFixed(1), "Mrd. CHF"];
+  return [(v < 0 ? "−" : "") + thousands(Math.abs(v)), "Mio. CHF"];
+}
+const F = (k, v) => split(k, v).join(" ");
+const compact = (k, v) => (k.unit === "%" ? v.toFixed(k.dec) + "%" : k.unit === "Mrd" ? (v / 1000).toFixed(1) + " Mrd" : thousands(v) + " Mio");
+const arrow = (d) => (d > 0 ? "↑" : d < 0 ? "↓" : "→");
+function fdelta(k, d, base) {
+  if (k.unit === "%") {
+    const p = Math.abs(d), min = Math.pow(10, -(k.dec || 0)) / 2;
+    return p < min ? "unverändert" : `${arrow(d)} ${p.toFixed(k.dec)} Pp.`;
+  }
+  if (k.kind === "flow") return `${arrow(d)} ${thousands(Math.abs(d))} Mio. CHF`;
+  const rel = d / Math.abs(base);
+  return Math.abs(rel) < 0.0005 ? "unverändert" : `${arrow(d)} ${pct(rel)}`;
+}
+
+// ───────────── Engine: same rules as the Go server, plus regulatory minimums ─────────────
+const evalCache = new Map();
+function evaluate(k, g, i) {
+  const key = k.id + "|" + g + "|" + i;
+  if (evalCache.has(key)) return evalCache.get(key);
+  const P = PERIODS[g], p = P[i];
+  const series = P.slice(0, i + 1).map((pp) => valueAt(k, pp));
+  const cur = series[i];
+  let prev = i > 0 ? series[i - 1] : null, prevNoun = NOUN[g];
+  const yi = g === "quartal" ? i - 4 : g === "monat" ? i - 12 : -1;
+  let yoy = yi >= 0 ? series[yi] : null;
+  // A period still running (2026 until October) is compared with the same months a year earlier.
+  const ytd = k.kind === "flow" && p.partial && p.from >= 12;
+  if (ytd) { prev = sum(k.series.slice(p.from - 12, p.to - 11)); prevNoun = "Vorjahr, gleiche Monate"; yoy = null; }
+  const past = series.slice(Math.max(0, i - 8), i);
+  const mu = mean(past), sd = Math.sqrt(mean(past.map((x) => (x - mu) ** 2)));
+  let z = 0;
+  if (past.length >= 4 && sd > 1e-9 && !(k.kind === "flow" && p.partial) && Math.abs(cur - mu) / Math.max(Math.abs(mu), 2 * sd) >= 0.05) z = (cur - mu) / sd;
+  const tgt = targetAt(k, p), reg = k.reg;
+  const mT = tgt != null && k.dir ? ((cur - tgt) / Math.abs(tgt)) * k.dir : null;
+  const mR = reg != null && k.dir ? ((cur - reg) / Math.abs(reg)) * k.dir : null;
+  let level = "calm", label = "Ruhig", tone = "neutral", move = false, breach = false;
+  if (mR !== null && mR < 0) { level = "alert"; tone = "bad"; label = "Regulatorisch verletzt"; breach = true; }
+  else if (mT !== null && mT < -0.03) { level = "alert"; tone = "bad"; label = k.dir > 0 ? "Unter internem Ziel" : "Über Frühwarnung"; }
+  else if (mT !== null && mT < 0) { level = "watch"; tone = "bad"; label = "Knapp verfehlt"; }
+  else if (Math.abs(z) >= 2 && k.dir && Math.sign(z) !== k.dir) { level = "watch"; tone = "bad"; label = "Auffällige Bewegung"; move = true; }
+  else if (Math.abs(z) >= 2) { level = "notable"; move = true; tone = k.dir ? "good" : "neutral"; label = k.dir ? "Gute Nachricht" : "Ungewöhnlich"; }
+  // SPC run rule: six or more consecutive moves in the adverse direction are a signal, even inside the limits.
+  let run = 0, special = null;
+  if (k.dir) for (let x = i; x > 0 && run < 36; x--) { if ((series[x] - series[x - 1]) * k.dir < 0) run++; else break; }
+  if ((level === "calm" || (level === "notable" && tone !== "good")) && run >= 6) { level = "watch"; tone = "bad"; label = "Anhaltender Trend"; special = "trend"; move = false; }
+  // Hysteresis: after an alert, the all-clear needs a 2 % recovery margin, so status does not flicker.
+  if (level === "calm" && i > 0 && mT !== null && mT < 0.02 && evaluate(k, g, i - 1).level === "alert") { level = "watch"; tone = "bad"; label = "Erholung, noch knapp"; special = "recover"; }
+  const kind = level === "notable" ? (tone === "good" ? "good" : "info") : level;
+  const m = Math.abs(mR !== null && mR < 0 ? mR : mT || 0);
+  const score = (breach ? 1600 : 0) + (level === "alert" ? 1000 + m * 100 : level === "watch" ? 600 + (m * 100 || Math.abs(z)) : level === "notable" ? 500 + Math.abs(z) : 100);
+  const mag = level === "alert" ? Math.min(1, 0.86 + m * 0.3) : level === "watch" ? 0.6 : level === "notable" ? 0.52 : 0.2;
+  const r = { k, g, i, p, series, cur, prev, yoy, tgt, reg, mT, mR, z, level, label, tone, kind, score: score + (special ? run : 0), mag, breach, ytd, prevNoun, run, special };
+  r.delta = prev !== null ? `${fdelta(k, cur - prev, prev)} ggü. ${prevNoun}` : "";
+  r.yoyText = yoy !== null ? `${fdelta(k, cur - yoy, yoy)} ggü. Vorjahr` : "";
+  r.answer = answerFor(r, move);
+  r.why = (level === "alert" || level === "watch") && i > 0 ? driverFor(r) : "";
+  if ((level === "alert" || level === "watch") && run >= 4 && special !== "trend") r.why = (r.why ? r.why + ". " : "") + `Seit ${run} ${RUN_NOUN[g]} in Folge ${k.dir > 0 ? "rückläufig" : "steigend"}`;
+  evalCache.set(key, r);
+  return r;
+}
+const RUN_NOUN = { monat: "Monaten", quartal: "Quartalen", jahr: "Jahren" };
+function answerFor(r, move) {
+  const { k, cur, tgt, reg, level, g, i } = r, v = F(k, cur);
+  if (r.special === "trend") return `${v}, seit ${r.run} ${RUN_NOUN[g]} in Folge ${k.dir > 0 ? "rückläufig" : "steigend"}`;
+  if (r.special === "recover") return `${v}, wieder im Ziel, aber noch ohne Sicherheitsabstand`;
+  if (r.breach) return k.dir > 0 ? `${v}, unter dem regulatorischen Minimum von ${F(k, reg)}` : `${v}, über dem Limit von ${F(k, reg)}`;
+  if ((level === "alert" || level === "watch") && !move) return k.dir > 0 ? `${v}, unter dem internen Ziel von ${F(k, tgt)}` : `${v}, über der Frühwarnschwelle von ${F(k, tgt)}`;
+  if (move) {
+    const before = r.series.slice(0, -1), up = r.z > 0;
+    let j = -1;
+    for (let x = before.length - 1; x >= 0; x--) if (up ? before[x] >= cur : before[x] <= cur) { j = x; break; }
+    if (j < 0 && before.length >= 4) return `${v}, ${up ? "höchster" : "tiefster"} Wert seit Beginn der Reihe 2019`;
+    if (j >= 0 && i - j >= 4) return `${v}, ${up ? "höchster" : "tiefster"} Wert seit ${PERIODS[g][j].long}`;
+    return `${v}, deutlich ${up ? "höher" : "tiefer"} als üblich`;
+  }
+  if (tgt != null) return k.dir > 0 ? `${v}, über dem Ziel von ${F(k, tgt)}` : `${v}, unter der Frühwarnschwelle von ${F(k, tgt)}`;
+  return r.delta ? `${v}, ${r.delta}` : v;
+}
+// Names a part only when it clearly explains the deviation.
+function driverFor(r) {
+  const { k, g, i } = r;
+  if (!k.parts) return "";
+  const p = PERIODS[g][i], q = r.ytd ? { from: p.from - 12, to: p.to - 12 } : PERIODS[g][i - 1];
+  if (k.partsMode === "ratio") {
+    const [num, den] = Object.keys(k.parts);
+    const dn = valueAt(k, p, k.parts[num]) / valueAt(k, q, k.parts[num]) - 1, dd = valueAt(k, p, k.parts[den]) / valueAt(k, q, k.parts[den]) - 1;
+    const top = [{ name: num, s: -dn * k.dir, d: dn }, { name: den, s: dd * k.dir, d: dd }].sort((a, b) => b.s - a.s)[0];
+    return top.s > 0 ? `Grund: ${top.name} ${top.d > 0 ? "+" : "−"}${pct(top.d)}` : "";
+  }
+  const ch = Object.entries(k.parts).map(([name, s]) => { const d = valueAt(k, p, s) - valueAt(k, q, s); return { name, d, s: -d * (k.dir || 1) }; }).sort((a, b) => b.s - a.s);
+  if (!ch.length || ch[0].s <= 0 || (ch[1] && ch[0].s < 1.5 * Math.max(0, ch[1].s))) return "";
+  return `Grund: ${ch[0].name} ${ch[0].d > 0 ? "+" : "−"}${thousands(Math.abs(ch[0].d))} Mio. CHF ggü. ${r.prevNoun}`;
+}
+const evalAll = (g, i) => KPIS.map((k) => evaluate(k, g, i)).sort((a, b) => b.score - a.score);
+
+// ───────────── DOM helpers ─────────────
+function h(tag, attrs = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k.startsWith("on") && typeof v === "function") el.addEventListener(k.slice(2), v);
+    else if (k === "text") el.textContent = v;
+    else if (k === "style") el.style.cssText = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) if (c !== null && c !== undefined && c !== false && c !== "") el.append(c instanceof Node ? c : String(c));
+  return el;
+}
+const SVGNS = "http://www.w3.org/2000/svg";
+function sv(tag, attrs = {}, ...kids) {
+  const el = document.createElementNS(SVGNS, tag);
+  for (const [k, v] of Object.entries(attrs)) if (v !== null && v !== undefined) el.setAttribute(k, v);
+  for (const c of kids) if (c) el.append(typeof c === "string" ? document.createTextNode(c) : c);
+  return el;
+}
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+function animate(dur, fn, ease = easeOut) {
+  if (reduced) { fn(1); return () => {}; }
+  const t0 = performance.now();
+  let stop = false;
+  const step = () => { if (stop) return; const k = clamp((performance.now() - t0) / dur, 0, 1); fn(ease(k)); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+  return () => { stop = true; };
+}
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const KIND_VAR = { alert: "--alert", watch: "--watch", good: "--good", info: "--accent", calm: "--ink-2" };
+const kindVar = (kind) => `var(${KIND_VAR[kind] || "--ink-2"})`;
+
+// ───────────── Scopes and Lumina ─────────────
+const GROUP_ORDER = ["liq", "kap", "zins", "bil", "wachs"];
+const SCOPES = { all: "ALCO gesamt", liq: "Liquidität", kap: "Kapital", zins: "Zinsrisiko", bil: "Bilanz", wachs: "Wachstum" };
+const SLUG = { all: "alco-gesamt", liq: "liquiditaet", kap: "kapital", zins: "zinsrisiko", bil: "bilanz", wachs: "wachstum" };
+const valAt = (k, t, s) => { const src = s || k.series, a = clamp(Math.floor(t), 0, N - 1), b = Math.min(N - 1, a + 1); return lerp(src[a], src[b], clamp(t - a, 0, 1)); };
+const scopeKpis = (scope) => (scope === "all" ? KPIS : KPIS.filter((k) => k.group === scope));
+const levelCounts = (m, scope = "all") => {
+  const ev = scopeKpis(scope).map((k) => evaluate(k, "monat", m));
+  return { alert: ev.filter((r) => r.level === "alert").length, watch: ev.filter((r) => r.level === "watch").length, good: ev.filter((r) => r.kind === "good").length };
+};
+function dots(c) {
+  return h("span", { class: "dots" }, ...Array.from({ length: c.alert }, () => h("i", { class: "dot", "data-level": "alert" })),
+    ...Array.from({ length: c.watch }, () => h("i", { class: "dot", "data-level": "watch" })), ...Array.from({ length: c.good }, () => h("i", { class: "dot", "data-level": "good" })));
+}
+
+// Lumina's sentence for a month and scope.
+function briefParts(m, scope, onName) {
+  const ev = scopeKpis(scope).map((k) => evaluate(k, "monat", m)).sort((a, b) => b.score - a.score);
+  const alerts = ev.filter((r) => r.level === "alert"), watches = ev.filter((r) => r.level === "watch"), goods = ev.filter((r) => r.kind === "good");
+  const breach = alerts.filter((r) => r.breach);
+  const name = (r) => h("button", { class: "name" + (r.level === "alert" ? " name--alert" : ""), type: "button", onclick: () => onName(r.k) }, r.k.name);
+  const join = (rs) => rs.flatMap((r, n) => (n === 0 ? [name(r)] : [n === rs.length - 1 ? " und " : ", ", name(r)]));
+  const words = ["", "Eine", "Zwei", "Drei", "Vier", "Fünf", "Sechs"];
+  let p;
+  if (breach.length) p = ["Regulatorische Grenze verletzt: ", ...join(breach), ". Das hat Vorrang."];
+  else if (!alerts.length && !watches.length) p = ["Alles ruhig. ", ...(goods.length ? ["Gute Nachricht: ", ...join(goods), "."] : ["Nichts braucht dich."])];
+  else if (!alerts.length) p = ["Fast alles ruhig. Behalte ", ...join(watches), " im Auge."];
+  else if (alerts.length === 1 && !watches.length) p = ["Ruhige Lage. Nur eine Sache braucht dich: ", name(alerts[0]), "."];
+  else if (alerts.length === 1) p = ["Eine Sache braucht dich: ", name(alerts[0]), ". Im Auge behalten: ", ...join(watches), "."];
+  else p = [`${words[alerts.length] || alerts.length} Dinge brauchen dich: `, ...join(alerts), ".", ...(watches.length ? [" Im Auge behalten: ", ...join(watches), "."] : [])];
+  if (!breach.length && (alerts.length || watches.length) && goods.length) p.push(" Gute Nachricht: ", ...join(goods), ".");
+  return p;
+}
+
+// ───────────── Lumina's chart recommendations ─────────────
+// Every candidate is generated from the data; the score ranks urgency and explanatory value.
+function candidatesFor(scope, m) {
+  const out = [], ks = scopeKpis(scope);
+  const ev = Object.fromEntries(KPIS.map((k) => [k.id, evaluate(k, "monat", m)]));
+  const heat = (r) => (r.level === "alert" ? 3 : r.level === "watch" ? 2 : r.kind === "good" ? 1.6 : 1);
+  for (const k of ks) {
+    const r = ev[k.id];
+    out.push({ id: "trend:" + k.id, kind: "trend", k: k.id, title: `${k.name}: Verlauf${k.reg !== null || k.target !== null ? " gegen " + (k.reg !== null ? "Grenzen" : "Ziel") : ""}`,
+      why: r.kind === "good" ? `${k.name}: ${r.label}, ${r.answer.replace(/^[^,]*, /, "")}. Der Verlauf zeigt, wie sich der Wert vom Ziel absetzt.`
+        : r.level !== "calm" ? `${k.name}: ${r.label} seit ${PERIODS.monat[streakStart(k, m)].long}. Darum der Verlauf mit Grenzbändern; er zeigt, wann es kippte, nicht warum.`
+        : k.reg !== null ? `${k.name} ist ruhig, ${headroom(k, r)} Puffer zum Minimum. Der Verlauf zeigt, ob dieser Abstand schrumpft.`
+        : k.target !== null ? `${k.name} ist ruhig und im Ziel. Der Verlauf zeigt, wie stabil das ist.` : `Für ${k.name} ist kein Ziel hinterlegt. Der Verlauf zeigt die Bewegung über die Zeit.`,
+      score: 20 * heat(r) + (k.reg !== null ? 6 : 0), types: k.kind === "flow" ? ["balken", "linie"] : ["flaeche", "linie", "balken"], ranges: ["1J", "3J", "Alles"], range: "3J", type: k.kind === "flow" ? "balken" : "flaeche" });
+    if (k.kind === "flow") out.push({ id: "cum:" + k.id, kind: "cum", k: k.id, title: `${k.name}: kumuliert im Jahr`, why: "Monatsflüsse schwanken. Kumuliert gegen das Jahresziel sieht man, ob das Jahr noch aufgeht.", score: 23 * heat(r), types: [], ranges: [] });
+    if (k.parts && !k.funnel && k.partsMode !== "ratio") {
+      out.push({ id: "parts:" + k.id, kind: "parts", k: k.id, title: `${k.name}: Zusammensetzung`, why: `${r.why ? r.why + ". " : ""}Die Zusammensetzung zeigt, welcher Teil die Bewegung trägt, nicht die Ursache dahinter.`,
+        score: (r.why ? 25 : 9) * heat(r), types: k.kind === "flow" ? ["balken"] : ["flaeche", "anteile"], ranges: ["1J", "3J", "Alles"], range: "3J", type: k.kind === "flow" ? "balken" : "flaeche" });
+      out.push({ id: "bridge:" + k.id, kind: "bridge", k: k.id, title: `${k.name}: Brücke über zwölf Monate`, why: m >= 12 ? `Zerlegt die Veränderung seit ${PERIODS.monat[m - 12].long} in ihre Teile.` : "Zerlegt die Veränderung über zwölf Monate in ihre Teile.", score: (r.level !== "calm" ? 21 : 6) * heat(r), types: [], ranges: [] });
+    }
+    if (k.partsMode === "ratio") out.push({ id: "drivers:" + k.id, kind: "drivers", k: k.id, title: `${k.name}: Zähler und Nenner`, why: `${k.name} ist ein Verhältnis. Getrennt sieht man, ob die Reserve sinkt oder die Abflüsse steigen.`, score: (r.level !== "calm" ? 24 : 8) * heat(r), types: [], ranges: ["1J", "3J", "Alles"], range: "3J" });
+    if (k.funnel) out.push({ id: "funnel:" + k.id, kind: "funnel", k: k.id, title: `${k.name}: nach Stufe`, why: "Was in der Pipeline steht, nach Stufe. Zeigt Volumen, keine Abschlusswahrscheinlichkeit.", score: 17 * heat(r), types: [], ranges: [] });
+    if (k.kind === "flow" || k.funnel || k.id === "nim") out.push({ id: "season:" + k.id, kind: "season", k: k.id, title: `${k.name}: Saisonmuster`, why: "Jedes Jahr eine Zeile. So sieht man, ob ein Monat typisch ist oder heraussticht.", score: 9 * heat(r), types: [], ranges: [] });
+  }
+  const regKs = ks.filter((k) => k.reg !== null && k.reg !== undefined);
+  if (regKs.length) out.push({ id: "buffer:" + scope, kind: "buffer", ks: regKs.map((k) => k.id), title: "Puffer zu den Grenzen", why: `Abstand jeder Quote zu Minimum und Ziel. Am wenigsten Puffer hat gerade ${[...regKs].sort((a, b) => ((ev[a.id].cur - a.reg) * a.dir) / Math.abs(a.reg) - ((ev[b.id].cur - b.reg) * b.dir) / Math.abs(b.reg))[0].name}.`, score: 26 + 12 * Math.max(...regKs.map((k) => heat(ev[k.id]))), types: [], ranges: [] });
+  if (["all", "liq", "bil"].includes(scope)) out.push({ id: "compare:lcr-dep", kind: "compare", ks: ["lcr", "dep"], title: "LCR und Kundeneinlagen", why: "Beide Reihen auf 100 indexiert. Gleichlauf zeigt einen Zusammenhang, keine Ursache.", score: ev.lcr.level !== "calm" ? 44 : 11, types: [], ranges: ["3J", "Alles"], range: "Alles" });
+  return out.sort((a, b) => b.score - a.score);
+}
+const SIZES_BY_RANK = ["L", "S", "M", "M", "S", "S", "S", "M"];
+function streakStart(k, m) { let x = m; while (x > 0 && evaluate(k, "monat", x - 1).level !== "calm") x--; return x; }
+function headroom(k, r) { const b = (r.cur - k.reg) * k.dir; return k.unit === "%" ? `${b.toFixed(k.dec)} Pp.` : F(k, b); }
+
+
+// ═════ Seite · what Lumina writes ═════
+// A sentence is a list of segments. Figures are their own segments, so they can roll in place while the words around them stand still:
+//   ["t", text] · ["n", key, figure, prefix?] · ["v", key, figure] the value itself · ["s"] the word-sized chart ·
+//   ["w", key, word] a word that may change · ["f", key, evidence, [segments]] a statement that shows its evidence on click.
+const TODAY = N - 1;
+const NUMWORD = ["Keine", "Eine", "Zwei", "Drei", "Vier", "Fünf", "Sechs", "Sieben", "Acht", "Neun", "Zehn", "Elf", "Zwölf"];
+const ORDINAL = ["", "erste", "zweite", "dritte", "vierte", "fünfte", "sechste", "siebte", "achte", "neunte", "zehnte", "elfte", "zwölfte"];
+const LEVEL_RANK = { calm: 0, notable: 1, watch: 2, alert: 3 };
+const stateOf = (k, m) => evaluate(k, "monat", m);
+const fold = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+// Grammar of the part names in the demo data: f, n, or p for plural. Real data would carry this in the catalog.
+const PART_GRAMMAR = { "HQLA": "p", "Nettomittelabflüsse": "p", "Sparkonten": "p", "Kontokorrente": "p", "Festgeld": "n", "Privatkunden": "p", "Vermögensverwaltung": "f", "Firmenkunden": "p" };
+const T = (s) => ["t", s], NUM = (key, s) => ["n", key, s], WORD = (key, s) => ["w", key, s], FACT = (key, evd, kids) => ["f", key, evd, kids];
+
+// A distance in the figure's own unit: «7 Prozentpunkte», «92 Mio.», «1.2 Mrd.».
+function distance(k, d) {
+  const a = Math.abs(d);
+  if (k.unit === "%") { const s = a.toFixed(k.dec); return s + (Number(s) === 1 ? " Prozentpunkt" : " Prozentpunkte"); }
+  return a >= 1000 ? (a / 1000).toFixed(1) + " Mrd." : thousands(a) + " Mio.";
+}
+
+// The part that moved most against the figure, named only when it clearly stands out (same rule as the engine).
+function driverOf(k, m) {
+  const r = stateOf(k, m);
+  if (!k.parts || m < 1 || (r.level !== "alert" && r.level !== "watch")) return null;
+  const names = Object.keys(k.parts);
+  if (k.partsMode === "ratio") {
+    const [num, den] = names, dn = k.parts[num][m] / k.parts[num][m - 1] - 1, dd = k.parts[den][m] / k.parts[den][m - 1] - 1;
+    const top = [{ name: num, s: -dn * k.dir, d: dn }, { name: den, s: dd * k.dir, d: dd }].sort((a, b) => b.s - a.s)[0];
+    return top.s > 0 ? { name: top.name, text: (top.d > 0 ? "+" : "−") + pct(top.d), evd: "drivers" } : null;
+  }
+  const ch = names.map((name) => { const d = k.parts[name][m] - k.parts[name][m - 1]; return { name, d, s: -d * (k.dir || 1) }; }).sort((a, b) => b.s - a.s);
+  if (!ch.length || ch[0].s <= 0 || (ch[1] && ch[0].s < 1.5 * Math.max(0, ch[1].s))) return null;
+  return { name: ch[0].name, text: (ch[0].d > 0 ? "+" : "−") + thousands(Math.abs(ch[0].d)) + " Mio.", evd: "parts" };
+}
+
+function sentencesFor(k, m) {
+  const r = stateOf(k, m), cur = r.cur, flow = k.kind === "flow", out = [];
+  const V = ["v", "v", F(k, cur)], SP = ["s"];
+  const tgtWord = flow ? "dem Monatsziel" : k.dir < 0 ? "der Frühwarnschwelle" : "dem internen Ziel", evTgt = flow ? "cum" : "trend";
+  const side = (ref) => (cur < ref ? "unter" : "über");
+  const hasTgt = r.tgt !== null && k.dir !== 0, hasLim = k.reg !== null && k.reg !== undefined && k.dir !== 0;
+  const tgtFact = () => FACT("tgt", evTgt, [NUM("gap", distance(k, cur - r.tgt)), T(` ${side(r.tgt)} ${tgtWord} von `), NUM("tgt", F(k, r.tgt))]);
+  const limFact = () => FACT("lim", "trend", [NUM("room", distance(k, cur - k.reg)), T(` ${side(k.reg)} dem ${k.dir < 0 ? "Limit" : "regulatorischen Minimum"}`)]);
+  const tail = r.answer.replace(/^[^,]*, /, ""), extreme = /^(höchster|tiefster) Wert seit (.+)$/.exec(tail);
+  const move = r.label === "Auffällige Bewegung" || r.label === "Gute Nachricht" || r.label === "Ungewöhnlich";
+  let s1;
+  if (r.breach) s1 = [V, SP, T(" liegt "), FACT("lim", "trend", [NUM("room", distance(k, cur - k.reg)), T(k.dir > 0 ? " unter dem regulatorischen Minimum von " : " über dem Limit von "), NUM("reg", F(k, k.reg))]), T(". Das hat Vorrang.")];
+  else if (r.special === "recover") s1 = [V, SP, T(" liegt wieder "), FACT("tgt", evTgt, [T(`${side(r.tgt)} ${tgtWord} von `), NUM("tgt", F(k, r.tgt))]), T(", aber noch ohne Sicherheitsabstand.")];
+  else if (move) s1 = extreme ? [V, SP, T(" ist der "), FACT("ext", "trend", [T(`${extreme[1].slice(0, -1)} Wert seit ${extreme[2]}`)]), T(".")] : [V, SP, T(" liegt "), FACT("ext", "trend", [T(tail)]), T(".")];
+  else if (hasTgt) {
+    const onTarget = parseFloat(distance(k, cur - r.tgt)) === 0;
+    s1 = onTarget ? [V, SP, T(` liegt genau auf ${tgtWord} von `), NUM("tgt", F(k, r.tgt)), T(".")]
+      : [V, SP, T(r.special === "trend" ? " liegt noch " : " liegt "), tgtFact(), ...(hasLim ? [T(" und "), limFact()] : []), T(".")];
+  } else if (r.prev === null) s1 = [V, SP, T(" ist der erste Wert der Reihe.")];
+  else if (k.unit === "%") {
+    const d = cur - r.prev, s = Math.abs(d).toFixed(k.dec);
+    s1 = Number(s) === 0 ? [V, SP, T(" hat sich zum Vormonat nicht bewegt.")] : [V, SP, T(" liegt "), NUM("dm", s + (Number(s) === 1 ? " Prozentpunkt" : " Prozentpunkte")), T(d > 0 ? " über dem Vormonat." : " unter dem Vormonat.")];
+  } else {
+    const d = cur - r.prev, rel = d / Math.abs(r.prev);
+    s1 = Math.abs(rel) < 0.0005 ? [V, SP, T(" hat sich zum Vormonat kaum bewegt.")] : [V, SP, T(" liegt "), NUM("dm", pct(rel)), T(d > 0 ? " über dem Vormonat." : " unter dem Vormonat.")];
+  }
+  out.push({ id: "pos", segs: s1 });
+  if (move && hasTgt && !r.breach && parseFloat(distance(k, cur - r.tgt)) !== 0) out.push({ id: "tgt2", segs: [T("Das sind "), tgtFact(), T(".")] });
+  const d = driverOf(k, m);
+  if (d) {
+    const g = k.funnel ? "s" : PART_GRAMMAR[d.name];
+    const lead = g === "p" ? "Bewegt haben sich vor allem die " : g === "f" ? "Bewegt hat sich vor allem die " : g === "n" ? "Bewegt hat sich vor allem das " : g === "s" ? "Bewegt hat sich vor allem die Stufe " : "Am stärksten bewegt hat sich: ";
+    out.push({ id: "drv", segs: [T(lead), FACT("drv", d.evd, [WORD("part", d.name)]), T(" "), ["n", "drvd", d.text, "("], T(" zum Vormonat).")] });
+  }
+  if ((r.level === "alert" || r.level === "watch") && r.run >= 3) out.push({ id: "run", segs: [T("Es ist der "), FACT("run", "run", [WORD("ord", ORDINAL[r.run] || r.run + "."), T(k.dir > 0 ? " Rückgang in Folge" : " Anstieg in Folge")]), T(".")] });
+  return out;
+}
+const sigOf = (segs) => segs.map((s) => (s[0] === "t" ? "t" + s[1] : s[0] === "f" ? "f" + s[1] + s[2] + "(" + sigOf(s[3]) + ")" : s[0] + (s[1] || ""))).join("|");
+
+function headlineFor(m) {
+  const rs = KPIS.map((k) => stateOf(k, m)), b = rs.filter((r) => r.breach).length, a = rs.filter((r) => r.level === "alert").length, w = rs.filter((r) => r.level === "watch").length;
+  if (b) return b === 1 ? "Eine Grenze ist verletzt." : "Mehrere Grenzen sind verletzt.";
+  if (a === 1) return "Eine Sache braucht dich.";
+  if (a > 1) return `${NUMWORD[a] || a} Dinge brauchen dich.`;
+  return w ? "Fast alles ruhig." : "Alles ruhig.";
+}
+// The lede names the figures. A name is ["k", id] and becomes a link to its block.
+function ledeFor(m) {
+  const rs = KPIS.map((k) => stateOf(k, m)).sort((x, y) => y.score - x.score);
+  const B = rs.filter((r) => r.breach), A = rs.filter((r) => r.level === "alert" && !r.breach), W = rs.filter((r) => r.level === "watch"), G = rs.filter((r) => r.kind === "good"), I = rs.filter((r) => r.kind === "info");
+  const names = (list) => list.flatMap((r, i) => (i === 0 ? [["k", r.k.id]] : [T(i === list.length - 1 ? " und " : ", "), ["k", r.k.id]]));
+  const p = [];
+  if (B.length) {
+    p.push(...names(B), T(B.length === 1 ? " liegt jenseits der regulatorischen Grenze. Das hat Vorrang." : " liegen jenseits der regulatorischen Grenze. Das hat Vorrang."));
+    if (A.length) p.push(T(" Ausserdem: "), ...names(A), T("."));
+  } else if (A.length) p.push(T("Es geht um "), ...names(A), T("."));
+  else if (W.length) p.push(T("Nichts brennt. Behalte "), ...names(W), T(" im Auge."));
+  else p.push(T("Nichts braucht dich."));
+  if ((A.length || B.length) && W.length) p.push(T(" Im Auge behalten: "), ...names(W), T("."));
+  if (G.length) p.push(T(" Gute Nachricht: "), ...names(G), T("."));
+  if (I.length) p.push(T(" Ungewöhnlich: "), ...names(I), T("."));
+  return p;
+}
+// Margin: at today the value a year ago, in the past today's value.
+function marginFor(k, m) {
+  if (m < TODAY) return ["heute", F(k, k.series[TODAY])];
+  return m >= 12 ? ["vor einem Jahr", F(k, k.series[m - 12])] : null;
+}
+// The latest event, shown while it is at most two months old.
+const eventFor = (m) => EVENTS.filter((e) => e.t <= m && m - e.t <= 2).sort((a, b) => b.t - a.t)[0] || null;
+
+// Evidence: which views a figure has, and Lumina's reason for each.
+function viewsFor(k) {
+  const v = [{ kind: "trend", name: "Verlauf" }];
+  if (k.partsMode === "ratio") v.push({ kind: "drivers", name: "Zähler und Nenner" });
+  else if (k.parts) v.push({ kind: "parts", name: "Zusammensetzung" });
+  if (k.kind === "flow" && k.target !== null) v.push({ kind: "cum", name: "Kumuliert" });
+  if (k.parts && k.partsMode !== "ratio" && !k.funnel) v.push({ kind: "bridge", name: "Brücke" });
+  if (k.id === "lcr" || k.id === "dep") v.push({ kind: "compare", name: "Vergleich" });
+  return v;
+}
+function whyFor(k, kind, m) {
+  if (kind === "run") { const r = stateOf(k, m); return r.run >= 2 ? `Der markierte Abschnitt zeigt die ${r.run} Monate, in denen ${k.name} jeweils ${k.dir > 0 ? "tiefer" : "höher"} lag als im Monat davor.` : `${k.name} hat sich zuletzt nicht mehrfach in dieselbe Richtung bewegt.`; }
+  if (kind === "parts" && k.funnel) return "Was in der Pipeline steht, nach Stufe. Zeigt Volumen, keine Abschlusswahrscheinlichkeit.";
+  const id = kind === "compare" ? "compare:lcr-dep" : kind + ":" + k.id, c = candidatesFor(k.group, m).find((x) => x.id === id);
+  return c ? c.why.replace(/^Grund: /, "Am stärksten bewegt: ") : "";
+}
+
+// «Frag einfach»: keywords for figures, views and moments. No language model, only matching.
+const ASK_FIGURES = { lcr: ["lcr", "liquiditat", "liquidity", "hqla", "mittelabfluss"], nsfr: ["nsfr", "refinanzierung", "funding"], cet1: ["cet1", "cet 1", "kernkapital", "eigenmittel", "kapitalquote"],
+  lev: ["leverage", "verschuldung"], eve: ["eve", "δeve", "zinsrisiko", "barwert", "zinsschock"], nim: ["zinsmarge", "marge", "nim", "zinserfolg"], bal: ["bilanzsumme", "bilanz", "aktiven"],
+  dep: ["einlagen", "kundeneinlagen", "sparkont", "festgeld", "kontokorrent"], mort: ["hypotheken", "hypothek"], nnm: ["neugeld", "netto-neugeld", "nettoneugeld", "zufluss", "vermogensverwaltung", "kundengelder"], pipe: ["pipeline", "offerte", "zusage", "anfrage"] };
+const ASK_VIEWS = { parts: ["zusammensetzung", "teile", "anteil", "woraus", "segment", "aufteilung"], bridge: ["brucke", "veranderung", "uberleitung"], cum: ["kumul", "jahresziel", "aufgelaufen"], drivers: ["zahler", "nenner", "treiber"], compare: ["vergleich", " vs ", " gegen "], trend: ["verlauf", "entwicklung", "trend", "historie"] };
+const MONTH_KEYS = ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "dez"];
+function understand(text, m) {
+  const f = " " + fold(text).replace(/\s+/g, " ") + " ";
+  const hits = [];
+  for (const k of KPIS) {
+    let at = -1;
+    for (const w of ASK_FIGURES[k.id] || []) { const i = f.search(new RegExp("[^a-z0-9]" + w.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&"))); if (i >= 0 && (at < 0 || i < at)) at = i; }
+    if (at >= 0) hits.push({ k, at });
+  }
+  hits.sort((a, b) => a.at - b.at);
+  let ks = hits.map((x) => x.k);
+  if (ks.includes(K.pipe) && f.includes("pipeline")) ks = ks.filter((k) => k.id !== "mort");
+  let view = null;
+  for (const [kind, words] of Object.entries(ASK_VIEWS)) if (!view && words.some((w) => f.includes(w))) view = kind;
+  let when = null, mt;
+  if ((mt = /[^a-z](januar|februar|marz|april|mai|juni|juli|august|september|oktober|november|dezember|jan|feb|mar|apr|jun|jul|aug|sept|sep|okt|nov|dez)\.? (20\d\d)/.exec(f))) when = ym(Number(mt[2]), MONTH_KEYS.indexOf(mt[1].slice(0, 3)) + 1);
+  else if ((mt = /q([1-4]) ?(20\d\d)/.exec(f))) when = ym(Number(mt[2]), Number(mt[1]) * 3);
+  else if ((mt = /[^0-9](20[12]\d)[^0-9]/.exec(f))) when = ym(Number(mt[1]), 12);
+  else if (/vor einem jahr|letztes jahr|im vorjahr/.test(f)) when = m - 12;
+  else if (/ heute | aktuell | jetzt /.test(f)) when = TODAY;
+  if (when !== null) when = clamp(when, 0, TODAY);
+  const words = f.trim().split(" ").length;
+  const question = /\?\s*$/.test(text) || /^ (zeig|wie|was|wo|wann|warum|wieso|weshalb|welche|vergleich)/.test(f) || (ks.length > 0 && words <= 4);
+  return { ks, view, when, question };
+}
+
+// ═════ Seite · word-sized charts and evidence ═════
+let uidN = 0;
+const NSS = { "vector-effect": "non-scaling-stroke" };
+const PART_COLORS = ["var(--c1)", "var(--c2)", "var(--c3)"];
+// Evidence shows up to 36 months and ends at the chosen month whenever history allows.
+const win = (m) => { const w1 = Math.max(m, Math.min(TODAY, 35)); return [Math.max(0, w1 - 35), w1]; };
+const lineD = (pts, X, Y) => "M" + pts.map((p) => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(2)}`).join(" L");
+const key = (swatch, text) => h("span", {}, swatch, text);
+const box = (color) => h("i", { class: "box", style: `background:${color}` });
+const dash = (color) => h("i", { style: `background:repeating-linear-gradient(90deg, ${color} 0 4px, transparent 4px 7px)` });
+
+// Word-sized chart: the last 24 months up to m. Lines for balances, bars for flows.
+function sparkEl(k) {
+  const svg = sv("svg", { class: "sp", viewBox: "0 0 64 18", preserveAspectRatio: "none", "aria-hidden": "true" });
+  svg._k = k;
+  return svg;
+}
+function sparkSet(svg, m) {
+  if (svg._m === m) return;
+  if (svg._m !== undefined) svg.classList.remove("draw");
+  svg._m = m;
+  const k = svg._k, a = Math.max(0, m - 23), vals = k.series.slice(a, m + 1), n = vals.length, off = 24 - n, kids = [];
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  if (k.kind === "flow") {
+    lo = Math.min(lo, 0); hi = Math.max(hi, 0);
+    const Y = (v) => 16.5 - ((v - lo) / (hi - lo || 1)) * 15, y0 = Y(0), w = 64 / 24;
+    vals.forEach((v, i) => kids.push(sv("rect", { class: "sb" + (i === n - 1 ? " now" : "") + (v < 0 ? " neg" : ""), x: ((i + off) * w + 0.45).toFixed(2), y: Math.min(Y(v), y0).toFixed(2), width: (w - 0.9).toFixed(2), height: Math.max(0.7, Math.abs(y0 - Y(v))).toFixed(2) })));
+  } else {
+    const Y = (v) => (hi === lo ? 9 : 16 - ((v - lo) / (hi - lo)) * 14), X = (i) => 1.5 + ((i + off) / 23) * 60.5;
+    if (n > 1) { const d = "M" + vals.map((v, i) => X(i).toFixed(1) + "," + Y(v).toFixed(1)).join(" L"); kids.push(sv("path", { class: "sg", d }), sv("path", { class: "sl", d, pathLength: 1 })); }
+    kids.push(sv("circle", { class: "sd", cx: X(n - 1).toFixed(1), cy: Y(vals[n - 1]).toFixed(1), r: 1.9 }));
+  }
+  svg.replaceChildren(...kids);
+}
+
+// Shared frame: a 600 × 200 drawing that stretches, labels as HTML so type stays crisp.
+function chartFrame() {
+  const id = "cl" + ++uidN, clip = sv("rect", { x: 0, y: -20, width: 600, height: 240 });
+  const svg = sv("svg", { viewBox: "0 0 600 200", preserveAspectRatio: "none", "aria-hidden": "true" }, sv("defs", {}, sv("clipPath", { id }, clip)));
+  const grid = sv("g"), zones = sv("g"), ghost = sv("g"), solid = sv("g", { "clip-path": `url(#${id})` }), over = sv("g");
+  for (const y of [12, 70.7, 129.3]) grid.append(sv("line", { class: "gr", x1: 0, x2: 600, y1: y, y2: y, ...NSS }));
+  grid.append(sv("line", { class: "ax", x1: 0, x2: 600, y1: 188, y2: 188, ...NSS }));
+  svg.append(grid, zones, ghost, solid, over);
+  const plot = h("div", { class: "plot" }, svg);
+  const lab = (cls) => { const s = h("span", { class: "pl" + (cls ? " " + cls : "") }); plot.append(s); return s; };
+  const fr = { plot, clip, zones, ghost, solid, over, lab, hv: null, hi: lab(), lo: lab(), x0: lab(), x1: lab() };
+  fr.hi.style.cssText = "left:0;top:3px";
+  fr.lo.style.cssText = "left:0;bottom:calc(6% + 4px)";
+  fr.x0.style.cssText = "left:0;top:calc(94% + 5px)";
+  fr.x1.style.cssText = "right:0;top:calc(94% + 5px)";
+  const hair = h("div", { class: "hair", hidden: true }), tip = lab("ptip");
+  tip.hidden = true;
+  plot.append(hair);
+  plot.addEventListener("pointermove", (e) => {
+    const hv = fr.hv;
+    if (!hv) return;
+    const b = plot.getBoundingClientRect(), t = hv.at(clamp((e.clientX - b.left) / b.width, 0, 1));
+    hair.hidden = tip.hidden = false;
+    hair.style.left = hv.x(t) + "%";
+    tip.textContent = hv.text(t);
+    tip.style.left = clamp(hv.x(t), 14, 86) + "%";
+  });
+  plot.addEventListener("pointerleave", () => { hair.hidden = tip.hidden = true; });
+  fr.clear = () => { zones.replaceChildren(); ghost.replaceChildren(); solid.replaceChildren(); over.replaceChildren(); };
+  return fr;
+}
+// Limit and target are named on their line. Two lines that lie close get their names side by side.
+function placeMarks(marks) {
+  marks.sort((a, b) => a[1] - b[1]);
+  marks.forEach(([lab, y, text, color], i) => {
+    lab.hidden = false;
+    lab.replaceChildren(h("i", { style: `background:${color}` }), text);
+    lab.style.top = `calc(${(y / 200) * 100}% - 7px)`;
+    lab.style.left = i > 0 && y - marks[i - 1][1] < 15 ? "11.5rem" : "3.3rem";
+  });
+}
+
+const CHARTS = {
+  // Verlauf: the figure over time against limit and target. Flows as bars with the plan as an outline.
+  trend(k, fr, legend, opt) {
+    const flow = k.kind === "flow", tLab = fr.lab("pm"), rLab = fr.lab("pm"), runLab = fr.lab("prun"), dot = fr.lab("dot");
+    return (m) => {
+      const [w0, w1] = win(m), n = w1 - w0 + 1, slot = 600 / n, r = stateOf(k, m), vals = k.series.slice(w0, w1 + 1);
+      const X = flow ? (t) => (t - w0 + 0.5) * slot : (t) => ((t - w0) / (w1 - w0)) * 592;
+      let lo = Math.min(...vals), hi = Math.max(...vals);
+      if (flow) { lo = Math.min(lo, 0); hi = Math.max(hi, 0, k.target || 0); }
+      const span = hi - lo || Math.abs(hi) * 0.1 || 1;
+      for (const th of [k.reg, flow ? null : k.target]) if (th !== null && th !== undefined && th > lo - span * 0.8 && th < hi + span * 0.8) { lo = Math.min(lo, th); hi = Math.max(hi, th); }
+      const pad = (hi - lo) * 0.12 || 1;
+      lo -= pad; hi += pad;
+      const Y = (v) => 188 - ((v - lo) / (hi - lo)) * 176, inside = (v) => v !== null && v !== undefined && Y(v) > 2 && Y(v) < 187;
+      fr.clear();
+      const marks = [];
+      if (inside(k.reg)) {
+        const y = Y(k.reg);
+        fr.zones.append(sv("rect", { class: "c-limband", x: 0, width: 600, y: k.dir > 0 ? y : 0, height: k.dir > 0 ? 188 - y : y }), sv("line", { class: "c-lim", x1: 0, x2: 600, y1: y, y2: y, ...NSS }));
+        marks.push([rLab, y, `${k.dir < 0 ? "Limit" : "Minimum"} ${F(k, k.reg)}`, "var(--alert)"]);
+      } else rLab.hidden = true;
+      if (inside(k.target)) {
+        const y = Y(k.target);
+        fr.zones.append(sv("line", { class: "c-tgt", x1: 0, x2: 600, y1: y, y2: y, ...NSS }));
+        marks.push([tLab, y, `${flow ? "Monatsziel" : k.dir < 0 ? "Frühwarnung" : "Ziel"} ${F(k, k.target)}`, "var(--accent)"]);
+      } else tLab.hidden = true;
+      placeMarks(marks);
+      fr.hi.hidden = marks.some((mk) => mk[1] < 22);
+      fr.lo.hidden = marks.some((mk) => mk[1] > 166);
+      if (opt.run && r.run >= 2) {
+        const a = Math.max(w0, m - r.run), xa = flow ? X(a) - slot / 2 : X(a), xb = flow ? X(m) + slot / 2 : X(m);
+        fr.zones.append(sv("rect", { class: "c-run", x: xa, width: Math.max(2, xb - xa), y: 0, height: 188 }));
+        runLab.hidden = false;
+        runLab.textContent = `${r.run} ${k.dir > 0 ? "Rückgänge" : "Anstiege"} in Folge`;
+        runLab.style.top = "4px";
+        runLab.style.left = xa < 330 ? `calc(${(xa / 6).toFixed(2)}% + 6px)` : "auto";
+        runLab.style.right = xa < 330 ? "auto" : `calc(${(100 - xb / 6).toFixed(2)}% + 6px)`;
+      } else runLab.hidden = true;
+      let to = 600;
+      if (flow) {
+        const y0 = Y(0), gap = Math.min(4, slot * 0.2);
+        vals.forEach((v, i) => {
+          const t = w0 + i, x = i * slot, short = v < 0 || (k.target !== null && v < k.target);
+          if (k.target !== null) fr.over.append(sv("rect", { class: "c-plan", x: x + gap * 0.5, y: Math.min(Y(k.target), y0), width: slot - gap, height: Math.abs(y0 - Y(k.target)), ...NSS }));
+          fr.solid.append(sv("rect", { class: "c-bar" + (t > m ? " later" : short ? " short" : "") + (t === m ? " now" : ""), x: x + gap, y: Math.min(Y(v), y0), width: Math.max(0.5, slot - 2 * gap), height: Math.max(0.6, Math.abs(y0 - Y(v))) }));
+        });
+        fr.over.append(sv("line", { class: "c-zero", x1: 0, x2: 600, y1: y0, y2: y0, ...NSS }));
+        dot.hidden = true;
+        legend.replaceChildren(key(box("var(--ink-2)"), "Monatswert"), key(h("i", { class: "out" }), "Monatsziel als Umriss"), key(box("var(--alert)"), "unter dem Ziel"));
+      } else {
+        const d = lineD(vals.map((v, i) => [w0 + i, v]), X, Y);
+        fr.ghost.append(sv("path", { class: "c-ghost", d, ...NSS }));
+        fr.solid.append(sv("path", { class: "c-area", d: `${d} L592,188 L0,188 Z` }), sv("path", { class: "c-line", d, ...NSS }));
+        dot.hidden = false;
+        dot.style.left = (X(m) / 6).toFixed(2) + "%";
+        dot.style.top = (Y(k.series[m]) / 2).toFixed(2) + "%";
+        to = X(m) + 1;
+        legend.replaceChildren(...(m < w1 ? [key(h("i", { style: "background:var(--ink);opacity:.25" }), `blass: der weitere Verlauf bis ${PERIODS.monat[w1].label}`)] : []));
+      }
+      fr.hv = { at: (f) => (flow ? Math.min(w1, w0 + Math.floor(f * n)) : Math.round(w0 + Math.min(1, (f * 600) / 592) * (w1 - w0))), x: (t) => X(t) / 6, text: (t) => `${PERIODS.monat[t].label} · ${F(k, k.series[t])}` };
+      fr.hi.textContent = F(k, hi); fr.lo.textContent = F(k, lo);
+      fr.x0.textContent = PERIODS.monat[w0].label; fr.x1.textContent = PERIODS.monat[w1].label;
+      return to;
+    };
+  },
+
+  // Zusammensetzung: which part carries the figure. Stacked areas for balances, stacked bars for flows.
+  parts(k, fr, legend) {
+    const names = Object.keys(k.parts), flow = k.kind === "flow";
+    return (m) => {
+      const [w0, w1] = win(m), n = w1 - w0 + 1, slot = 600 / n;
+      fr.clear();
+      let to = 600;
+      if (flow) {
+        const stacks = [];
+        for (let t = w0; t <= w1; t++) stacks.push(names.map((nm) => k.parts[nm][t]));
+        let lo = Math.min(0, ...stacks.map((s) => sum(s.filter((v) => v < 0)))), hi = Math.max(0, ...stacks.map((s) => sum(s.filter((v) => v > 0))));
+        const pad = (hi - lo) * 0.1 || 1;
+        if (lo < 0) lo -= pad;
+        hi += pad;
+        const Y = (v) => 188 - ((v - lo) / (hi - lo)) * 176, y0 = Y(0), gap = Math.min(4, slot * 0.2);
+        stacks.forEach((s, i) => {
+          let up = 0, down = 0;
+          s.forEach((v, j) => {
+            const from = v >= 0 ? up : down, till = from + v;
+            if (v >= 0) up = till; else down = till;
+            fr.solid.append(sv("rect", { x: i * slot + gap, y: Math.min(Y(from), Y(till)), width: Math.max(0.5, slot - 2 * gap), height: Math.max(0.4, Math.abs(Y(from) - Y(till))), fill: PART_COLORS[j], "fill-opacity": w0 + i > m ? 0.12 : w0 + i === m ? 1 : 0.6 }));
+          });
+        });
+        fr.over.append(sv("line", { class: "c-zero", x1: 0, x2: 600, y1: y0, y2: y0, ...NSS }));
+        fr.hi.textContent = F(k, hi); fr.lo.textContent = lo < 0 ? F(k, lo) : "";
+        fr.hv = { at: (f) => Math.min(w1, w0 + Math.floor(f * n)), x: (t) => ((t - w0 + 0.5) * slot) / 6, text: (t) => `${PERIODS.monat[t].label} · ${F(k, k.series[t])}` };
+      } else {
+        const X = (t) => ((t - w0) / (w1 - w0)) * 600, rows = [];
+        for (let t = w0; t <= w1; t++) rows.push(names.map((nm) => k.parts[nm][t]));
+        const hi = Math.max(...rows.map((rw) => sum(rw))) * 1.08, Y = (v) => 188 - (v / hi) * 176;
+        let base = rows.map(() => 0);
+        names.forEach((nm, j) => {
+          const top = rows.map((rw, i) => base[i] + rw[j]), up = top.map((v, i) => [w0 + i, v]), dn = base.map((v, i) => [w0 + i, v]).reverse(), d = lineD(up, X, Y);
+          fr.solid.append(sv("path", { d: d + " L" + dn.map((p) => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(2)}`).join(" L") + " Z", fill: PART_COLORS[j], "fill-opacity": 0.5 }), sv("path", { d, fill: "none", stroke: PART_COLORS[j], "stroke-width": 1.4, ...NSS }));
+          fr.ghost.append(sv("path", { class: "c-ghost", d, ...NSS }));
+          base = top;
+        });
+        to = X(m) + 1;
+        fr.hi.textContent = F(k, hi); fr.lo.textContent = F(k, 0);
+        fr.hv = { at: (f) => Math.round(w0 + f * (w1 - w0)), x: (t) => X(t) / 6, text: (t) => `${PERIODS.monat[t].label} · ${F(k, k.series[t])}` };
+      }
+      const now = names.map((nm) => k.parts[nm][m]), tot = sum(now.map(Math.abs)) || 1;
+      legend.replaceChildren(...names.map((nm, j) => key(box(PART_COLORS[j]), `${nm} ${flow ? (now[j] < 0 ? "−" : "+") + thousands(Math.abs(now[j])) + " Mio." : Math.round((now[j] / tot) * 100) + " %"}`)), ...(flow ? [] : [h("span", { text: "von unten nach oben gestapelt" })]));
+      fr.x0.textContent = PERIODS.monat[w0].label; fr.x1.textContent = PERIODS.monat[w1].label;
+      return to;
+    };
+  },
+  drivers(k, fr, legend) {
+    const names = Object.keys(k.parts);
+    return indexed(fr, legend, names.map((nm, j) => ({ name: nm, arr: k.parts[nm], color: PART_COLORS[j] })), () => `${k.name} = ${names[0]} ÷ ${names[1]}`);
+  },
+  compare(k, fr, legend, opt) {
+    return indexed(fr, legend, opt.ks.map((id, j) => ({ name: K[id].name, arr: K[id].series, color: PART_COLORS[j] })), (w0) => `beide = 100 im ${PERIODS.monat[w0].label}`);
+  },
+
+  // Kumuliert: the months of the year, their running total and the path to the annual target.
+  cum(k, fr, legend) {
+    const tLab = fr.lab("pm"), dot = fr.lab("dot");
+    return (m) => {
+      const y0m = m - (m % 12), X = (t) => ((t - y0m + 0.5) / 12) * 600, months = [];
+      for (let t = y0m; t <= Math.min(TODAY, y0m + 11); t++) months.push([t, k.series[t]]);
+      let acc = 0;
+      const cum = months.map(([t, v]) => [t, (acc += v)]), target = k.target * 12;
+      const lo0 = Math.min(0, ...months.map((p) => p[1]), ...cum.map((p) => p[1])), hi0 = Math.max(target, ...cum.map((p) => p[1]), ...months.map((p) => p[1]));
+      const lo = lo0 < 0 ? lo0 - (hi0 - lo0) * 0.06 : 0, hi = hi0 + (hi0 - lo0) * 0.09, Y = (v) => 188 - ((v - lo) / (hi - lo)) * 176, yz = Y(0);
+      fr.clear();
+      fr.zones.append(sv("line", { class: "c-tgt", x1: 0, y1: yz, x2: 600, y2: Y(target), ...NSS }));
+      for (const [t, v] of months) fr.over.append(sv("rect", { class: "c-bar" + (t > m ? " later" : v < 0 || v < k.target ? " short" : "") + (t === m ? " now" : ""), x: X(t) - 13, y: Math.min(Y(v), yz), width: 26, height: Math.max(0.6, Math.abs(yz - Y(v))) }));
+      fr.over.append(sv("line", { class: "c-zero", x1: 0, x2: 600, y1: yz, y2: yz, ...NSS }));
+      fr.solid.append(sv("path", { d: lineD([[y0m - 0.5, 0], ...cum], X, Y), fill: "none", stroke: "var(--c1)", "stroke-width": 2.1, "stroke-linejoin": "round", ...NSS }));
+      const cv = cum[m - y0m][1], path = k.target * (m - y0m + 1);
+      dot.hidden = false;
+      dot.style.left = (X(m) / 6).toFixed(2) + "%";
+      dot.style.top = (Y(cv) / 2).toFixed(2) + "%";
+      tLab.replaceChildren(h("i", { style: "background:var(--accent)" }), `Jahresziel ${F(k, target)}`);
+      tLab.style.cssText = `right:0;top:max(0px, calc(${(Y(target) / 2).toFixed(1)}% - 17px))`;
+      legend.replaceChildren(key(box("var(--ink-2)"), "Monat"), key(h("i", { style: "background:var(--c1)" }), "kumuliert"), key(dash("var(--accent)"), "Zielpfad"),
+        h("span", { text: `${PERIODS.monat[m].y} bis ${MON[m % 12]}: ${F(k, cv)}, ${thousands(Math.abs(cv - path))} Mio. ${cv < path ? "unter" : "über"} dem Zielpfad` }));
+      fr.hi.textContent = F(k, hi); fr.lo.textContent = lo < 0 ? F(k, lo) : "";
+      fr.x0.textContent = "Jan " + PERIODS.monat[m].y; fr.x1.textContent = "Dez";
+      fr.hv = null;
+      return ((m - y0m + 1) / 12) * 600;
+    };
+  },
+
+  // Brücke: the change over twelve months, split into its parts.
+  bridge(k, fr, legend) {
+    const names = Object.keys(k.parts), flow = k.kind === "flow", count = names.length + 2;
+    const labs = Array.from({ length: count }, () => fr.lab("pv")), cats = Array.from({ length: count }, () => fr.lab("pcat")), empty = fr.lab("pempty");
+    return (m) => {
+      fr.clear();
+      fr.hv = null;
+      fr.hi.textContent = fr.lo.textContent = fr.x0.textContent = fr.x1.textContent = "";
+      if (m < (flow ? 23 : 12)) {
+        labs.concat(cats).forEach((l) => (l.hidden = true));
+        empty.hidden = false;
+        empty.textContent = "Für die Brücke braucht es zwölf Monate Geschichte.";
+        legend.replaceChildren();
+        return 600;
+      }
+      empty.hidden = true;
+      const val = (arr, t) => (flow ? sum(arr.slice(Math.max(0, t - 11), t + 1)) : arr[t]);
+      const start = val(k.series, m - 12), end = val(k.series, m), steps = [{ name: flow ? "12 Monate davor" : PERIODS.monat[m - 12].label, from: 0, to: start, kind: "base" }];
+      let acc = start;
+      names.forEach((nm) => { const d = val(k.parts[nm], m) - val(k.parts[nm], m - 12); steps.push({ name: nm, from: acc, to: acc + d, kind: d * (k.dir || 1) >= 0 ? "good" : "alert" }); acc += d; });
+      steps.push({ name: flow ? "letzte 12 Monate" : PERIODS.monat[m].label, from: 0, to: end, kind: "end" });
+      const lo = Math.min(0, ...steps.map((s) => Math.min(s.from, s.to))), hi = Math.max(...steps.map((s) => Math.max(s.from, s.to)));
+      const zl = flow ? lo : Math.max(0, Math.min(...steps.map((s) => Math.min(s.from || s.to, s.to))) * 0.92), top = hi + (hi - zl) * 0.06;
+      const Y = (v) => 188 - ((v - zl) / (top - zl || 1)) * 164, slot = 600 / count;
+      steps.forEach((s, i) => {
+        const ends = s.kind === "base" || s.kind === "end", f2 = ends ? zl : s.from, y1 = Y(Math.max(f2, s.to)), y2 = Y(Math.min(f2, s.to)), d = s.to - s.from;
+        fr.solid.append(sv("rect", { x: i * slot + slot * 0.2, y: y1, width: slot * 0.6, height: Math.max(1, y2 - y1), fill: s.kind === "base" ? "var(--ink-2)" : s.kind === "end" ? "var(--ink)" : `var(--${s.kind})`, "fill-opacity": s.kind === "base" ? 0.45 : 0.85 }));
+        if (i < count - 1) fr.over.append(sv("line", { class: "c-link", x1: i * slot + slot * 0.8, x2: (i + 1) * slot + slot * 0.2, y1: Y(s.to), y2: Y(s.to), ...NSS }));
+        labs[i].hidden = cats[i].hidden = false;
+        labs[i].textContent = ends ? compact(k, s.to) : (d >= 0 ? "+" : "−") + compact(k, Math.abs(d));
+        labs[i].style.left = cats[i].style.left = `${((i + 0.5) / count) * 100}%`;
+        labs[i].style.top = `calc(${(y1 / 200) * 100}% - 15px)`;
+        cats[i].style.width = `${100 / count}%`;
+        cats[i].textContent = s.name;
+      });
+      legend.replaceChildren(key(box("var(--good)"), "hilft"), key(box("var(--alert)"), "belastet"));
+      return 600;
+    };
+  },
+};
+// Two or more series on one scale: each starts at 100 at the left edge. The second line is dashed, so colour is not the only cue.
+function indexed(fr, legend, series, caption) {
+  return (m) => {
+    const [w0, w1] = win(m), X = (t) => ((t - w0) / (w1 - w0)) * 600;
+    const lines = series.map((s) => ({ ...s, pts: s.arr.slice(w0, w1 + 1).map((v, i) => [w0 + i, (v / s.arr[w0]) * 100]) }));
+    const all = lines.flatMap((l) => l.pts.map((p) => p[1])).concat([100]), lo = Math.min(...all) - 2, hi = Math.max(...all) + 2, Y = (v) => 188 - ((v - lo) / (hi - lo)) * 176;
+    fr.clear();
+    fr.zones.append(sv("line", { class: "c-base", x1: 0, x2: 600, y1: Y(100), y2: Y(100), ...NSS }));
+    lines.forEach((l, j) => {
+      const d = lineD(l.pts, X, Y);
+      fr.ghost.append(sv("path", { class: "c-ghost", d, ...NSS }));
+      fr.solid.append(sv("path", { d, fill: "none", stroke: l.color, "stroke-width": 1.9, "stroke-linejoin": "round", "stroke-dasharray": j ? "7 4" : null, ...NSS }));
+    });
+    legend.replaceChildren(...lines.map((l, j) => key(j ? dash(l.color) : h("i", { style: `background:${l.color}` }), `${l.name} ${Math.round(l.pts[m - w0][1])}`)), h("span", { text: caption(w0) }));
+    fr.hi.textContent = String(Math.round(hi)); fr.lo.textContent = String(Math.round(lo));
+    fr.x0.textContent = PERIODS.monat[w0].label; fr.x1.textContent = PERIODS.monat[w1].label;
+    fr.hv = { at: (f) => Math.round(w0 + f * (w1 - w0)), x: (t) => X(t) / 6, text: (t) => `${PERIODS.monat[t].label} · ` + lines.map((l) => `${l.name} ${Math.round(l.pts[t - w0][1])}`).join(" · ") };
+    return X(m) + 1;
+  };
+}
+// A chart for one figure. draw(m, first) redraws for a month; the first draw reveals it from the left.
+function makeChart(kind, k, extra) {
+  const fr = chartFrame(), legend = h("div", { class: "lg" }), base = kind === "run" ? "trend" : kind;
+  const el = h("figure", { class: "chart", "data-kind": base }, fr.plot, legend), draw = CHARTS[base](k, fr, legend, { ...(extra || {}), run: kind === "run" });
+  let stop = null;
+  return {
+    el, kind, plot: fr.plot,
+    draw(m, first) {
+      const to = draw(m);
+      if (stop) { stop(); stop = null; }
+      if (first && !reduced) { fr.clip.setAttribute("width", 0); stop = animate(900, (e) => fr.clip.setAttribute("width", (to * e).toFixed(1)), easeOut); }
+      else fr.clip.setAttribute("width", to.toFixed(1));
+    },
+  };
+}
+
+// ═════ Seite · state, rolling figures, sentences ═════
+const $ = (id) => document.getElementById(id);
+// The page: the month on show, and what the person has made of the letter.
+// Block ids: "k:<figure>", "n:<note>", "c:<comparison>", and "ruhig" for the quiet line.
+const ST = { m: TODAY, memo: null, pins: new Set(), forms: {}, aside: {}, order: [], notes: {}, cmps: {}, open: {}, hint: true, hint2: true, playing: false, scrub: false };
+const STORE = "lumantic.seite.v1";
+const newId = (p) => p + ":" + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
+
+function save() {
+  try {
+    localStorage.setItem(STORE, JSON.stringify({ pins: [...ST.pins], forms: ST.forms, aside: ST.aside, order: ST.order.filter((id) => !isAutoId(id)), notes: ST.notes, cmps: ST.cmps, hint: ST.hint, hint2: ST.hint2 }));
+  } catch (e) { /* storage is a convenience only */ }
+}
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORE) || "null");
+    if (!d || typeof d !== "object") return;
+    if (Array.isArray(d.pins)) d.pins.forEach((id) => K[id] && ST.pins.add(id));
+    for (const [id, f] of Object.entries(d.forms || {})) if (K[id] && ["satz", "zahl", "diagramm"].includes(f)) ST.forms[id] = f;
+    for (const [id, a] of Object.entries(d.aside || {})) if (K[id] && Number.isFinite(a)) ST.aside[id] = a;
+    for (const [id, segs] of Object.entries(d.notes || {})) if (/^n:/.test(id) && Array.isArray(segs)) ST.notes[id] = segs.filter((s) => s && (typeof s.t === "string" || K[s.k]));
+    for (const [id, ks] of Object.entries(d.cmps || {})) if (/^c:/.test(id) && Array.isArray(ks) && ks.length === 2 && K[ks[0]] && K[ks[1]]) ST.cmps[id] = ks;
+    if (Array.isArray(d.order)) ST.order = d.order.filter((id) => typeof id === "string");
+    if (d.hint === false) ST.hint = false;
+    if (d.hint2 === false) ST.hint2 = false;
+  } catch (e) { /* start fresh */ }
+}
+
+// ───────────── Which blocks the letter has ─────────────
+// A signal the person has put aside stays aside until it gets worse.
+const isAside = (k, m) => ST.aside[k.id] !== undefined && LEVEL_RANK[stateOf(k, m).level] <= ST.aside[k.id];
+const autoKpis = (m) => KPIS.filter((k) => !ST.pins.has(k.id) && stateOf(k, m).level !== "calm" && !isAside(k, m)).sort((a, b) => stateOf(b, m).score - stateOf(a, m).score);
+const isAutoId = (id) => id[0] === "k" && !ST.pins.has(id.slice(2));
+const blockExists = (id) => id === "ruhig" || (id[0] === "k" ? ST.pins.has(id.slice(2)) : id[0] === "n" ? id in ST.notes : id in ST.cmps);
+// Lumina's own blocks fill their places in order of urgency. Pinned blocks, notes and comparisons stay where the person put them.
+// With resort (the month changed) Lumina's order returns; without it her blocks keep the order the person gave them.
+function syncOrder(resort) {
+  const autos = autoKpis(ST.m).map((k) => "k:" + k.id), out = [], kept = new Set();
+  let last = -1, ai = 0;
+  for (const id of ST.order) {
+    if (!isAutoId(id)) { if (blockExists(id) && !out.includes(id)) out.push(id); continue; }
+    const next = resort ? (ai < autos.length ? autos[ai++] : null) : autos.includes(id) && !kept.has(id) ? id : null;
+    if (next) { out.push(next); kept.add(next); last = out.length - 1; }
+  }
+  const rest = autos.filter((id) => !kept.has(id));
+  out.splice(last >= 0 ? last + 1 : 0, 0, ...rest);
+  if (!out.includes("ruhig")) out.splice(last >= 0 ? last + 1 + rest.length : rest.length, 0, "ruhig");
+  ST.order = out;
+}
+const quietKpis = (m) => KPIS.filter((k) => !ST.order.includes("k:" + k.id)).sort((a, b) => LEVEL_RANK[stateOf(b, m).level] - LEVEL_RANK[stateOf(a, m).level]);
+
+// ───────────── Rolling figures ─────────────
+// The digits of a figure are separate cells, counted from the right, so a digit rolls on its own and the unit never moves.
+const NUM_RE = /^([−+-]?[\d’.]+)(.*)$/;
+const rollMode = (mode) => (mode === "scrub" ? "scrub" : mode === "step" || mode === "edit" ? "step" : "none");
+function makeRoll(str, cls) {
+  const el = h("span", { class: "roll" + (cls ? " " + cls : ""), role: "img" });
+  el._cells = [];
+  el._unit = h("span", { class: "ru" });
+  el.append(el._unit);
+  rollSet(el, str, "none");
+  return el;
+}
+function rollSet(el, str, mode) {
+  if (el._str === str) return;
+  const mt = NUM_RE.exec(str), digits = mt ? [...mt[1]] : [], unit = mt ? mt[2] : str;
+  const val = mt ? Number(mt[1].replace("−", "-").replace("+", "").replace(/’/g, "")) : NaN;
+  const dir = Number.isFinite(val) && Number.isFinite(el._val) && val < el._val ? -1 : 1, live = mode !== "none" && !reduced;
+  el._str = str; el._val = val;
+  el.setAttribute("aria-label", str);
+  if (el._unit.textContent !== unit) el._unit.textContent = unit;
+  const old = el._cells, cells = [], n = digits.length;
+  for (let p = 0; p < Math.max(n, old.length); p++) {
+    const ch = p < n ? digits[n - 1 - p] : null, o = old[p];
+    if (ch === null) { o.el.remove(); continue; }
+    if (!o) {
+      const cur = h("span", { class: "rcc", text: ch }), cell = { el: h("span", { class: "rc", "aria-hidden": "true" }, cur), cur, ch };
+      el.insertBefore(cell.el, p > 0 ? cells[p - 1].el : el._unit);
+      cells[p] = cell;
+      if (live && old.length) slideIn(cur, dir, mode, p);
+      continue;
+    }
+    if (o.ch !== ch) {
+      o.el.querySelectorAll(".rg").forEach((g) => g.remove());
+      if (live && mode === "step") {
+        const g = h("span", { class: "rg", text: o.ch });
+        o.el.append(g);
+        g.animate([{ transform: "none", opacity: 1 }, { transform: `translateY(${-dir * 70}%)`, opacity: 0 }], { duration: 300, delay: Math.min(p, 6) * 26, easing: "ease-in", fill: "forwards" }).onfinish = () => g.remove();
+      }
+      o.cur.textContent = ch;
+      o.ch = ch;
+      if (live) slideIn(o.cur, dir, mode, p);
+    }
+    cells[p] = o;
+  }
+  el._cells = cells;
+}
+function slideIn(cur, dir, mode, p) {
+  const quick = mode === "scrub";
+  cur.getAnimations().forEach((a) => a.cancel());
+  cur.animate([{ transform: `translateY(${dir * (quick ? 34 : 70)}%)`, opacity: quick ? 0.35 : 0 }, { transform: "none", opacity: 1 }],
+    { duration: quick ? 150 : 460, delay: quick ? 0 : Math.min(p, 6) * 26, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" });
+}
+// A word or short text that changes: swap it, with a short fade so the eye catches it.
+function swapText(el, text, mode) {
+  if (el.textContent === text) return;
+  el.textContent = text;
+  if (mode !== "init" && mode !== "none" && !reduced) el.animate([{ opacity: 0.25 }, { opacity: 1 }], { duration: mode === "scrub" ? 140 : 280, easing: "ease-out" });
+}
+// The old state of an element fades out on top while the new one is already in place.
+function ghostOf(el) {
+  const host = el.offsetParent;
+  if (!host) return;
+  host.querySelectorAll(":scope > .ghost").forEach((g) => g.remove());
+  const g = el.cloneNode(true);
+  g.removeAttribute("id");
+  g.classList.add("ghost");
+  g.setAttribute("aria-hidden", "true");
+  g.style.cssText = `left:${el.offsetLeft}px;top:${el.offsetTop}px;width:${el.offsetWidth}px`;
+  host.append(g);
+  g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: "ease-out", fill: "forwards" }).onfinish = () => g.remove();
+  el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 340, delay: 60, easing: "ease-out", fill: "backwards" });
+}
+
+// ───────────── Sentences ─────────────
+const factEl = (evd, kids, cls) => h("span", { class: "fact" + (cls ? " " + cls : ""), role: "button", tabindex: "0", "data-ev": evd, "aria-expanded": "false" }, ...kids);
+const sparkButton = (sp) => h("span", { class: "spk", role: "button", tabindex: "0", "data-ev": "trend", "aria-label": "Verlauf zeigen", "aria-expanded": "false" }, sp);
+function buildSegs(segs, slots, k) {
+  const f = document.createDocumentFragment();
+  for (const s of segs) {
+    if (s[0] === "t") f.append(s[1]);
+    else if (s[0] === "n" || s[0] === "v") {
+      const r = makeRoll(s[2], "num");
+      slots.set(s[1], r);
+      f.append(s[0] === "v" ? factEl("trend", [r], "val") : s[3] ? h("span", { class: "nw" }, s[3], r) : r);
+    } else if (s[0] === "s") {
+      const sp = sparkEl(k);
+      sparkSet(sp, ST.m);
+      slots.set("~spark", sp);
+      f.append(sparkButton(sp));
+    } else if (s[0] === "w") {
+      const w = h("span", { class: "wd", text: s[2] });
+      slots.set(s[1], w);
+      f.append(w);
+    } else if (s[0] === "f") f.append(factEl(s[2], [buildSegs(s[3], slots, k)]));
+  }
+  return f;
+}
+function updateSlots(segs, slots, mode) {
+  for (const s of segs) {
+    if (s[0] === "n" || s[0] === "v") rollSet(slots.get(s[1]), s[2], rollMode(mode));
+    else if (s[0] === "s") sparkSet(slots.get("~spark"), ST.m);
+    else if (s[0] === "w") swapText(slots.get(s[1]), s[2], mode);
+    else if (s[0] === "f") updateSlots(s[3], slots, mode);
+  }
+}
+// Writes the sentences into a paragraph. A sentence whose wording is unchanged only rolls its figures;
+// one whose wording changed is rewritten, with the old paragraph fading out over it.
+function drawPara(v, sentences, mode) {
+  if (!v.para) { v.para = h("p", { class: "para" }); v.main.replaceChildren(v.para); }
+  const p = v.para, sigs = sentences.map((s) => sigOf(s.segs));
+  const reworded = v.sents.size > 0 && (v.sents.size !== sentences.length || sentences.some((s, i) => !v.sents.get(s.id) || v.sents.get(s.id).sig !== sigs[i]));
+  if (reworded && mode === "step" && !reduced) ghostOf(p);
+  const keep = new Set(sentences.map((s) => s.id));
+  for (const [sid, o] of v.sents) if (!keep.has(sid)) { o.el.remove(); v.sents.delete(sid); }
+  let prev = null;
+  sentences.forEach((s, i) => {
+    let o = v.sents.get(s.id);
+    if (!o) { o = { el: h("span", { class: "sn" }), sig: null, slots: null }; v.sents.set(s.id, o); }
+    const want = prev ? prev.nextSibling : p.firstChild;
+    if (want !== o.el) p.insertBefore(o.el, want);
+    if (o.sig !== sigs[i]) {
+      const fresh = o.sig === null;
+      o.slots = new Map();
+      o.el.replaceChildren(buildSegs(s.segs, o.slots, v.k));
+      o.sig = sigs[i];
+      if (!reduced && (mode === "scrub" || (mode === "step" && fresh))) o.el.animate([{ opacity: 0.3 }, { opacity: 1 }], { duration: mode === "scrub" ? 150 : 320, easing: "ease-out" });
+    } else updateSlots(s.segs, o.slots, mode);
+    prev = o.el;
+  });
+}
+
+// ═════ Seite · the blocks of the letter ═════
+const VIEWS = new Map();
+let LIFT = null; // { id, from } while a figure is lifted out of the quiet line
+// One line beside the first figure says that statements open their evidence. It goes with the first unfold.
+const FACT_HINT = h("span", { class: "fhint" }, h("span", { "aria-hidden": "true", text: "← " }), "Klick auf eine Aussage, der Beleg klappt auf.");
+function placeFactHint(want) {
+  const first = ST.hint2 ? want.map((id) => VIEWS.get(id)).find((v) => v.k) : null;
+  if (first) first.el.querySelector(".mg").append(FACT_HINT); else FACT_HINT.remove();
+}
+function dropFactHint() {
+  if (!ST.hint2) return;
+  ST.hint2 = false;
+  FACT_HINT.remove();
+  save();
+}
+const gripIcon = () => sv("svg", { viewBox: "0 0 10 16", width: 10, height: 16, "aria-hidden": "true" }, ...[[2.5, 3], [7.5, 3], [2.5, 8], [7.5, 8], [2.5, 13], [7.5, 13]].map(([x, y]) => sv("circle", { cx: x, cy: y, r: 1.35 })));
+function gripButton(id, name) {
+  const b = h("button", { class: "grip", type: "button", "aria-label": `${name}: verschieben oder ändern`, "aria-haspopup": "menu", title: "Ziehen verschiebt · Klick öffnet das Menü" }, gripIcon());
+  b.addEventListener("pointerdown", (e) => gripDown(e, id, b));
+  b.addEventListener("click", (e) => { if (e.detail === 0) openBlockMenu(id, b, true); });
+  b.addEventListener("keydown", (e) => { if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) { e.preventDefault(); moveBlock(id, e.key === "ArrowUp" ? -1 : 1); b.focus(); } });
+  return b;
+}
+function moreButton(id, name) {
+  const b = h("button", { class: "more", type: "button", "aria-label": `${name}: ändern`, "aria-haspopup": "menu" }, "···");
+  b.addEventListener("click", (e) => openBlockMenu(id, b, e.detail === 0));
+  return b;
+}
+function setMargin(mg, k, m) {
+  const mn = marginFor(k, m), sig = mn ? mn.join() : "";
+  if (mg._sig === sig) return;
+  mg._sig = sig;
+  mg.replaceChildren(...(mn ? [mn[0] + ": ", h("b", { text: mn[1] })] : []));
+}
+
+// A figure as a block: sentences, a single number, or a chart.
+function kpiView(k) {
+  const id = "k:" + k.id;
+  const mk = h("span", { class: "mk" }), stw = h("span", { class: "stw" }), since = h("button", { class: "since", type: "button", title: "Zu diesem Monat reisen" }), pinned = h("span", { class: "pinned", hidden: true, text: "angeheftet" });
+  const main = h("div", { class: "main" }), evPad = h("div", { class: "ev-pad" }), evBox = h("div", { class: "ev", "data-open": "false" }, h("div", { class: "ev-in" }, evPad)), mg = h("aside", { class: "mg" });
+  const el = h("section", { class: "blk row", "data-id": id, "aria-label": k.name }, h("div", { class: "gut" }, gripButton(id, k.name)),
+    h("div", { class: "body" }, h("div", { class: "lbl" }, mk, h("span", { class: "nm", text: k.name }), stw, since, pinned, moreButton(id, k.name)), main, evBox), mg);
+  const v = { id, k, el, main, evBox, evPad, form: null, sents: new Map(), para: null, big: null, evKind: null, chart: null, cap: null, evFrom: null, fresh: true };
+  since.addEventListener("click", () => { stopPlay(); go(Number(since.dataset.t), "step"); showRuler(2400); });
+  v.update = (m, mode) => {
+    const r = stateOf(k, m), form = ST.forms[k.id] || "satz", s0 = r.level !== "calm" ? streakStart(k, m) : m;
+    el.dataset.kind = mk.dataset.kind = r.kind;
+    swapText(stw, r.label, mode);
+    since.hidden = s0 >= m;
+    if (s0 < m) { since.textContent = "seit " + PERIODS.monat[s0].long; since.dataset.t = s0; }
+    pinned.hidden = !ST.pins.has(k.id);
+    if (v.form !== form) { v.form = form; v.sents.clear(); v.para = v.big = null; main.replaceChildren(); el.dataset.form = form; }
+    if (form === "zahl") drawBig(v, r, mode);
+    else drawPara(v, form === "diagramm" ? sentencesFor(k, m).slice(0, 1) : sentencesFor(k, m), mode);
+    syncEvidence(v, form === "diagramm" ? ST.open[id] || "trend" : ST.open[id] || null, m, mode);
+    el.querySelectorAll(".fact, .spk").forEach((f) => f.setAttribute("aria-expanded", String(!!v.evKind && (f.dataset.ev === v.evKind || (f.classList.contains("spk") && v.evKind === "trend")))));
+    setMargin(mg, k, m);
+  };
+  return v;
+}
+function drawBig(v, r, mode) {
+  if (!v.big) {
+    const roll = makeRoll(F(v.k, r.cur), "num"), sp = sparkEl(v.k), sub = h("p", { class: "bigsub" });
+    v.big = { roll, sp, sub };
+    v.main.replaceChildren(h("div", { class: "big" }, factEl("trend", [roll], "val"), sparkButton(sp)), sub);
+  }
+  rollSet(v.big.roll, F(v.k, r.cur), rollMode(mode));
+  sparkSet(v.big.sp, ST.m);
+  const t = [r.delta, r.yoyText].filter(Boolean).join(" · ") || "Erster Wert der Reihe";
+  if (v.big.sub.textContent !== t) v.big.sub.textContent = t;
+}
+// Evidence under a block: chips for the views, Lumina's reason, the chart.
+function syncEvidence(v, want, m, mode) {
+  const k = v.k, id = v.id;
+  if (!want) {
+    if (v.evKind) { v.evBox.dataset.open = "false"; v.evKind = v.chart = null; setTimeout(() => { if (!v.evKind) v.evPad.replaceChildren(); }, 520); }
+    return;
+  }
+  const fixed = v.form === "diagramm";
+  if (v.evKind === want && v.evFixed === fixed) { v.cap.textContent = whyFor(k, want, m); v.chart.draw(m, false); return; }
+  const wasOpen = v.evKind !== null, shown = want === "run" ? "trend" : want;
+  v.evFixed = fixed;
+  const chips = h("div", { class: "chips", role: "group", "aria-label": `Ansichten für ${k.name}` },
+    ...viewsFor(k).map((vw) => h("button", { class: "chipb", type: "button", "aria-pressed": String(vw.kind === shown), onclick: () => { ST.open[id] = vw.kind; v.update(ST.m, "edit"); } }, vw.name)),
+    fixed ? null : h("button", { class: "evx", type: "button", "aria-label": "Beleg schliessen", title: "Schliessen", onclick: () => { delete ST.open[id]; v.update(ST.m, "edit"); } }, "×"));
+  v.cap = h("p", { class: "cap", text: whyFor(k, want, m) });
+  v.chart = makeChart(want, k, want === "compare" ? { ks: ["lcr", "dep"] } : null);
+  v.evKind = want;
+  v.evPad.replaceChildren(chips, v.cap, v.chart.el);
+  v.evBox.dataset.open = "true";
+  const grows = !wasOpen && mode !== "init" && !reduced && growInto(v);
+  v.chart.draw(m, mode !== "init" && !grows);
+  if (grows) v.chart.el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 360, delay: 280, easing: "ease-out", fill: "backwards" });
+  else if (mode !== "init" && !reduced) v.chart.el.animate([{ opacity: 0.2 }, { opacity: 1 }], { duration: 300, easing: "ease-out" });
+}
+// The word-sized chart grows into the full one.
+function growInto(v) {
+  const sp = v.el.querySelector(".main .sp");
+  if (!sp) return false;
+  const a = sp.getBoundingClientRect(), b = v.chart.plot.getBoundingClientRect();
+  if (!a.width || !b.width) return false;
+  const g = sp.cloneNode(true);
+  g.classList.remove("draw");
+  g.classList.add("grow");
+  // The copy grows by its box, not by a transform, so its strokes stay as thin as they were.
+  g.querySelectorAll("path").forEach((p) => p.setAttribute("vector-effect", "non-scaling-stroke"));
+  g.querySelectorAll(".sd").forEach((c) => c.remove());
+  const box = (r, dy, hh) => ({ left: r.left + "px", top: r.top + dy + "px", width: r.width + "px", height: hh + "px" });
+  Object.assign(g.style, box(a, 0, a.height));
+  document.body.append(g);
+  g.animate([box(a, 0, a.height), box(b, b.height * 0.1, b.height * 0.8)], { duration: 560, easing: "cubic-bezier(.45,0,.2,1)", fill: "forwards" });
+  g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 320, delay: 300, easing: "ease-in", fill: "forwards" }).onfinish = () => g.remove();
+  return true;
+}
+
+// «Ruhig»: every figure without a block of its own, in one line.
+function quietView() {
+  const count = h("span", { class: "stw" }), line = h("p", { class: "qline" }), items = new Map();
+  const el = h("section", { class: "blk row quiet", "data-id": "ruhig", "aria-label": "Ruhige Kennzahlen" }, h("div", { class: "gut" }),
+    h("div", { class: "body" }, h("div", { class: "lbl" }, h("span", { class: "mk", "data-kind": "calm" }), h("span", { class: "nm", text: "Ruhig" }), count), line),
+    h("aside", { class: "mg", text: "Ein Klick holt eine Kennzahl als eigenen Absatz heraus." }));
+  const v = { id: "ruhig", el, fresh: true };
+  v.update = (m, mode) => {
+    const ks = quietKpis(m), aside = ks.filter((k) => stateOf(k, m).level !== "calm").length, live = mode !== "init" && !reduced && !v.fresh;
+    count.textContent = (ks.length === 1 ? "eine Kennzahl" : ks.length + " Kennzahlen") + (aside ? ` · davon ${aside} beiseitegelegt` : "");
+    const first = new Map();
+    if (live) for (const [kid, it] of items) first.set(kid, it.el.getBoundingClientRect());
+    const keep = new Set(ks.map((k) => k.id));
+    for (const [kid, it] of items) if (!keep.has(kid)) { it.el.remove(); items.delete(kid); }
+    let prev = null;
+    for (const k of ks) {
+      let it = items.get(k.id);
+      if (!it) {
+        const roll = makeRoll(F(k, k.series[m]), "num"), sp = sparkEl(k), mk = h("span", { class: "mk", hidden: true });
+        it = { el: h("button", { class: "qi", type: "button", "data-k": k.id, title: `${k.long}: als eigenen Absatz zeigen` }, mk, h("span", { class: "qn", text: k.name + " " }), roll, sp), roll, sp, mk };
+        items.set(k.id, it);
+      }
+      const want = prev ? prev.nextSibling : line.firstChild;
+      if (want !== it.el) line.insertBefore(it.el, want);
+      const r = stateOf(k, m);
+      it.mk.hidden = r.level === "calm";
+      it.mk.dataset.kind = r.kind;
+      rollSet(it.roll, F(k, r.cur), rollMode(mode));
+      sparkSet(it.sp, m);
+      prev = it.el;
+    }
+    if (!live) return;
+    for (const [kid, it] of items) {
+      const a = first.get(kid), b = it.el.getBoundingClientRect();
+      if (!a) it.el.animate([{ opacity: 0.2 }, { opacity: 1 }], { duration: mode === "scrub" ? 150 : 360, easing: "ease-out" });
+      else if (Math.abs(a.left - b.left) > 1 || Math.abs(a.top - b.top) > 1) it.el.animate([{ transform: `translate(${a.left - b.left}px, ${a.top - b.top}px)` }, { transform: "none" }], { duration: mode === "scrub" ? 180 : 360, easing: "cubic-bezier(.2,.8,.2,1)" });
+    }
+  };
+  return v;
+}
+
+// A live figure inside a note: name, value and word-sized chart follow the month.
+function chipEl(k) {
+  const roll = makeRoll(F(k, k.series[ST.m]), "num"), sp = sparkEl(k);
+  sparkSet(sp, ST.m);
+  const c = h("span", { class: "chip", contenteditable: "false", "data-k": k.id, title: `${k.long}: zum Absatz` }, h("span", { class: "cn", text: k.name }), " ", roll, sp);
+  c._roll = roll; c._sp = sp;
+  return c;
+}
+function updateChips(m, mode) {
+  document.querySelectorAll(".chip").forEach((c) => { if (c._roll) { const k = K[c.dataset.k]; rollSet(c._roll, F(k, k.series[m]), rollMode(mode)); sparkSet(c._sp, m); } });
+}
+const fillNote = (p, segs) => p.replaceChildren(...segs.map((s) => (s.k ? chipEl(K[s.k]) : s.t)));
+function readNote(p) {
+  const out = [];
+  for (const n of p.childNodes) {
+    if (n.nodeType === 1 && n.classList.contains("chip")) out.push({ k: n.dataset.k });
+    else { const t = n.textContent; if (t) { const last = out[out.length - 1]; if (last && last.t !== undefined) last.t += t; else out.push({ t }); } }
+  }
+  return out;
+}
+function noteView(id) {
+  const p = h("p", { class: "para ed", contenteditable: "true", spellcheck: "false", role: "textbox", "aria-label": "Notiz", "data-ph": "Leere Notiz. Schreib etwas, [[ fügt eine Kennzahl ein." });
+  const el = h("section", { class: "blk row note", "data-id": id, "aria-label": "Notiz" }, h("div", { class: "gut" }, gripButton(id, "Notiz")),
+    h("div", { class: "body" }, h("div", { class: "lbl" }, h("span", { class: "mk", "data-kind": "note" }), h("span", { class: "nm", text: "Notiz" }), moreButton(id, "Notiz")), p), h("aside", { class: "mg" }));
+  fillNote(p, ST.notes[id] || []);
+  wireEditor(p, { change: () => { if (id in ST.notes) { ST.notes[id] = readNote(p); save(); } }, enter: () => p.blur(), blur: () => { if (id in ST.notes && !p.textContent.trim() && !p.querySelector(".chip")) removeBlock(id, true); } });
+  return { id, el, p, fresh: true, update() {} };
+}
+
+// A comparison of two balances, indexed to 100. Both names are buttons that swap the figure.
+function cmpView(id) {
+  const pick = (i) => {
+    const b = h("button", { class: "fact pick", type: "button", title: "Andere Kennzahl wählen" });
+    b.addEventListener("click", (e) => pickFigure(b, (k) => { ST.cmps[id][i] = k.id; save(); renderAll("edit"); }, ST.cmps[id][1 - i], e.detail === 0));
+    return b;
+  };
+  const a = pick(0), b = pick(1), ra = makeRoll("", "num"), rb = makeRoll("", "num"), since = h("span"), holder = h("div", { class: "ev-pad" });
+  const el = h("section", { class: "blk row cmp", "data-id": id, "aria-label": "Vergleich" }, h("div", { class: "gut" }, gripButton(id, "Vergleich")),
+    h("div", { class: "body" }, h("div", { class: "lbl" }, h("span", { class: "mk", "data-kind": "info" }), h("span", { class: "nm", text: "Vergleich" }), moreButton(id, "Vergleich")),
+      h("p", { class: "para" }, "Seit ", since, " hat sich ", a, " um ", ra, " verändert, ", b, " um ", rb, ". Gleichlauf zeigt einen Zusammenhang, keine Ursache."), holder), h("aside", { class: "mg" }));
+  const v = { id, el, fresh: true, chart: null, key: "" };
+  v.update = (m, mode) => {
+    const ks = ST.cmps[id], [x, y] = ks.map((i) => K[i]), [w0] = win(m), change = (k) => { const d = k.series[m] / k.series[w0] - 1; return (d < 0 ? "−" : "+") + pct(d); };
+    a.textContent = x.name; b.textContent = y.name;
+    swapText(since, PERIODS.monat[w0].long, mode);
+    rollSet(ra, change(x), rollMode(mode)); rollSet(rb, change(y), rollMode(mode));
+    if (v.key !== ks.join()) { v.key = ks.join(); v.chart = makeChart("compare", x, { ks }); holder.replaceChildren(v.chart.el); v.chart.draw(m, mode !== "init"); }
+    else v.chart.draw(m, false);
+  };
+  return v;
+}
+const viewFor = (id) => { if (!VIEWS.has(id)) VIEWS.set(id, id === "ruhig" ? quietView() : id[0] === "k" ? kpiView(K[id.slice(2)]) : id[0] === "n" ? noteView(id) : cmpView(id)); return VIEWS.get(id); };
+
+// ───────────── Head: dateline, headline, lede, event ─────────────
+let WHEN_Y = null, RULER_CUR = null;
+function renderHead(m, mode) {
+  const p = PERIODS.monat[m], past = m < TODAY;
+  swapText($("whenM"), MONTH[p.m], mode);
+  rollSet(WHEN_Y, String(p.y), rollMode(mode));
+  $("when").setAttribute("aria-label", `${p.long}. Ziehen oder Pfeiltasten wechseln den Monat.`);
+  $("tag").textContent = past ? "ALCO-Brief · Rückblick" : "ALCO-Brief";
+  $("state").hidden = past;
+  $("back").hidden = !past;
+  RULER_CUR.style.left = (m / TODAY) * 100 + "%";
+  RULER_CUR.dataset.edge = m < 5 ? "l" : m > TODAY - 5 ? "r" : "";
+  RULER_CUR.firstChild.textContent = `Q${p.q} ${p.y}`;
+  $("gui").style.transform = `rotate(${(m - TODAY) * 3}deg)`;
+  $("ruler").setAttribute("aria-valuenow", m);
+  $("ruler").setAttribute("aria-valuetext", p.long);
+  const hl = $("hl"), text = headlineFor(m);
+  if (hl._t !== text) {
+    if (hl._t && mode === "step" && !reduced) ghostOf(hl);
+    hl._t = text;
+    hl.setAttribute("aria-label", text);
+    hl.replaceChildren(...text.split(" ").flatMap((w, i) => (i ? [" ", h("span", { class: "hw", text: w })] : [h("span", { class: "hw", text: w })])));
+    if (!reduced && mode !== "init") [...hl.children].forEach((w, i) => w.animate([{ opacity: mode === "scrub" ? 0.35 : 0, transform: mode === "scrub" ? "none" : "translateY(.16em)" }, { opacity: 1, transform: "none" }],
+      { duration: mode === "scrub" ? 150 : 440, delay: mode === "scrub" ? 0 : 90 + i * 60, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" }));
+  }
+  const lede = $("lede"), parts = ledeFor(m), sig = parts.map((x) => x[1]).join("");
+  if (lede._sig !== sig) {
+    if (lede._sig && mode === "step" && !reduced) ghostOf(lede);
+    lede._sig = sig;
+    lede.replaceChildren(...parts.map((x) => (x[0] === "k" ? h("button", { class: "lk", type: "button", "data-k": x[1], text: K[x[1]].name }) : x[1])));
+    if (!reduced && mode === "scrub") lede.animate([{ opacity: 0.35 }, { opacity: 1 }], { duration: 150 });
+  }
+  const e = eventFor(m), evm = $("evm"), esig = e ? String(e.t) : "";
+  if (evm._sig !== esig) {
+    evm._sig = esig;
+    evm.replaceChildren(...(e ? [h("strong", { text: `${PERIODS.monat[e.t].long} · ${e.title}` }), e.text] : []));
+    if (e && !reduced && mode !== "init") evm.animate([{ opacity: 0, transform: "translateX(6px)" }, { opacity: 1, transform: "none" }], { duration: 420, easing: "ease-out" });
+  }
+}
+
+// ───────────── The whole letter for the current month ─────────────
+// mode: "init" first paint · "scrub" while dragging or playing (short moves) · "step" one deliberate change of month · "edit" the person changed the letter.
+function renderAll(mode) {
+  const m = ST.m, host = $("blocks"), live = mode !== "init" && !reduced, quick = mode === "scrub";
+  syncOrder(mode !== "edit");
+  renderHead(m, mode);
+  const first = new Map();
+  if (live) for (const el of host.children) if (!el.classList.contains("gone")) first.set(el, el.getBoundingClientRect());
+  const want = ST.order.filter((id) => id !== "ruhig" || quietKpis(m).length), wanted = new Set(want);
+  for (const [id, v] of VIEWS) {
+    if (wanted.has(id)) continue;
+    VIEWS.delete(id);
+    if (!live || quick || !v.el.isConnected) { v.el.remove(); continue; }
+    v.el.style.top = v.el.offsetTop + "px";
+    v.el.classList.add("gone");
+    v.el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: "ease-out", fill: "forwards" }).onfinish = () => v.el.remove();
+  }
+  let at = host.firstElementChild;
+  const skip = () => { while (at && at.classList.contains("gone")) at = at.nextElementSibling; };
+  for (const id of want) {
+    const v = viewFor(id);
+    skip();
+    if (v.el === at) at = at.nextElementSibling; else host.insertBefore(v.el, at);
+    v.update(m, v.fresh ? "init" : mode);
+  }
+  placeFactHint(want);
+  updateChips(m, mode);
+  if (live) {
+    for (const id of want) { const f = VIEWS.get(id).el._flip; if (f) f.cancel(); }
+    for (const id of want) {
+      const v = VIEWS.get(id), el = v.el, a = first.get(el), b = el.getBoundingClientRect();
+      if (!a || v.fresh) {
+        const from = LIFT && LIFT.id === id ? LIFT.from : null;
+        el.animate(from ? [{ transform: `translate(${from.left - b.left}px, ${from.top - b.top}px)`, opacity: 0.3 }, { transform: "none", opacity: 1 }] : [{ transform: quick ? "none" : "translateY(10px)", opacity: quick ? 0.3 : 0 }, { transform: "none", opacity: 1 }],
+          { duration: quick ? 160 : 420, easing: "cubic-bezier(.2,.8,.2,1)" });
+      } else if (Math.abs(a.top - b.top) > 0.5) el._flip = el.animate([{ transform: `translateY(${a.top - b.top}px)` }, { transform: "none" }], { duration: quick ? 190 : 400, easing: "cubic-bezier(.2,.8,.2,1)" });
+    }
+  }
+  for (const id of want) VIEWS.get(id).fresh = false;
+}
+
+// ═════ Seite · time: the month word, the ruler, play, keys ═════
+const STEP_PX = 8; // pixels of drag per month
+let memoTimer = 0, playTimer = 0, rulerTimer = 0, rulerPinned = false;
+
+// Sets the month. mode says how the letter moves there (see renderAll).
+function go(m, mode) {
+  m = clamp(Math.round(m), 0, TODAY);
+  if (m === ST.m) return;
+  ST.m = m;
+  clearTimeout(memoTimer);
+  if (m < TODAY) memoTimer = setTimeout(() => { ST.memo = m; }, 450);
+  renderAll(mode);
+}
+function step(d) {
+  stopPlay(); dropHint();
+  go(ST.m + d, "step");
+  showRuler(2200);
+}
+// Z: today ↔ the last moment visited.
+function toggleZ() {
+  stopPlay(); dropHint();
+  if (ST.m === TODAY) go(ST.memo !== null ? ST.memo : Math.max(0, TODAY - 12), "step");
+  else { ST.memo = ST.m; go(TODAY, "step"); }
+  showRuler(2200);
+}
+function play() {
+  if (ST.playing) return;
+  dropHint();
+  if (ST.m >= TODAY) go(0, "step");
+  ST.playing = true;
+  syncPlay();
+  showRuler();
+  playTimer = setInterval(() => { if (ST.m >= TODAY) stopPlay(); else go(ST.m + 1, "scrub"); }, 260);
+}
+function stopPlay() {
+  if (!ST.playing) return;
+  ST.playing = false;
+  clearInterval(playTimer);
+  if (ST.m < TODAY) ST.memo = ST.m;
+  syncPlay();
+  showRuler(2200);
+}
+function syncPlay() {
+  const b = $("play");
+  b.setAttribute("aria-pressed", String(ST.playing));
+  b.setAttribute("aria-label", ST.playing ? "Anhalten" : "Geschichte abspielen");
+  b.textContent = ST.playing ? "II" : "▶";
+}
+// The one-line hint beside the month goes away with the first trip.
+function dropHint() {
+  if (!ST.hint) return;
+  ST.hint = false;
+  $("hint").hidden = true;
+  save();
+}
+
+// ───────────── Ruler ─────────────
+function showRuler(ms) {
+  $("rr").dataset.open = "true";
+  clearTimeout(rulerTimer);
+  if (ms) rulerTimer = setTimeout(hideRuler, ms);
+}
+function hideRuler() {
+  if (rulerPinned || ST.scrub || ST.playing || $("when").matches(":hover") || $("rr").matches(":hover")) { rulerTimer = setTimeout(hideRuler, 900); return; }
+  $("rr").dataset.open = "false";
+}
+function showTip(anchor, head, text) {
+  const tip = $("tip"), pr = $("page").getBoundingClientRect(), r = anchor.getBoundingClientRect();
+  tip.replaceChildren(h("b", { text: head }), text);
+  tip.hidden = false;
+  tip.style.left = clamp(r.left + r.width / 2 - tip.offsetWidth / 2, 16, Math.max(16, innerWidth - tip.offsetWidth - 16)) - pr.left + "px";
+  tip.style.top = r.bottom + 10 - pr.top + "px";
+}
+const hideTip = () => { $("tip").hidden = true; };
+const scrubbing = (on) => { ST.scrub = on; document.body.classList.toggle("scrubbing", on); if (!on && ST.m < TODAY) ST.memo = ST.m; };
+function buildRuler() {
+  const r = $("ruler"), kids = [h("div", { class: "base" })];
+  for (let t = 0; t <= TODAY; t++) {
+    const p = PERIODS.monat[t], x = (t / TODAY) * 100, c = levelCounts(t);
+    if (p.m % 3 === 0) kids.push(h("i", { class: "tk" + (p.m === 0 ? " y" : ""), style: `left:${x}%` }));
+    if (p.m === 0) kids.push(h("span", { class: "yl", style: `left:${x}%`, text: String(p.y) }));
+    if (c.alert) kids.push(h("i", { class: "ht", style: `left:${x}%;height:${4 + c.alert * 4}px` }));
+    else if (c.watch) kids.push(h("i", { class: "ht w", style: `left:${x}%` }));
+  }
+  for (const e of EVENTS) {
+    const b = h("button", { class: "evd", type: "button", style: `left:${(e.t / TODAY) * 100}%`, "aria-label": `${e.title}, ${PERIODS.monat[e.t].long}` });
+    b.addEventListener("pointerdown", (ev) => ev.stopPropagation());
+    b.addEventListener("click", () => { stopPlay(); dropHint(); go(e.t, "step"); showRuler(2600); });
+    b.addEventListener("pointerenter", () => showTip(b, `${PERIODS.monat[e.t].long} · ${e.title}`, e.text));
+    b.addEventListener("pointerleave", hideTip);
+    kids.push(b);
+  }
+  RULER_CUR = h("div", { class: "cur" }, h("span"));
+  kids.push(RULER_CUR);
+  r.replaceChildren(...kids);
+  r.setAttribute("aria-valuemin", 0);
+  r.setAttribute("aria-valuemax", TODAY);
+  r.addEventListener("pointerdown", (e) => {
+    if (e.button > 0) return;
+    stopPlay(); dropHint();
+    r.setPointerCapture(e.pointerId);
+    scrubbing(true);
+    showRuler();
+    const at = (ev) => { const b = r.getBoundingClientRect(); go(((ev.clientX - b.left) / b.width) * TODAY, "scrub"); };
+    const up = () => { r.removeEventListener("pointermove", at); r.removeEventListener("pointerup", up); r.removeEventListener("pointercancel", up); scrubbing(false); showRuler(2600); };
+    at(e);
+    r.addEventListener("pointermove", at); r.addEventListener("pointerup", up); r.addEventListener("pointercancel", up);
+  });
+}
+
+// ───────────── The month word ─────────────
+function wireTime() {
+  const w = $("when"), pin = () => { rulerPinned = !rulerPinned; showRuler(rulerPinned ? 0 : 700); };
+  w.addEventListener("pointerdown", (e) => {
+    if (e.button > 0) return;
+    stopPlay();
+    const x0 = e.clientX, m0 = ST.m;
+    let moved = false;
+    w.setPointerCapture(e.pointerId);
+    const move = (ev) => {
+      const dx = ev.clientX - x0;
+      if (!moved && Math.abs(dx) < 4) return;
+      if (!moved) { moved = true; scrubbing(true); dropHint(); showRuler(); }
+      go(m0 + Math.round(dx / STEP_PX), "scrub");
+    };
+    const up = () => {
+      w.removeEventListener("pointermove", move); w.removeEventListener("pointerup", up); w.removeEventListener("pointercancel", up);
+      if (moved) { scrubbing(false); showRuler(2200); } else pin();
+    };
+    w.addEventListener("pointermove", move); w.addEventListener("pointerup", up); w.addEventListener("pointercancel", up);
+  });
+  w.addEventListener("click", (e) => { if (e.detail === 0) pin(); });
+  w.addEventListener("keydown", (e) => { if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); e.stopPropagation(); step((e.key === "ArrowRight" ? 1 : -1) * (e.shiftKey ? 12 : 1)); } });
+  $("prev").addEventListener("click", () => step(-1));
+  $("next").addEventListener("click", () => step(1));
+  $("play").addEventListener("click", () => (ST.playing ? stopPlay() : play()));
+  $("back").addEventListener("click", () => { stopPlay(); ST.memo = ST.m; go(TODAY, "step"); showRuler(1800); });
+  w.addEventListener("pointerenter", () => showRuler(1600));
+  $("rr").addEventListener("pointerenter", () => showRuler(1600));
+
+  document.addEventListener("keydown", (e) => {
+    const t = e.target, typing = t.isContentEditable || t.tagName === "INPUT" || t.tagName === "TEXTAREA";
+    if (e.key === "Escape") { if (escapeKey()) e.preventDefault(); return; }
+    if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (MENU.open && menuKey(e)) return;
+    const onButton = t.tagName === "BUTTON" || (t.getAttribute && t.getAttribute("role") === "button");
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); step((e.key === "ArrowRight" ? 1 : -1) * (e.shiftKey ? 12 : 1)); }
+    else if (e.key === "z" || e.key === "Z") toggleZ();
+    else if (e.key === " " && !onButton) { e.preventDefault(); ST.playing ? stopPlay() : play(); }
+    else if (e.key === "?") toggleIdee();
+    else if (e.key === "/") { e.preventDefault(); focusInsert("/"); }
+    else if ((e.key === "Enter" || e.key === " ") && t.matches && t.matches(".fact, .spk")) { e.preventDefault(); t.click(); }
+  });
+}
+// Esc closes what is open, one thing at a time.
+function escapeKey() {
+  if (MENU.open) { closeMenu(); return true; }
+  if (!$("idee").hidden) { toggleIdee(false); return true; }
+  const a = document.activeElement;
+  if (a && a.isContentEditable) { a.blur(); return true; }
+  if (ST.playing) { stopPlay(); return true; }
+  if (rulerPinned) { rulerPinned = false; showRuler(300); return true; }
+  const v = LAST_EV && VIEWS.get(LAST_EV);
+  if (v && ST.open[LAST_EV] && v.form !== "diagramm") { delete ST.open[LAST_EV]; LAST_EV = null; v.update(ST.m, "edit"); return true; }
+  return false;
+}
+
+// ═════ Seite · changing the letter: menus, handles, evidence, the insert line ═════
+// One floating list serves the block menu, the slash menu and the figure picker.
+// items: { label, hint, run, keep } · { head } · { node }
+const MENU = { open: false, items: [], sel: -1, opener: null, blk: null, editor: null };
+let LAST_EV = null, toastTimer = 0;
+function openMenu(anchor, items, opts = {}) {
+  const el = $("menu"), runs = items.filter((it) => it.run);
+  closeMenu();
+  Object.assign(MENU, { open: true, items: runs, sel: runs.length ? 0 : -1, opener: opts.opener || null, blk: opts.blk || null, editor: opts.editor || null });
+  if (MENU.blk) MENU.blk.classList.add("menu-open");
+  let n = 0;
+  el.replaceChildren(...items.map((it) => (it.head ? h("div", { class: "mh", text: it.head }) : it.node ? it.node
+    : h("button", { class: "mi", type: "button", role: "option", "data-i": n, "aria-selected": String(n++ === 0) }, h("span", { text: it.label }), it.hint ? h("small", { text: it.hint }) : null))));
+  el.hidden = false;
+  const pr = $("page").getBoundingClientRect(), r = anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : anchor, w = el.offsetWidth, ht = el.offsetHeight;
+  let top = r.bottom + 6;
+  if (top + ht > innerHeight - 8 && r.top - ht - 6 > 8) top = r.top - ht - 6;
+  el.style.left = clamp(r.left, 16, Math.max(16, innerWidth - w - 16)) - pr.left + "px";
+  el.style.top = top - pr.top + "px";
+  if (opts.focus) { const f = el.querySelector(".segb, .mi"); if (f) f.focus(); }
+}
+function closeMenu() {
+  if (!MENU.open) return;
+  if (MENU.blk) MENU.blk.classList.remove("menu-open");
+  Object.assign(MENU, { open: false, items: [], sel: -1, opener: null, blk: null, editor: null });
+  $("menu").hidden = true;
+}
+function menuSelect(i) {
+  MENU.sel = i;
+  $("menu").querySelectorAll(".mi").forEach((b) => { const on = Number(b.dataset.i) === i; b.setAttribute("aria-selected", String(on)); if (on) b.scrollIntoView({ block: "nearest" }); });
+}
+function menuRun(i) {
+  const it = MENU.items[i];
+  if (!it) return;
+  if (!it.keep) closeMenu();
+  it.run();
+}
+function menuKey(e) {
+  if (!MENU.open) return false;
+  const n = MENU.items.length;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); if (n) menuSelect((MENU.sel + (e.key === "ArrowDown" ? 1 : n - 1)) % n); return true; }
+  if (e.key === "Enter" || e.key === "Tab") { if (MENU.sel < 0) return false; e.preventDefault(); menuRun(MENU.sel); return true; }
+  if (e.key === "Escape") { e.preventDefault(); closeMenu(); return true; }
+  return false;
+}
+function wireMenu() {
+  const el = $("menu");
+  el.addEventListener("pointerdown", (e) => e.preventDefault()); // the caret stays in the editor
+  el.addEventListener("click", (e) => { const b = e.target.closest(".mi"); if (b) menuRun(Number(b.dataset.i)); });
+  el.addEventListener("pointermove", (e) => { const b = e.target.closest(".mi"); if (b && Number(b.dataset.i) !== MENU.sel) menuSelect(Number(b.dataset.i)); });
+  el.addEventListener("keydown", (e) => { if (menuKey(e)) e.stopPropagation(); });
+  document.addEventListener("pointerdown", (e) => { if (MENU.open && !el.contains(e.target) && !(MENU.opener && MENU.opener.contains(e.target))) closeMenu(); });
+}
+function toast(msg, undo) {
+  const t = $("toast");
+  t.replaceChildren(msg, ...(undo ? [h("button", { type: "button", onclick: () => { t.hidden = true; undo(); } }, "Rückgängig")] : []));
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, undo ? 6500 : 3400);
+}
+
+// ───────────── What a block can do ─────────────
+// byKey: opened from the keyboard, so focus moves into the menu. A pointer leaves focus alone.
+function openBlockMenu(id, anchor, byKey) {
+  const v = VIEWS.get(id);
+  if (!v) return;
+  const k = id[0] === "k" ? K[id.slice(2)] : null, items = [{ head: k ? k.name : id[0] === "n" ? "Notiz" : "Vergleich" }];
+  if (k) {
+    const form = ST.forms[k.id] || "satz", pinned = ST.pins.has(k.id);
+    items.push({ node: h("div", { class: "seg", role: "group", "aria-label": "Form" }, ...[["satz", "Satz"], ["zahl", "Zahl"], ["diagramm", "Diagramm"]].map(([f, name]) =>
+      h("button", { class: "segb", type: "button", "aria-pressed": String(f === form), onclick: () => { closeMenu(); setForm(k, f); } }, name))) });
+    items.push({ label: pinned ? "Lösen" : "Anheften", hint: pinned ? "folgt wieder Luminas Ordnung" : "bleibt, auch wenn es ruhig ist", run: () => togglePin(k) });
+  }
+  items.push({ label: "Nach oben", hint: "Alt ↑", run: () => moveBlock(id, -1) }, { label: "Nach unten", hint: "Alt ↓", run: () => moveBlock(id, 1) },
+    { label: "Entfernen", hint: !k ? "" : stateOf(k, ST.m).level !== "calm" ? "bleibt bei «Ruhig» sichtbar" : "zurück zu «Ruhig»", run: () => removeBlock(id) });
+  openMenu(anchor, items, { opener: anchor, blk: v.el, focus: !!byKey });
+}
+function setForm(k, form) {
+  ST.forms[k.id] = form;
+  save();
+  renderAll("edit");
+}
+function togglePin(k) {
+  const on = !ST.pins.has(k.id);
+  if (on) { ST.pins.add(k.id); delete ST.aside[k.id]; } else ST.pins.delete(k.id);
+  save();
+  renderAll("edit");
+  toast(on ? `${k.name} bleibt im Brief, auch wenn es ruhig ist.` : `${k.name} folgt wieder Luminas Ordnung.`);
+}
+function moveBlock(id, d) {
+  const shown = ST.order.filter((x) => VIEWS.has(x)), i = shown.indexOf(id), j = i + d;
+  if (i < 0 || j < 0 || j >= shown.length) return;
+  const a = ST.order.indexOf(id), b = ST.order.indexOf(shown[j]);
+  ST.order[a] = shown[j];
+  ST.order[b] = id;
+  save();
+  renderAll("edit");
+}
+// A figure that is removed never vanishes: it returns to the quiet line, with its mark if it is a signal.
+function removeBlock(id, silent) {
+  if (id[0] === "k") {
+    const k = K[id.slice(2)], level = stateOf(k, ST.m).level;
+    ST.pins.delete(k.id);
+    if (level !== "calm") ST.aside[k.id] = LEVEL_RANK[level];
+    delete ST.open[id];
+    if (!silent) toast(level !== "calm" ? `${k.name} liegt jetzt bei «Ruhig», mit seinem Zeichen.` : `${k.name} steht wieder in der Zeile «Ruhig».`);
+  } else {
+    const note = id[0] === "n", store = note ? ST.notes : ST.cmps, kept = store[id], at = ST.order.indexOf(id);
+    delete store[id];
+    if (!silent) toast(note ? "Notiz entfernt." : "Vergleich entfernt.", () => { store[id] = kept; ST.order.splice(Math.min(Math.max(0, at), ST.order.length), 0, id); save(); renderAll("edit"); });
+  }
+  save();
+  renderAll("edit");
+}
+function flash(v) {
+  v.el.classList.remove("flash");
+  void v.el.offsetWidth;
+  v.el.classList.add("flash");
+  setTimeout(() => v.el.classList.remove("flash"), 1600);
+}
+function reveal(el) {
+  const b = el.getBoundingClientRect();
+  if (b.top < 60 || b.bottom > innerHeight - 40) el.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
+}
+// Makes sure a figure has its own block and brings it into view. opts: { open: view, end: at the end, from: rect it lifts from }
+function showKpi(k, opts = {}) {
+  const id = "k:" + k.id;
+  if (!ST.order.includes(id)) {
+    if (ST.aside[k.id] !== undefined && stateOf(k, ST.m).level !== "calm") delete ST.aside[k.id];
+    else { ST.pins.add(k.id); delete ST.aside[k.id]; ST.order.splice(opts.end ? ST.order.length : Math.max(0, ST.order.indexOf("ruhig")), 0, id); }
+  }
+  if (opts.open) { ST.open[id] = opts.open; dropFactHint(); }
+  LIFT = opts.from ? { id, from: opts.from } : null;
+  save();
+  renderAll("edit");
+  LIFT = null;
+  const v = VIEWS.get(id);
+  if (v) { reveal(v.el); if (!opts.from) flash(v); }
+  return v;
+}
+function addNote(segs) {
+  const id = newId("n");
+  ST.notes[id] = segs;
+  ST.order.push(id);
+  save();
+  renderAll("edit");
+  if (VIEWS.get(id)) reveal(VIEWS.get(id).el);
+}
+function addCompare(a, b) {
+  const id = newId("c");
+  ST.cmps[id] = [a, b];
+  ST.order.push(id);
+  save();
+  renderAll("edit");
+  const v = VIEWS.get(id);
+  if (v) { reveal(v.el); flash(v); }
+}
+function wireBlocks() {
+  $("blocks").addEventListener("click", (e) => {
+    const f = e.target.closest(".fact:not(.pick), .spk");
+    if (f) {
+      const v = VIEWS.get(f.closest(".blk").dataset.id);
+      if (!v || !v.k) return;
+      if (ST.open[v.id] === f.dataset.ev && v.form !== "diagramm") delete ST.open[v.id]; else ST.open[v.id] = f.dataset.ev;
+      LAST_EV = v.id;
+      dropFactHint();
+      v.update(ST.m, "edit");
+      return;
+    }
+    const qi = e.target.closest(".qi"), chip = e.target.closest(".chip");
+    if (qi) showKpi(K[qi.dataset.k], { from: qi.getBoundingClientRect() });
+    else if (chip) showKpi(K[chip.dataset.k]);
+  });
+  $("lede").addEventListener("click", (e) => { const b = e.target.closest(".lk"); if (b) showKpi(K[b.dataset.k]); });
+}
+// Drag a block by its handle. Neighbours step aside as the pointer passes their middle. A click without a drag opens the menu.
+function gripDown(e, id, grip) {
+  if (e.button > 0) return;
+  const el = VIEWS.get(id).el, host = $("blocks"), y0 = e.clientY + scrollY, top0 = el.getBoundingClientRect().top + scrollY;
+  let moved = false;
+  grip.setPointerCapture(e.pointerId);
+  const mid = (x) => { const b = x.getBoundingClientRect(); return b.top + b.height / 2; };
+  const sib = (dir) => { let s = el; do s = dir < 0 ? s.previousElementSibling : s.nextElementSibling; while (s && s.classList.contains("gone")); return s; };
+  const swap = (other, after) => {
+    const a = other.getBoundingClientRect().top;
+    if (after) el.before(other); else el.after(other); // the dragged block itself is never detached, so it keeps the pointer
+    if (other._flip) other._flip.cancel();
+    const d = a - other.getBoundingClientRect().top;
+    if (!reduced && Math.abs(d) > 1) other._flip = other.animate([{ transform: `translateY(${d}px)` }, { transform: "none" }], { duration: 260, easing: "cubic-bezier(.2,.8,.2,1)" });
+  };
+  const move = (ev) => {
+    const dy = ev.clientY + scrollY - y0;
+    if (!moved && Math.abs(dy) < 5) return;
+    if (!moved) { moved = true; closeMenu(); if (el._flip) el._flip.cancel(); el.classList.add("dragging"); }
+    for (let guard = 0; guard < 20; guard++) {
+      const next = sib(1), prev = sib(-1);
+      if (next && ev.clientY > mid(next)) swap(next, true);
+      else if (prev && ev.clientY < mid(prev)) swap(prev, false);
+      else break;
+    }
+    el.style.transform = "none";
+    el.style.transform = `translateY(${top0 + dy - (el.getBoundingClientRect().top + scrollY)}px)`;
+    if (ev.clientY < 70) scrollBy(0, -14); else if (ev.clientY > innerHeight - 70) scrollBy(0, 14);
+  };
+  const up = () => {
+    removeEventListener("pointermove", move); removeEventListener("pointerup", up); removeEventListener("pointercancel", up);
+    if (!moved) { openBlockMenu(id, grip); return; }
+    const from = el.getBoundingClientRect().top;
+    el.style.transform = "";
+    el.classList.remove("dragging");
+    const d = from - el.getBoundingClientRect().top;
+    if (!reduced && Math.abs(d) > 1) el._flip = el.animate([{ transform: `translateY(${d}px)` }, { transform: "none" }], { duration: 240, easing: "cubic-bezier(.2,.8,.2,1)" });
+    const dom = [...host.children].filter((c) => !c.classList.contains("gone")).map((c) => c.dataset.id);
+    if (!dom.includes("ruhig")) dom.splice(Math.min(dom.length, Math.max(0, ST.order.indexOf("ruhig"))), 0, "ruhig");
+    ST.order = dom;
+    save();
+  };
+  addEventListener("pointermove", move); addEventListener("pointerup", up); addEventListener("pointercancel", up);
+}
+
+// ───────────── Writing: notes, live figures, the insert line ─────────────
+function caretQuery(p) {
+  const sel = getSelection(), n = sel.anchorNode;
+  if (!sel.rangeCount || !sel.isCollapsed || !n || n.nodeType !== 3 || !p.contains(n)) return null;
+  const mt = /\[\[([^\[\]]*)$/.exec(n.data.slice(0, sel.anchorOffset));
+  return mt ? { node: n, start: mt.index, end: sel.anchorOffset, q: mt[1] } : null;
+}
+// «[[» offers the figures; the chosen one becomes a live chip in the text.
+function openChipMenu(p, q, changed) {
+  const f = fold(q.q.trim()), list = KPIS.filter((k) => !f || fold(`${k.name} ${k.long} ${k.id}`).includes(f));
+  if (!list.length) { closeMenu(); return; }
+  const r = document.createRange();
+  r.setStart(q.node, q.start); r.setEnd(q.node, q.end);
+  const b = r.getBoundingClientRect();
+  openMenu(b.width || b.height ? b : p, [{ head: "Kennzahl einfügen" }, ...list.map((k) => ({ label: k.name, hint: F(k, k.series[ST.m]), run: () => insertChip(p, k, changed) }))], { editor: p });
+}
+function insertChip(p, k, changed) {
+  const q = caretQuery(p);
+  if (!q) return;
+  const r = document.createRange(), space = document.createTextNode(" ");
+  r.setStart(q.node, q.start); r.setEnd(q.node, q.end);
+  r.deleteContents();
+  r.insertNode(space);
+  r.insertNode(chipEl(k));
+  getSelection().collapse(space, 1);
+  if (changed) changed();
+}
+// An editable paragraph: plain text only, Enter does not break the line, «[[» opens the figures.
+function wireEditor(p, on) {
+  p.addEventListener("input", () => {
+    if (!p.textContent && !p.querySelector(".chip")) p.replaceChildren();
+    if (on.input && on.input()) return;
+    const q = caretQuery(p);
+    if (q) openChipMenu(p, q, on.change); else if (MENU.editor === p) closeMenu();
+    if (on.change) on.change();
+  });
+  p.addEventListener("keydown", (e) => {
+    if (MENU.open && menuKey(e)) { e.stopPropagation(); return; }
+    if (e.key === "Enter") { e.preventDefault(); if (on.enter) on.enter(); }
+  });
+  p.addEventListener("paste", (e) => { e.preventDefault(); document.execCommand("insertText", false, e.clipboardData.getData("text/plain").replace(/\s+/g, " ")); });
+  p.addEventListener("blur", () => { if (MENU.editor === p) closeMenu(); if (on.blur) on.blur(); });
+}
+const ASK_LABEL = { trend: "Verlauf", parts: "Zusammensetzung", bridge: "Brücke", cum: "Kumuliert", drivers: "Zähler und Nenner", compare: "Vergleich" };
+const INS_PH = ["Schreib / für einen Baustein, [[ für eine Kennzahl, oder frag einfach.", "Notiz schreiben. Enter legt sie ab, [[ fügt eine Kennzahl ein."];
+let insNote = false;
+function insMode(note) {
+  insNote = note;
+  $("ins").dataset.ph = INS_PH[note ? 1 : 0];
+}
+// Lumina answers under the line: what she understood, and a way to correct her.
+function say(text, asNote) {
+  const el = $("insay");
+  el.replaceChildren("Lumina: " + text, ...(asNote ? [" ", h("button", { class: "lk", type: "button", onclick: () => { asNote(); say("Als Notiz abgelegt."); } }, "Lieber als Notiz ablegen")] : []));
+  if (!reduced) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 320 });
+}
+function openSlashMenu(q) {
+  const ins = $("ins"), f = fold(q.trim()), hit = (s) => !f || fold(s).includes(f);
+  const tools = [{ label: "Notiz", hint: "freier Text mit [[Kennzahlen]]", run: () => { ins.replaceChildren(); insMode(true); ins.focus(); } },
+    { label: "Vergleich", hint: "zwei Kennzahlen, auf 100 indexiert", keep: true, run: pickCompare }].filter((t) => hit(t.label));
+  const figs = KPIS.filter((k) => hit(`${k.name} ${k.long}`)).map((k) => ({ label: k.name, hint: ST.order.includes("k:" + k.id) ? "schon im Brief" : k.long, run: () => { ins.replaceChildren(); showKpi(k, { end: true }); say(`${k.name} steht jetzt als eigener Absatz im Brief.`); } }));
+  openMenu(ins, [...(tools.length ? [{ head: "Baustein" }, ...tools] : []), ...(figs.length ? [{ head: "Kennzahl" }, ...figs] : []), ...(tools.length || figs.length ? [] : [{ head: "Kein Baustein mit diesem Namen" }])], { editor: ins });
+}
+function pickCompare() {
+  const ins = $("ins"), stocks = KPIS.filter((k) => k.kind === "stock");
+  openMenu(ins, [{ head: "Vergleich · erste Kennzahl" }, ...stocks.map((a) => ({ label: a.name, hint: a.long, keep: true, run: () =>
+    openMenu(ins, [{ head: `Vergleich · ${a.name} mit` }, ...stocks.filter((b) => b !== a).map((b) => ({ label: b.name, hint: b.long, run: () => { ins.replaceChildren(); addCompare(a.id, b.id); say(`Vergleich von ${a.name} und ${b.name} eingefügt. Ein Klick auf einen Namen tauscht die Kennzahl.`); } }))], { editor: ins }) }))], { editor: ins });
+}
+function pickFigure(anchor, onPick, except, byKey) {
+  openMenu(anchor, [{ head: "Kennzahl wählen" }, ...KPIS.filter((k) => k.kind === "stock" && k.id !== except).map((k) => ({ label: k.name, hint: k.long, run: () => onPick(k) }))], { opener: anchor, focus: !!byKey });
+}
+// Enter on the insert line: a note, or a question that Lumina matches to a figure, a view and a month.
+function commitInsert() {
+  const ins = $("ins"), segs = readNote(ins).map((s) => (s.t !== undefined ? { t: s.t.replace(/ /g, " ") } : s));
+  const text = segs.map((s) => (s.t !== undefined ? s.t : K[s.k].name)).join("").trim();
+  if (!text) return;
+  if (!insNote && text.startsWith("/")) { say("Diesen Baustein kenne ich nicht. «/» allein zeigt, was es gibt."); return; }
+  const clear = () => { ins.replaceChildren(); insMode(false); }, asNote = () => addNote([{ t: text }]);
+  if (insNote || segs.some((s) => s.k)) { clear(); addNote(segs); say("Als Notiz abgelegt."); return; }
+  const u = understand(text, ST.m);
+  clear();
+  if (!u.question) { asNote(); say("Als Notiz abgelegt. Mit einem Fragezeichen suche ich die passende Kennzahl."); return; }
+  if (!u.ks.length) { asNote(); say("Dazu finde ich keine Kennzahl. Ich habe es als Notiz abgelegt."); return; }
+  const when = u.when !== null && u.when < TODAY ? ", " + PERIODS.monat[u.when].long : "";
+  if (u.when !== null && u.when !== ST.m) { stopPlay(); dropHint(); go(u.when, "step"); }
+  if (u.ks.length >= 2 && (u.view === "compare" || u.view === null) && u.ks[0].kind === "stock" && u.ks[1].kind === "stock") {
+    addCompare(u.ks[0].id, u.ks[1].id);
+    say(`Verstanden: Vergleich von ${u.ks[0].name} und ${u.ks[1].name}${when}.`, asNote);
+    return;
+  }
+  const k = u.ks[0], views = viewsFor(k), view = u.view && views.some((x) => x.kind === u.view) ? u.view : "trend";
+  showKpi(k, { end: true, open: view });
+  LAST_EV = "k:" + k.id;
+  say(`Verstanden: ${k.name}, ${ASK_LABEL[view]}${when}.` + (u.view && u.view !== view ? ` «${ASK_LABEL[u.view]}» gibt es für diese Kennzahl nicht.` : ""), asNote);
+}
+function focusInsert(text) {
+  const ins = $("ins");
+  ins.focus();
+  if (!text) return;
+  ins.textContent = text;
+  getSelection().selectAllChildren(ins);
+  getSelection().collapseToEnd();
+  ins.dispatchEvent(new Event("input"));
+}
+function wireInsert() {
+  const ins = $("ins");
+  wireEditor(ins, {
+    input: () => { if (!insNote && ins.textContent.startsWith("/") && !ins.querySelector(".chip")) { openSlashMenu(ins.textContent.slice(1)); return true; } return false; },
+    enter: commitInsert,
+    blur: () => { if (!ins.textContent.trim() && !ins.querySelector(".chip")) insMode(false); },
+  });
+}
+
+// ═════ Seite · the idea note, the watermark, the opening ═════
+function toggleIdee(open) {
+  const el = $("idee"), want = open === undefined ? el.hidden : open;
+  el.hidden = !want;
+  $("ideeBtn").setAttribute("aria-expanded", String(want));
+}
+function resetAll() {
+  try { localStorage.removeItem(STORE); } catch (e) { /* nothing stored */ }
+  stopPlay();
+  closeMenu();
+  Object.assign(ST, { m: TODAY, memo: null, forms: {}, aside: {}, order: [], notes: {}, cmps: {}, open: {}, hint: true, hint2: true });
+  ST.pins.clear();
+  VIEWS.clear();
+  $("blocks").replaceChildren();
+  $("insay").replaceChildren();
+  $("hint").hidden = false;
+  renderAll("init");
+  toggleIdee(false);
+  toast("Der Brief ist wieder so, wie Lumina ihn schreibt.");
+}
+// A guilloche rosette, the fine line pattern of banknotes and cheques, as a watermark behind the dateline.
+function drawGuilloche() {
+  const c = $("gui"), size = c.clientWidth, dpr = Math.min(2, window.devicePixelRatio || 1);
+  if (!size) return;
+  c.width = c.height = Math.round(size * dpr);
+  const g = c.getContext("2d"), R = size / 2 - 4, cx = size / 2, cy = size / 2;
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, size, size);
+  g.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#131c2a";
+  g.lineWidth = 0.6;
+  const band = (r0, amp, waves, copies) => {
+    for (let j = 0; j < copies; j++) {
+      g.beginPath();
+      for (let i = 0; i <= 720; i++) {
+        const a = (i / 720) * Math.PI * 2, r = r0 + amp * Math.sin(waves * a + (j / copies) * Math.PI * 2), x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
+        if (i) g.lineTo(x, y); else g.moveTo(x, y);
+      }
+      g.closePath();
+      g.stroke();
+    }
+  };
+  band(R * 0.86, R * 0.11, 20, 12);
+  band(R * 0.585, R * 0.13, 13, 12);
+  band(R * 0.29, R * 0.19, 7, 14);
+  for (const rr of [R, R * 0.73, R * 0.44]) { g.beginPath(); g.arc(cx, cy, rr, 0, Math.PI * 2); g.stroke(); }
+}
+// The opening: the headline sets itself word by word, figures roll in, word-sized charts draw themselves.
+// Everything starts from a readable state, so a still frame of the page is complete.
+function intro() {
+  const ease = "cubic-bezier(.2,.8,.2,1)", words = [...$("hl").children];
+  words.forEach((w, i) => w.animate([{ opacity: 0.3, transform: "translateY(.18em)" }, { opacity: 1, transform: "none" }], { duration: 560, delay: 150 + i * 110, easing: ease, fill: "backwards" }));
+  const t0 = 150 + words.length * 110;
+  $("lede").animate([{ opacity: 0.3 }, { opacity: 1 }], { duration: 640, delay: t0, easing: "ease-out", fill: "backwards" });
+  [...$("blocks").children].forEach((b, i) => {
+    const d = t0 + 260 + i * 150;
+    b.animate([{ opacity: 0.32, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }], { duration: 640, delay: d, easing: ease, fill: "backwards" });
+    b.querySelectorAll(".rcc").forEach((c, j) => c.animate([{ transform: "translateY(30%)", opacity: 0.3 }, { transform: "none", opacity: 1 }], { duration: 600, delay: d + 140 + (j % 9) * 34, easing: ease, fill: "backwards" }));
+    b.querySelectorAll(".sp").forEach((s) => { s.style.setProperty("--dd", d + 200 + "ms"); s.classList.add("draw"); });
+  });
+  // Then the month word nudges once and its ruler peeks out. Any input skips this.
+  let touched = false;
+  const skip = () => { touched = true; };
+  for (const type of ["pointerdown", "keydown", "wheel"]) addEventListener(type, skip, { once: true, passive: true, capture: true });
+  setTimeout(() => {
+    if (touched || ST.m !== TODAY) return;
+    $("when").animate([{ transform: "none" }, { transform: "translateX(-9px)" }, { transform: "translateX(5px)" }, { transform: "none" }], { duration: 820, easing: "ease-in-out" });
+    showRuler(3000);
+  }, t0 + 1900);
+}
+function boot() {
+  load();
+  WHEN_Y = makeRoll(String(PERIODS.monat[TODAY].y));
+  $("whenY").append(WHEN_Y);
+  buildRuler();
+  if (!ST.hint) $("hint").hidden = true;
+  renderAll("init");
+  wireTime(); wireMenu(); wireBlocks(); wireInsert();
+  $("ideeBtn").addEventListener("click", () => toggleIdee());
+  $("reset").addEventListener("click", resetAll);
+  drawGuilloche();
+  // The watermark is drawn in ink, so it follows the theme and the size of the page.
+  let again = 0;
+  const redraw = () => { clearTimeout(again); again = setTimeout(drawGuilloche, 120); };
+  addEventListener("resize", redraw);
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+  new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  // A click or a drag with the mouse or a finger must not leave keyboard focus on a control: Space would press
+  // that control again instead of playing. Focus reached with Tab stays, so the keyboard keeps its normal behaviour.
+  let byPointer = false;
+  const dropFocus = () => { const a = document.activeElement; if (byPointer && a && a !== document.body && !a.isContentEditable && !["INPUT", "TEXTAREA", "SELECT"].includes(a.tagName)) a.blur(); };
+  addEventListener("pointerdown", () => { byPointer = true; }, true);
+  addEventListener("keydown", (e) => { if (e.key === "Tab") byPointer = false; }, true);
+  addEventListener("pointerup", () => setTimeout(dropFocus, 0), true);
+  addEventListener("click", (e) => { if (e.detail > 0) setTimeout(dropFocus, 0); }, true);
+  if (!reduced) intro();
+}
+boot();
+</script>

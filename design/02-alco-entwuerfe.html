@@ -1,0 +1,1451 @@
+<title>Lumantic ALCO-Entwürfe</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500;1,600&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one night sky, three ways to read it. A = instrument board, B = time stream, C = star map in an astrolabe.
+   Shared language: brightness means urgency, Lumina speaks in italic serif, data speaks in mono, registration marks frame every instrument. */
+:root {
+  --night: #05070f;
+  --night-2: #0b1122;
+  --panel: rgba(12, 17, 34, .72);
+  --star: #eee8d9;
+  --star-2: #b4ae9f;
+  --dim: #7d7a71;
+  --hair: rgba(238, 232, 217, .11);
+  --hair-2: rgba(238, 232, 217, .22);
+  --brass: #d6b06a;
+  --brass-soft: color-mix(in srgb, var(--brass) 14%, transparent);
+  --alert: #ff6b4d;
+  --watch: #f3b746;
+  --good: #63d39f;
+  --f-voice: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --f-ui: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-data: "Geist Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --gutter-l: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+  color-scheme: dark;
+}
+html { background: var(--night); }
+body {
+  min-height: 100%; color: var(--star); font: 400 14px/1.5 var(--f-ui); -webkit-font-smoothing: antialiased;
+  background: radial-gradient(ellipse 80% 60% at 70% 0%, color-mix(in srgb, var(--brass) 6%, var(--night-2)) 0%, var(--night) 60%) fixed, var(--night);
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--night); }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 1px solid var(--brass); outline-offset: 3px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mono { font-family: var(--f-data); }
+.label { font: 400 10px/1.3 var(--f-data); letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+
+/* ── Top bar ── */
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  display: flex; align-items: center; gap: 14px 28px; flex-wrap: wrap;
+  padding-left: var(--gutter-l); padding-right: var(--gutter-r); padding-block: 14px;
+  background: color-mix(in srgb, var(--night) 82%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--hair);
+}
+.brand { display: flex; align-items: baseline; gap: 12px; }
+.mark { width: 9px; height: 9px; border-radius: 50%; background: var(--brass); box-shadow: 0 0 0 4px var(--brass-soft), 0 0 20px 6px var(--brass-soft); align-self: center; }
+.word { font: 600 18px/1 var(--f-ui); letter-spacing: -.01em; }
+.slogan { font: italic 500 16px/1 var(--f-voice); color: var(--star-2); }
+.tabs { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
+.tab { border: 1px solid transparent; background: none; padding: 8px 12px; font: 500 10.5px/1 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: var(--star-2); }
+.tab b { color: var(--brass); font-weight: 500; margin-right: 6px; }
+.tab:hover { color: var(--star); }
+.tab[aria-selected="true"] { color: var(--star); border-color: var(--hair-2); background: var(--brass-soft); }
+.source { font: 400 10px/1.3 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+
+.brief-wrap { padding-left: var(--gutter-l); padding-right: var(--gutter-r); padding-block: 26px 6px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 30px; }
+.brief { margin: 0; font: italic 500 clamp(24px, 3vw, 36px)/1.1 var(--f-voice); max-width: 24em; text-wrap: balance; }
+.brief .name { border: 0; background: none; padding: 0; font: inherit; color: var(--brass); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; text-decoration-color: color-mix(in srgb, var(--brass) 40%, transparent); }
+.brief .name--alert { color: color-mix(in srgb, var(--alert) 72%, var(--star)); text-decoration-color: color-mix(in srgb, var(--alert) 40%, transparent); }
+.brief .name:hover { text-decoration-color: currentColor; }
+.brief.is-changing { animation: shimmer .7s ease-out; }
+@keyframes shimmer { from { opacity: .35; filter: blur(3px); } }
+.period { text-align: right; }
+.period strong { display: block; font: 400 22px/1.1 var(--f-data); letter-spacing: -.02em; color: var(--star); }
+
+.concept { padding-left: var(--gutter-l); padding-right: var(--gutter-r); padding-block: 18px 90px; }
+.concept-note { margin: 0 0 18px; font: italic 500 17px/1.35 var(--f-voice); color: var(--star-2); max-width: 62ch; }
+
+/* ── Status pill and registration marks (shared language) ── */
+.pill { display: inline-flex; align-items: center; gap: 7px; font: 500 9.5px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; padding: 5px 8px 5px 7px; border: 1px solid var(--hair-2); color: var(--star); white-space: nowrap; }
+.pill i { width: 6px; height: 6px; border-radius: 50%; background: var(--star-2); opacity: .7; }
+.pill[data-level="alert"] { border-color: color-mix(in srgb, var(--alert) 50%, transparent); } .pill[data-level="alert"] i { background: var(--alert); opacity: 1; box-shadow: 0 0 8px var(--alert); }
+.pill[data-level="watch"] { border-color: color-mix(in srgb, var(--watch) 45%, transparent); } .pill[data-level="watch"] i { background: var(--watch); opacity: 1; box-shadow: 0 0 8px var(--watch); }
+.pill[data-level="good"] { border-color: color-mix(in srgb, var(--good) 45%, transparent); } .pill[data-level="good"] i { background: var(--good); opacity: 1; box-shadow: 0 0 8px var(--good); }
+.pill[data-level="info"] i { background: var(--brass); opacity: 1; }
+.pill[data-level="calm"] { color: var(--star-2); border-color: var(--hair); }
+.reg { position: absolute; width: 10px; height: 10px; border: 0 solid var(--brass); pointer-events: none; opacity: .75; }
+.reg.tl { top: -1px; left: -1px; border-top-width: 1px; border-left-width: 1px; }
+.reg.tr { top: -1px; right: -1px; border-top-width: 1px; border-right-width: 1px; }
+.reg.bl { bottom: -1px; left: -1px; border-bottom-width: 1px; border-left-width: 1px; }
+.reg.br { bottom: -1px; right: -1px; border-bottom-width: 1px; border-right-width: 1px; }
+
+/* ── Module (instrument) ── */
+.mod {
+  position: relative; min-width: 0; display: flex; flex-direction: column; gap: 10px;
+  padding: 16px 18px 14px; border: 1px solid var(--hair);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .025), transparent 40%), var(--panel);
+  backdrop-filter: blur(8px);
+  transition: border-color .5s, box-shadow .5s, opacity .5s;
+}
+.mod.enter { animation: condense .6s cubic-bezier(.2, .8, .2, 1) backwards; }
+@keyframes condense { from { opacity: 0; filter: blur(8px); transform: translateY(6px) scale(.985); } }
+.mod--alert { border-color: color-mix(in srgb, var(--alert) 34%, transparent); box-shadow: 0 0 46px -14px color-mix(in srgb, var(--alert) 55%, transparent); animation: breathe 3.4s ease-in-out infinite; }
+.mod--alert.enter { animation: condense .6s cubic-bezier(.2, .8, .2, 1) backwards, breathe 3.4s ease-in-out .6s infinite; }
+.mod--alert .reg { border-color: var(--alert); }
+@keyframes breathe { 50% { box-shadow: 0 0 64px -12px color-mix(in srgb, var(--alert) 70%, transparent); } }
+.mod--watch { border-color: color-mix(in srgb, var(--watch) 28%, transparent); }
+.mod--good { border-color: color-mix(in srgb, var(--good) 26%, transparent); }
+.mod--calm { opacity: .82; }
+.mod--calm:hover, .mod--calm:focus-within { opacity: 1; }
+.mod.is-new { box-shadow: 0 0 0 1px var(--brass), 0 0 50px -10px var(--brass); }
+.mod-head { display: flex; align-items: center; gap: 8px; min-height: 24px; }
+.mod-group { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mod-tools { display: flex; gap: 2px; opacity: 0; transition: opacity .2s; }
+.mod:hover .mod-tools, .mod:focus-within .mod-tools { opacity: 1; }
+.mod-tools button { border: 1px solid transparent; background: none; color: var(--dim); font: 400 10px/1 var(--f-data); padding: 4px 6px; letter-spacing: .08em; }
+.mod-tools button:hover, .mod-tools button[aria-pressed="true"] { color: var(--star); border-color: var(--hair-2); }
+.mod-grip { cursor: grab; }
+.mod-name { margin: 0; font: 600 22px/1.05 var(--f-voice); letter-spacing: -.005em; }
+.mod-name small { display: block; margin-top: 4px; font: 400 9.5px/1.2 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.mod-fig { display: flex; align-items: flex-end; justify-content: space-between; gap: 6px 14px; flex-wrap: wrap; }
+.mod-val { font: 400 40px/1 var(--f-data); letter-spacing: -.045em; white-space: nowrap; }
+.mod-val small { font-size: 11px; letter-spacing: .1em; color: var(--star-2); margin-left: 6px; text-transform: uppercase; }
+.mod-cmp { display: grid; gap: 3px; font: 400 10.5px/1.25 var(--f-data); color: var(--star-2); text-align: right; }
+.mod-chart { position: relative; height: 112px; }
+.mod-voice { margin: 0; font: italic 500 17px/1.3 var(--f-voice); color: var(--star); }
+.mod-voice span { display: block; font: 400 9px/1 var(--f-data); font-style: normal; letter-spacing: .18em; text-transform: uppercase; color: var(--dim); margin-bottom: 5px; }
+.mod-rules { display: flex; flex-wrap: wrap; gap: 4px 16px; font: 400 9.5px/1.3 var(--f-data); letter-spacing: .1em; text-transform: uppercase; color: var(--star-2); border-top: 1px solid var(--hair); padding-top: 10px; }
+.mod-rules span { display: inline-flex; align-items: center; gap: 7px; }
+.mod-rules span::before { content: ""; width: 12px; height: 1px; background: var(--brass); }
+.mod-rules .r-reg::before { background: var(--alert); height: 2px; }
+.mod-forms { display: flex; gap: 0; border: 1px solid var(--hair); align-self: flex-start; }
+.mod-forms button { border: 0; background: none; padding: 6px 10px; font: 400 9.5px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.mod-forms button + button { border-left: 1px solid var(--hair); }
+.mod-forms button[aria-pressed="true"] { color: var(--star); background: var(--brass-soft); }
+.size-L .mod-val { font-size: 54px; }
+.size-L .mod-chart { height: 156px; }
+.size-S .mod-val { font-size: 28px; }
+.size-S .mod-chart { height: 46px; }
+.size-S .mod-name { font-size: 19px; }
+.size-S .mod-rules, .size-S .mod-forms, .size-S .mod-cmp span + span { display: none; }
+.size-S .mod-voice { font-size: 15px; }
+.mod.is-dragging { opacity: .3; }
+.mod.drop-before { box-shadow: -3px 0 0 var(--brass); }
+
+/* ── Charts ── */
+.ch { position: absolute; inset: 0; }
+.ch svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ch-dot { position: absolute; width: 8px; height: 8px; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 0 2px var(--night), 0 0 12px currentColor; background: currentColor; }
+.ch-dot::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 1px solid currentColor; animation: ping 2s ease-out infinite; }
+@keyframes ping { from { transform: scale(.4); opacity: .8; } to { transform: scale(1.6); opacity: 0; } }
+.ch-lab { position: absolute; font: 400 9px/1 var(--f-data); letter-spacing: .08em; color: var(--dim); white-space: nowrap; }
+.ch-lab--rule { color: var(--brass); right: 0; transform: translateY(-120%); }
+.ch-lab--reg { color: var(--alert); right: 0; transform: translateY(-120%); }
+.beams { display: grid; gap: 11px; padding-top: 2px; }
+.beam-row { display: grid; grid-template-columns: minmax(70px, 34%) minmax(0, 1fr); gap: 10px; align-items: center; font: 400 10px/1.2 var(--f-data); color: var(--star-2); }
+.beam-track { position: relative; height: 16px; display: flex; align-items: center; }
+.beam { height: 2px; background: linear-gradient(90deg, transparent, var(--c)); box-shadow: 0 0 10px var(--c); transition: width .8s cubic-bezier(.2, .8, .2, 1); position: relative; }
+.beam::after { content: ""; position: absolute; right: -3px; top: -2px; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px 2px var(--c); }
+.beam-mark { position: absolute; top: 1px; bottom: 1px; width: 1px; background: var(--star-2); opacity: .5; transition: left .8s cubic-bezier(.2, .8, .2, 1); }
+.beam-val { position: absolute; right: 0; top: -11px; color: var(--star); }
+.funnel { display: grid; gap: 5px; }
+.funnel-step { display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; gap: 10px; align-items: center; font: 400 10px/1 var(--f-data); color: var(--star-2); }
+.funnel-bar { height: 18px; margin: 0 auto; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--c) 55%, transparent), transparent); border-left: 1px solid var(--c); border-right: 1px solid var(--c); transition: width .8s cubic-bezier(.2, .8, .2, 1); }
+.funnel-step b { font-weight: 400; color: var(--star); }
+
+/* ── A · Instrumente ── */
+.loupe { border: 1px solid var(--hair); background: var(--panel); padding: 14px 16px 12px; margin-bottom: 18px; position: relative; display: grid; gap: 10px; }
+.loupe-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.crumbs { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font: 400 11px/1 var(--f-data); letter-spacing: .1em; text-transform: uppercase; }
+.crumbs button { border: 0; background: none; padding: 4px 2px; color: var(--star-2); }
+.crumbs button:hover { color: var(--brass); }
+.crumbs button[aria-current="true"] { color: var(--star); }
+.crumbs i { color: var(--dim); font-style: normal; }
+.seg { display: inline-flex; border: 1px solid var(--hair-2); }
+.seg button { border: 0; background: none; padding: 6px 11px; font: 400 10px/1 var(--f-data); letter-spacing: .12em; text-transform: uppercase; color: var(--star-2); }
+.seg button + button { border-left: 1px solid var(--hair-2); }
+.seg button[aria-pressed="true"] { background: var(--brass-soft); color: var(--star); }
+.lrow { display: grid; gap: 4px; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); animation: unfold .45s cubic-bezier(.2, .8, .2, 1); }
+@keyframes unfold { from { opacity: 0; transform: translateY(-6px); clip-path: inset(0 0 100% 0); } }
+.lcell { border: 1px solid var(--hair); background: rgba(255, 255, 255, .015); padding: 8px 8px 7px; text-align: left; display: grid; gap: 6px; min-width: 0; transition: border-color .25s, background .25s; }
+.lcell:hover { border-color: var(--hair-2); }
+.lcell[aria-pressed="true"] { border-color: var(--brass); background: var(--brass-soft); }
+.lcell[disabled] { opacity: .3; cursor: default; }
+.lcell .t { font: 400 11px/1 var(--f-data); letter-spacing: .06em; color: var(--star); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lcell .burn { display: flex; gap: 2px; height: 4px; }
+.lcell .burn i { width: 4px; height: 4px; border-radius: 50%; background: var(--alert); box-shadow: 0 0 5px var(--alert); }
+.lcell .burn i.w { background: var(--watch); box-shadow: 0 0 5px var(--watch); }
+.lcell .burn i.g { background: var(--good); box-shadow: none; }
+.lrow--years .lcell .t { font-size: 13px; }
+.a-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.btn { border: 1px solid var(--hair-2); background: none; padding: 8px 12px; font: 500 10.5px/1 var(--f-data); letter-spacing: .14em; text-transform: uppercase; color: var(--star-2); }
+.btn:hover { color: var(--star); border-color: var(--star-2); }
+.btn--brass { color: var(--brass); border-color: color-mix(in srgb, var(--brass) 45%, transparent); }
+.btn--brass:hover { background: var(--brass-soft); color: var(--star); }
+.btn[aria-pressed="true"] { background: var(--brass-soft); color: var(--star); border-color: var(--brass); }
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px; grid-auto-flow: dense; align-items: start; }
+.grid > .size-S { grid-column: span 3; } .grid > .size-M { grid-column: span 4; } .grid > .size-L { grid-column: span 6; }
+
+/* ── B · Zeitstrom ── */
+.b-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.b-tools .spacer { flex: 1; }
+.stream { --side: 236px; border: 1px solid var(--hair); background: var(--panel); position: relative; user-select: none; }
+.b-row { display: grid; grid-template-columns: var(--side) minmax(0, 1fr); }
+.b-axis { height: 46px; border-bottom: 1px solid var(--hair); position: relative; overflow: hidden; z-index: 2; }
+.b-axis .tk { position: absolute; bottom: 0; width: 1px; background: var(--hair-2); }
+.b-axis .tl { position: absolute; bottom: 12px; transform: translateX(4px); font: 400 10px/1 var(--f-data); letter-spacing: .08em; color: var(--star-2); white-space: nowrap; }
+.b-axis .tl--major { color: var(--star); font-size: 11px; bottom: 26px; }
+.b-axis .ev { position: absolute; top: 6px; width: 7px; height: 7px; border: 1px solid var(--brass); background: var(--night); transform: translateX(-50%) rotate(45deg); cursor: pointer; padding: 0; }
+.b-axis .ev:hover { background: var(--brass); }
+.b-side { padding: 0 14px; border-right: 1px solid var(--hair); display: flex; align-items: center; gap: 10px; min-width: 0; }
+.b-group { grid-column: 1 / -1; padding: 12px 14px 6px; border-bottom: 1px solid var(--hair); font: 400 10px/1 var(--f-data); letter-spacing: .2em; text-transform: uppercase; color: var(--brass); background: rgba(255, 255, 255, .012); }
+.lane { border-bottom: 1px solid var(--hair); transition: background .3s; }
+.lane:hover { background: rgba(255, 255, 255, .015); }
+.lane.is-dragging { opacity: .35; }
+.lane .b-side { cursor: grab; }
+.lane-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--star-2); opacity: .6; flex: none; }
+.lane-dot[data-level="alert"] { background: var(--alert); opacity: 1; box-shadow: 0 0 10px var(--alert); }
+.lane-dot[data-level="watch"] { background: var(--watch); opacity: 1; box-shadow: 0 0 8px var(--watch); }
+.lane-dot[data-level="good"] { background: var(--good); opacity: 1; }
+.lane-txt { flex: 1; min-width: 0; }
+.lane-name { font: 600 17px/1.1 var(--f-voice); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lane-val { font: 400 12px/1.4 var(--f-data); color: var(--star-2); }
+.lane-val b { font-weight: 400; color: var(--star); font-size: 14px; }
+.lane-x { border: 0; background: none; color: var(--dim); font-size: 16px; opacity: 0; padding: 2px 4px; }
+.lane:hover .lane-x, .lane:focus-within .lane-x { opacity: 1; }
+.lane-track { position: relative; height: 72px; overflow: hidden; }
+.lane--tall .lane-track { height: 120px; }
+.lane-track svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.b-cursor { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--star); opacity: .45; pointer-events: none; }
+.b-pin { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--brass) 9%, transparent); border-right: 1px solid var(--brass); box-shadow: 6px 0 16px -8px var(--brass); pointer-events: none; }
+.lane.is-new { background: var(--brass-soft); }
+.b-now { position: absolute; top: 0; bottom: 0; right: 0; pointer-events: none; background: repeating-linear-gradient(135deg, transparent 0 6px, rgba(255, 255, 255, .025) 6px 7px); }
+.b-cursor-lab { position: absolute; top: 52px; transform: translateX(-50%); font: 400 10px/1 var(--f-data); background: var(--star); color: var(--night); padding: 3px 6px; pointer-events: none; white-space: nowrap; }
+.b-overlay { position: absolute; top: 0; bottom: 0; right: 0; left: var(--side); z-index: 1; cursor: crosshair; touch-action: none; }
+.b-hint { margin: 10px 0 0; font: 400 10px/1.4 var(--f-data); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+
+/* ── C · Sternbilder ── */
+.c-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 400px); gap: 22px; align-items: start; }
+.c-stage { position: sticky; top: 140px; aspect-ratio: 1; max-height: calc(100vh - 170px); max-width: 100%; margin: 0 auto; width: 100%; }
+.c-stage svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.c-dock { display: grid; gap: 14px; }
+.c-dock-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.c-dock-head h2 { margin: 0; font: italic 500 24px/1.1 var(--f-voice); }
+.c-empty { border: 1px dashed var(--hair-2); padding: 18px; font: italic 500 17px/1.35 var(--f-voice); color: var(--star-2); }
+.arc { cursor: pointer; transition: opacity .3s; }
+.arc:hover { opacity: .85; }
+.star-g { cursor: pointer; }
+.star-g .halo { transition: r .9s cubic-bezier(.2, .8, .2, 1), opacity .9s; }
+.star-g .prog { transition: stroke-dasharray .9s cubic-bezier(.2, .8, .2, 1), stroke .6s; }
+.star-g:hover .lab-n { fill: var(--star); }
+.parallax { transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
+
+/* ── Drawer, toast ── */
+.scrim { position: fixed; inset: 0; z-index: 40; background: rgba(2, 3, 8, .55); animation: fade .2s; }
+.drawer { position: fixed; z-index: 41; top: 0; right: 0; bottom: 0; width: min(420px, 100%); background: color-mix(in srgb, var(--night-2) 92%, transparent); backdrop-filter: blur(16px); border-left: 1px solid var(--hair-2); padding: calc(env(safe-area-inset-top, 0px) + 22px) max(22px, env(safe-area-inset-right, 0px)) 22px 22px; overflow-y: auto; animation: slide .35s cubic-bezier(.2, .8, .2, 1); display: grid; gap: 14px; align-content: start; }
+@keyframes slide { from { transform: translateX(24px); opacity: 0; } }
+@keyframes fade { from { opacity: 0; } }
+.drawer h2 { margin: 0; font: italic 500 26px/1.1 var(--f-voice); }
+.drawer p { margin: 0; color: var(--star-2); font: italic 500 17px/1.35 var(--f-voice); }
+.lib-item { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; border: 1px solid var(--hair); background: var(--panel); padding: 12px 14px; }
+.lib-item:hover { border-color: var(--brass); }
+.lib-item b { font: 600 19px/1.1 var(--f-voice); }
+.lib-item small { grid-column: 1; font: 400 9.5px/1.3 var(--f-data); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.lib-item span { grid-row: 1 / span 2; grid-column: 2; font: 400 10px/1 var(--f-data); letter-spacing: .14em; color: var(--brass); }
+.toast { position: fixed; z-index: 50; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); transform: translateX(-50%); margin: 0; background: color-mix(in srgb, var(--night-2) 92%, transparent); border: 1px solid var(--hair-2); padding: 10px 16px; font: italic 500 17px/1.3 var(--f-voice); max-width: calc(100% - 32px); animation: rise .3s; }
+@keyframes rise { from { transform: translate(-50%, 10px); opacity: 0; } }
+.tip { position: fixed; z-index: 45; pointer-events: none; max-width: 280px; background: color-mix(in srgb, var(--night-2) 94%, transparent); border: 1px solid var(--hair-2); padding: 9px 12px; font: italic 500 16px/1.25 var(--f-voice); }
+.tip small { display: block; font: 400 9.5px/1 var(--f-data); font-style: normal; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); margin-bottom: 5px; }
+
+@media (max-width: 1180px) {
+  .grid > .size-S { grid-column: span 4; } .grid > .size-M { grid-column: span 6; } .grid > .size-L { grid-column: span 12; }
+  .c-wrap { grid-template-columns: minmax(0, 1fr); }
+  .c-stage { position: relative; top: 0; max-height: none; max-width: 640px; }
+}
+@media (max-width: 720px) {
+  .grid > .size-S, .grid > .size-M, .grid > .size-L { grid-column: span 12; }
+  .tabs { margin-left: 0; width: 100%; }
+  .tab { padding: 7px 8px; letter-spacing: .08em; }
+  .source { display: none; }
+  .period { text-align: left; }
+  .stream { --side: 128px; }
+  .b-side { padding: 0 8px; }
+  .lane-name { font-size: 15px; }
+  .lane-val { font-size: 10.5px; }
+  .lrow--months, .lrow--quarters { grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
+  .lrow--years { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .mod-val { font-size: 34px; }
+  .size-L .mod-val { font-size: 42px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<header class="top">
+  <div class="brand"><span class="mark" aria-hidden="true"></span><span class="word">lumantic</span><span class="slogan">Quiet until it matters.</span></div>
+  <nav class="tabs" role="tablist" aria-label="Entwürfe">
+    <button class="tab" role="tab" type="button" data-concept="instrumente" aria-selected="true"><b>A</b>Instrumente</button>
+    <button class="tab" role="tab" type="button" data-concept="zeitstrom" aria-selected="false"><b>B</b>Zeitstrom</button>
+    <button class="tab" role="tab" type="button" data-concept="sternbilder" aria-selected="false"><b>C</b>Sternbilder</button>
+  </nav>
+  <span class="source">Goldlayer ALCO · Beispielbank · erfundene Zahlen</span>
+</header>
+
+<div class="brief-wrap">
+  <h1 class="brief" id="brief">Lumina liest die Lage …</h1>
+  <div class="period"><span class="label">Betrachtet</span><strong id="period-label">Oktober 2026</strong><span class="label" id="period-sub">Monat · Stand 31.10.2026</span></div>
+</div>
+
+<main>
+  <section class="concept" id="concept-instrumente" aria-label="Entwurf A, Instrumente"></section>
+  <section class="concept" id="concept-zeitstrom" aria-label="Entwurf B, Zeitstrom" hidden></section>
+  <section class="concept" id="concept-sternbilder" aria-label="Entwurf C, Sternbilder" hidden></section>
+</main>
+<div class="tip" id="tip" hidden></div>
+<p class="toast" id="toast" role="status" hidden></p>
+
+<script>
+
+"use strict";
+// ───────────── Helpers ─────────────
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const sum = (xs) => xs.reduce((a, b) => a + b, 0);
+const mean = (xs) => (xs.length ? sum(xs) / xs.length : 0);
+function rng(seed) {
+  return () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+const R = rng(1914);
+
+// ───────────── Time: monthly from January 2019 to October 2026 ─────────────
+const N = 94;
+const MON = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+const MONTH = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+const ym = (y, m) => (y - 2019) * 12 + (m - 1);
+const mOf = (t) => ((t % 12) + 12) % 12;
+
+// Smooth keyframe series with seeded noise; the last months (quietFrom on) are exact.
+function keys(points, noise = 0, quietFrom = N) {
+  const out = new Array(N);
+  for (let t = 0; t < N; t++) {
+    let k = 0;
+    while (k < points.length - 2 && t > points[k + 1][0]) k++;
+    const [t0, v0] = points[k], [t1, v1] = points[k + 1];
+    const f = t1 === t0 ? 0 : clamp((t - t0) / (t1 - t0), 0, 1);
+    const n = (R() * 2 - 1) * noise;
+    out[t] = v0 + (v1 - v0) * f * f * (3 - 2 * f) + (t < quietFrom ? n : 0);
+  }
+  return out;
+}
+function flows(base, amp, overrides) {
+  const out = Array.from({ length: N }, () => base + (R() * 2 - 1) * amp);
+  for (const [y, m, v] of overrides) out[ym(y, m)] = v;
+  return out;
+}
+
+// ───────────── The demo ALCO gold layer (all figures invented) ─────────────
+const LCR = keys([[0, 142], [ym(2019, 12), 144], [ym(2020, 2), 143], [ym(2020, 6), 162], [ym(2021, 1), 168], [ym(2021, 6), 158], [ym(2021, 12), 150],
+  [ym(2022, 6), 146], [ym(2022, 12), 140], [ym(2023, 2), 141], [ym(2023, 3), 155], [ym(2023, 6), 147], [ym(2023, 12), 144], [ym(2024, 12), 141],
+  [ym(2025, 12), 135], [ym(2026, 6), 130], [ym(2026, 7), 127], [ym(2026, 8), 124], [ym(2026, 9), 121], [ym(2026, 10), 118]], 1.6, ym(2026, 6));
+const OUTFLOW = keys([[0, 2600], [ym(2026, 6), 3020], [ym(2026, 10), 3210]], 18, ym(2026, 6));
+const HQLA = LCR.map((v, t) => (v * OUTFLOW[t]) / 100);
+const NSFR = keys([[0, 121], [ym(2020, 6), 128], [ym(2021, 6), 126], [ym(2022, 12), 120], [ym(2023, 6), 122], [ym(2024, 12), 123], [ym(2025, 12), 120], [ym(2026, 10), 117]], 0.7, ym(2026, 9));
+const CET1 = keys([[0, 15.1], [ym(2024, 12), 16.6], [ym(2025, 1), 16.1], [ym(2026, 10), 16.3]], 0.07);
+const LEV = keys([[0, 6.3], [ym(2020, 3), 6.35], [ym(2020, 6), 6.0], [ym(2021, 6), 6.4], [ym(2026, 10), 6.9]], 0.04);
+const EVE = keys([[0, 9.0], [ym(2021, 6), 10.5], [ym(2022, 9), 8.2], [ym(2024, 6), 10.8], [ym(2025, 12), 12.1], [ym(2026, 6), 12.6],
+  [ym(2026, 7), 12.7], [ym(2026, 8), 12.8], [ym(2026, 9), 12.9], [ym(2026, 10), 13.2]], 0.18, ym(2026, 6));
+const NIM = keys([[0, 1.08], [ym(2021, 12), 1.02], [ym(2022, 9), 1.1], [ym(2023, 9), 1.38], [ym(2024, 6), 1.3], [ym(2025, 6), 1.12], [ym(2026, 10), 1.05]], 0.008);
+const BAL = keys([[0, 27800], [ym(2020, 3), 28400], [ym(2020, 5), 29300], [ym(2023, 2), 31000], [ym(2023, 4), 31700], [ym(2026, 7), 34150], [ym(2026, 10), 33900]], 55, ym(2026, 7));
+const SAVE = keys([[0, 11200], [ym(2020, 5), 11800], [ym(2022, 6), 12300], [ym(2023, 12), 11000], [ym(2026, 7), 11300], [ym(2026, 8), 11160], [ym(2026, 9), 10900], [ym(2026, 10), 10660]], 40, ym(2026, 7));
+const CURR = keys([[0, 7200], [ym(2020, 5), 7700], [ym(2022, 6), 8000], [ym(2023, 12), 7200], [ym(2026, 10), 7350]], 35);
+const TERM = keys([[0, 2000], [ym(2022, 6), 1900], [ym(2023, 3), 2900], [ym(2023, 12), 4300], [ym(2025, 6), 4900], [ym(2026, 10), 5200]], 25);
+const DEP = SAVE.map((v, t) => v + CURR[t] + TERM[t]);
+const MORT = keys([[0, 18100], [ym(2022, 6), 20900], [ym(2023, 6), 21300], [ym(2026, 10), 23500]], 30);
+const NNM_P = flows(24, 10, [[2020, 3, 70], [2020, 4, 50], [2023, 3, 150], [2023, 4, 90], [2026, 8, 8], [2026, 9, 2], [2026, 10, -6]]);
+const NNM_V = flows(22, 14, [[2020, 3, 80], [2023, 3, 210], [2023, 4, 130], [2023, 5, 60], [2026, 6, 8], [2026, 7, 0], [2026, 8, -12], [2026, 9, -40], [2026, 10, -58]]);
+const NNM_F = flows(9, 9, [[2023, 3, 60], [2026, 9, 3], [2026, 10, 2]]);
+const NNM = NNM_P.map((v, t) => v + NNM_V[t] + NNM_F[t]);
+const PIPE = keys([[0, 620], [ym(2021, 12), 700], [ym(2022, 9), 600], [ym(2023, 6), 520], [ym(2024, 12), 690], [ym(2025, 12), 760],
+  [ym(2026, 5), 820], [ym(2026, 6), 900], [ym(2026, 7), 980], [ym(2026, 8), 1050], [ym(2026, 9), 1100], [ym(2026, 10), 1150]], 22, ym(2026, 5))
+  .map((v, t) => (t < ym(2026, 5) ? v + 35 * Math.sin((2 * Math.PI * (mOf(t) - 2)) / 12) : v));
+const PIPE_A = PIPE.map((v, t) => v * (0.42 + 0.03 * Math.sin(t / 7)));
+const PIPE_O = PIPE.map((v) => v * 0.33);
+const PIPE_Z = PIPE.map((v, t) => v - PIPE_A[t] - PIPE_O[t]);
+
+const GROUPS = { liq: "Liquidität", kap: "Kapital", zins: "Zinsrisiko", bil: "Bilanz", wachs: "Wachstum" };
+const KPIS = [
+  { id: "lcr", group: "liq", name: "LCR", long: "Liquidity Coverage Ratio", unit: "%", dec: 0, kind: "stock", dir: 1, reg: 100, target: 125,
+    series: LCR, parts: { "HQLA": HQLA, "Nettomittelabflüsse": OUTFLOW }, partsMode: "ratio", table: "liquiditaet_monat",
+    desc: "Hochliquide Aktiva im Verhältnis zu den Nettomittelabflüssen der nächsten 30 Tage." },
+  { id: "nsfr", group: "liq", name: "NSFR", long: "Net Stable Funding Ratio", unit: "%", dec: 0, kind: "stock", dir: 1, reg: 100, target: 110,
+    series: NSFR, table: "liquiditaet_monat", desc: "Verfügbare stabile Refinanzierung im Verhältnis zur erforderlichen." },
+  { id: "cet1", group: "kap", name: "CET1-Quote", long: "Hartes Kernkapital", unit: "%", dec: 1, kind: "stock", dir: 1, reg: 10.5, target: 14,
+    series: CET1, table: "eigenmittel_monat", desc: "Hartes Kernkapital in Prozent der risikogewichteten Positionen." },
+  { id: "lev", group: "kap", name: "Leverage Ratio", long: "Ungewichtete Eigenmittelquote", unit: "%", dec: 1, kind: "stock", dir: 1, reg: 3, target: 5,
+    series: LEV, table: "eigenmittel_monat", desc: "Kernkapital im Verhältnis zum Gesamtengagement.", hidden: true },
+  { id: "eve", group: "zins", name: "Zinsrisiko ΔEVE", long: "Barwertsensitivität", unit: "%", dec: 1, kind: "stock", dir: -1, reg: 15, target: 13,
+    regName: "FINMA-Ausreissertest", targetName: "Frühwarnung", series: EVE, table: "zinsrisiko_monat",
+    desc: "Verlust des Barwerts bei einem Zinsschock, in Prozent des Kernkapitals." },
+  { id: "nim", group: "zins", name: "Zinsmarge", long: "Nettozinsmarge", unit: "%", dec: 2, kind: "stock", dir: 1, reg: null, target: null,
+    series: NIM, table: "erfolg_monat", desc: "Zinserfolg im Verhältnis zu den zinstragenden Aktiven, annualisiert." },
+  { id: "bal", group: "bil", name: "Bilanzsumme", long: "Total Aktiven", unit: "Mrd", kind: "stock", dir: 0, reg: null, target: null,
+    series: BAL, table: "bilanz_monat", desc: "Total der Aktiven per Monatsende." },
+  { id: "dep", group: "bil", name: "Kundeneinlagen", long: "Verpflichtungen aus Kundeneinlagen", unit: "Mrd", kind: "stock", dir: 1, reg: null, target: null,
+    series: DEP, parts: { "Sparkonten": SAVE, "Kontokorrente": CURR, "Festgeld": TERM }, table: "bilanz_monat", desc: "Einlagen von Kundinnen und Kunden per Monatsende." },
+  { id: "mort", group: "bil", name: "Hypotheken", long: "Hypothekarforderungen", unit: "Mrd", kind: "stock", dir: 0, reg: null, target: null,
+    series: MORT, table: "bilanz_monat", desc: "Ausstehende Hypotheken per Monatsende.", hidden: true },
+  { id: "nnm", group: "wachs", name: "Netto-Neugeld", long: "Zuflüsse minus Abflüsse", unit: "Mio", kind: "flow", dir: 1, reg: null, target: 30,
+    series: NNM, parts: { "Privatkunden": NNM_P, "Vermögensverwaltung": NNM_V, "Firmenkunden": NNM_F }, table: "neugeld_monat",
+    desc: "Neu zugeflossene minus abgeflossene Kundenvermögen. Ziel: 30 Mio. CHF pro Monat." },
+  { id: "pipe", group: "wachs", name: "Hypotheken-Pipeline", long: "Anfragen, Offerten und Zusagen", unit: "Mio", kind: "stock", dir: 1, reg: null, target: 600,
+    series: PIPE, parts: { "Anfrage": PIPE_A, "Offerte": PIPE_O, "Zusage": PIPE_Z }, funnel: true, table: "pipeline_monat",
+    desc: "Volumen der Hypotheken, die angefragt, offeriert oder zugesagt, aber noch nicht ausbezahlt sind." },
+];
+const K = Object.fromEntries(KPIS.map((k) => [k.id, k]));
+const EVENTS = [
+  { t: ym(2020, 3), title: "Pandemie", text: "Die Bank baut Liquiditätsreserven auf, Kundengelder fliessen zu." },
+  { t: ym(2022, 9), title: "SNB beendet Negativzinsen", text: "Der Leitzins steigt auf 0.5 %. Die Zinsmarge beginnt zu steigen." },
+  { t: ym(2023, 3), title: "Marktturbulenzen", text: "Innert weniger Wochen fliessen ungewöhnlich viele Kundengelder zu." },
+  { t: ym(2023, 6), title: "Leitzins 1.75 %", text: "Höhepunkt der Zinswende. Festgeld wird attraktiv, Sparkonten verlieren." },
+  { t: ym(2025, 1), title: "Basel III final", text: "Neue Eigenmittelvorschriften gelten. Die CET1-Quote sinkt einmalig." },
+  { t: ym(2025, 6), title: "Leitzins 0 %", text: "Die SNB senkt auf null. Druck auf die Zinsmarge." },
+  { t: ym(2026, 8), title: "Mandate gekündigt", text: "Zwei grosse Vermögensverwaltungs-Mandate gehen. Das wirkt auf Netto-Neugeld und LCR." },
+];
+
+// ───────────── Periods ─────────────
+const PERIODS = { jahr: [], quartal: [], monat: [] };
+for (let y = 2019; y <= 2026; y++) {
+  const from = ym(y, 1), to = Math.min(ym(y, 12), N - 1), partial = to < ym(y, 12);
+  PERIODS.jahr.push({ g: "jahr", y, from, to, partial, label: String(y), long: partial ? `${y} bis ${MONTH[mOf(to)]}` : `${y}` });
+  for (let q = 1; q <= 4; q++) {
+    const f = ym(y, 3 * q - 2);
+    if (f > N - 1) break;
+    const tt = Math.min(ym(y, 3 * q), N - 1), part = tt < ym(y, 3 * q);
+    PERIODS.quartal.push({ g: "quartal", y, q, from: f, to: tt, partial: part, label: `Q${q} ${y}`, short: `Q${q}`, long: part ? `Q${q} ${y} bis ${MONTH[mOf(tt)]}` : `Q${q} ${y}` });
+  }
+}
+for (let t = 0; t < N; t++) {
+  const y = 2019 + Math.floor(t / 12), m = mOf(t);
+  PERIODS.monat.push({ g: "monat", y, m, q: Math.floor(m / 3) + 1, from: t, to: t, partial: false, label: `${MON[m]} ${y}`, short: MON[m], long: `${MONTH[m]} ${y}` });
+}
+for (const g of Object.keys(PERIODS)) PERIODS[g].forEach((p, i) => (p.i = i));
+const NOUN = { jahr: "Vorjahr", quartal: "Vorquartal", monat: "Vormonat" };
+const G_NAME = { jahr: "Jahr", quartal: "Quartal", monat: "Monat" };
+const indexOfMonth = (g, t) => PERIODS[g].findIndex((p) => p.from <= t && t <= p.to);
+const monthsIn = (p) => p.to - p.from + 1;
+const valueAt = (k, p, s = k.series) => (k.kind === "flow" ? sum(s.slice(p.from, p.to + 1)) : s[p.to]);
+const targetAt = (k, p) => (k.target == null ? null : k.kind === "flow" ? k.target * monthsIn(p) : k.target);
+function endDate(p) { const y = 2019 + Math.floor(p.to / 12), m = mOf(p.to); const d = new Date(Date.UTC(y, m + 1, 0)); return `${d.getUTCDate()}.${m + 1}.${y}`; }
+
+// ───────────── Format (Swiss) ─────────────
+const thousands = (v) => Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "’");
+const pct = (d) => { const p = Math.abs(d * 100); return (p < 10 ? String(Number(p.toFixed(1))) : String(Math.round(p))) + " %"; };
+function split(k, v) {
+  if (k.unit === "%") return [v.toFixed(k.dec), "%"];
+  if (k.unit === "Mrd") return [(v / 1000).toFixed(1), "Mrd. CHF"];
+  return [(v < 0 ? "−" : "") + thousands(Math.abs(v)), "Mio. CHF"];
+}
+const F = (k, v) => split(k, v).join(" ");
+const compact = (k, v) => (k.unit === "%" ? v.toFixed(k.dec) + "%" : k.unit === "Mrd" ? (v / 1000).toFixed(1) + " Mrd" : thousands(v) + " Mio");
+const arrow = (d) => (d > 0 ? "↑" : d < 0 ? "↓" : "→");
+function fdelta(k, d, base) {
+  if (k.unit === "%") {
+    const p = Math.abs(d), min = Math.pow(10, -(k.dec || 0)) / 2;
+    return p < min ? "unverändert" : `${arrow(d)} ${p.toFixed(k.dec)} Pp.`;
+  }
+  if (k.kind === "flow") return `${arrow(d)} ${thousands(Math.abs(d))} Mio. CHF`;
+  const rel = d / Math.abs(base);
+  return Math.abs(rel) < 0.0005 ? "unverändert" : `${arrow(d)} ${pct(rel)}`;
+}
+
+// ───────────── Engine: same rules as the Go server, plus regulatory minimums ─────────────
+const evalCache = new Map();
+function evaluate(k, g, i) {
+  const key = k.id + "|" + g + "|" + i;
+  if (evalCache.has(key)) return evalCache.get(key);
+  const P = PERIODS[g], p = P[i];
+  const series = P.slice(0, i + 1).map((pp) => valueAt(k, pp));
+  const cur = series[i];
+  let prev = i > 0 ? series[i - 1] : null, prevNoun = NOUN[g];
+  const yi = g === "quartal" ? i - 4 : g === "monat" ? i - 12 : -1;
+  let yoy = yi >= 0 ? series[yi] : null;
+  // A period still running (2026 until October) is compared with the same months a year earlier.
+  const ytd = k.kind === "flow" && p.partial && p.from >= 12;
+  if (ytd) { prev = sum(k.series.slice(p.from - 12, p.to - 11)); prevNoun = "Vorjahr, gleiche Monate"; yoy = null; }
+  const past = series.slice(Math.max(0, i - 8), i);
+  const mu = mean(past), sd = Math.sqrt(mean(past.map((x) => (x - mu) ** 2)));
+  let z = 0;
+  if (past.length >= 4 && sd > 1e-9 && !(k.kind === "flow" && p.partial) && Math.abs(cur - mu) / Math.max(Math.abs(mu), 2 * sd) >= 0.05) z = (cur - mu) / sd;
+  const tgt = targetAt(k, p), reg = k.reg;
+  const mT = tgt != null && k.dir ? ((cur - tgt) / Math.abs(tgt)) * k.dir : null;
+  const mR = reg != null && k.dir ? ((cur - reg) / Math.abs(reg)) * k.dir : null;
+  let level = "calm", label = "Ruhig", tone = "neutral", move = false, breach = false;
+  if (mR !== null && mR < 0) { level = "alert"; tone = "bad"; label = "Regulatorisch verletzt"; breach = true; }
+  else if (mT !== null && mT < -0.03) { level = "alert"; tone = "bad"; label = k.dir > 0 ? "Unter internem Ziel" : "Über Frühwarnung"; }
+  else if (mT !== null && mT < 0) { level = "watch"; tone = "bad"; label = "Knapp verfehlt"; }
+  else if (Math.abs(z) >= 2 && k.dir && Math.sign(z) !== k.dir) { level = "watch"; tone = "bad"; label = "Auffällige Bewegung"; move = true; }
+  else if (Math.abs(z) >= 2) { level = "notable"; move = true; tone = k.dir ? "good" : "neutral"; label = k.dir ? "Gute Nachricht" : "Ungewöhnlich"; }
+  const kind = level === "notable" ? (tone === "good" ? "good" : "info") : level;
+  const m = Math.abs(mR !== null && mR < 0 ? mR : mT || 0);
+  const score = (breach ? 1600 : 0) + (level === "alert" ? 1000 + m * 100 : level === "watch" ? 600 + (m * 100 || Math.abs(z)) : level === "notable" ? 500 + Math.abs(z) : 100);
+  const mag = level === "alert" ? Math.min(1, 0.86 + m * 0.3) : level === "watch" ? 0.6 : level === "notable" ? 0.52 : 0.2;
+  const r = { k, g, i, p, series, cur, prev, yoy, tgt, reg, mT, mR, z, level, label, tone, kind, score, mag, breach, ytd, prevNoun };
+  r.delta = prev !== null ? `${fdelta(k, cur - prev, prev)} ggü. ${prevNoun}` : "";
+  r.yoyText = yoy !== null ? `${fdelta(k, cur - yoy, yoy)} ggü. Vorjahr` : "";
+  r.answer = answerFor(r, move);
+  r.why = (level === "alert" || level === "watch") && i > 0 ? driverFor(r) : "";
+  evalCache.set(key, r);
+  return r;
+}
+function answerFor(r, move) {
+  const { k, cur, tgt, reg, level, g, i } = r, v = F(k, cur);
+  if (r.breach) return k.dir > 0 ? `${v}, unter dem regulatorischen Minimum von ${F(k, reg)}` : `${v}, über dem Limit von ${F(k, reg)}`;
+  if ((level === "alert" || level === "watch") && !move) return k.dir > 0 ? `${v}, unter dem internen Ziel von ${F(k, tgt)}` : `${v}, über der Frühwarnschwelle von ${F(k, tgt)}`;
+  if (move) {
+    const before = r.series.slice(0, -1), up = r.z > 0;
+    let j = -1;
+    for (let x = before.length - 1; x >= 0; x--) if (up ? before[x] >= cur : before[x] <= cur) { j = x; break; }
+    if (j < 0 && before.length >= 4) return `${v}, ${up ? "höchster" : "tiefster"} Wert seit Beginn der Reihe 2019`;
+    if (j >= 0 && i - j >= 4) return `${v}, ${up ? "höchster" : "tiefster"} Wert seit ${PERIODS[g][j].long}`;
+    return `${v}, deutlich ${up ? "höher" : "tiefer"} als üblich`;
+  }
+  if (tgt != null) return k.dir > 0 ? `${v}, über dem Ziel von ${F(k, tgt)}` : `${v}, unter der Frühwarnschwelle von ${F(k, tgt)}`;
+  return r.delta ? `${v}, ${r.delta}` : v;
+}
+// Names a part only when it clearly explains the deviation.
+function driverFor(r) {
+  const { k, g, i } = r;
+  if (!k.parts) return "";
+  const p = PERIODS[g][i], q = r.ytd ? { from: p.from - 12, to: p.to - 12 } : PERIODS[g][i - 1];
+  if (k.partsMode === "ratio") {
+    const [num, den] = Object.keys(k.parts);
+    const dn = valueAt(k, p, k.parts[num]) / valueAt(k, q, k.parts[num]) - 1, dd = valueAt(k, p, k.parts[den]) / valueAt(k, q, k.parts[den]) - 1;
+    const top = [{ name: num, s: -dn * k.dir, d: dn }, { name: den, s: dd * k.dir, d: dd }].sort((a, b) => b.s - a.s)[0];
+    return top.s > 0 ? `Grund: ${top.name} ${top.d > 0 ? "+" : "−"}${pct(top.d)}` : "";
+  }
+  const ch = Object.entries(k.parts).map(([name, s]) => { const d = valueAt(k, p, s) - valueAt(k, q, s); return { name, d, s: -d * (k.dir || 1) }; }).sort((a, b) => b.s - a.s);
+  if (!ch.length || ch[0].s <= 0 || (ch[1] && ch[0].s < 1.5 * Math.max(0, ch[1].s))) return "";
+  return `Grund: ${ch[0].name} ${ch[0].d > 0 ? "+" : "−"}${thousands(Math.abs(ch[0].d))} Mio. CHF ggü. ${r.prevNoun}`;
+}
+const evalAll = (g, i) => KPIS.map((k) => evaluate(k, g, i)).sort((a, b) => b.score - a.score);
+
+// ───────────── DOM helpers ─────────────
+function h(tag, attrs = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k.startsWith("on") && typeof v === "function") el.addEventListener(k.slice(2), v);
+    else if (k === "text") el.textContent = v;
+    else if (k === "style") el.style.cssText = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) if (c !== null && c !== undefined && c !== false && c !== "") el.append(c instanceof Node ? c : String(c));
+  return el;
+}
+const SVGNS = "http://www.w3.org/2000/svg";
+function sv(tag, attrs = {}, ...kids) {
+  const el = document.createElementNS(SVGNS, tag);
+  for (const [k, v] of Object.entries(attrs)) if (v !== null && v !== undefined) el.setAttribute(k, v);
+  for (const c of kids) if (c) el.append(typeof c === "string" ? document.createTextNode(c) : c);
+  return el;
+}
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+function animate(dur, fn, ease = easeOut) {
+  if (reduced) { fn(1); return () => {}; }
+  const t0 = performance.now();
+  let stop = false;
+  const step = () => { if (stop) return; const k = clamp((performance.now() - t0) / dur, 0, 1); fn(ease(k)); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+  return () => { stop = true; };
+}
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const KIND_VAR = { alert: "--alert", watch: "--watch", good: "--good", info: "--brass", calm: "--star-2" };
+const kindVar = (kind) => `var(${KIND_VAR[kind] || "--star-2"})`;
+
+// ───────────── State ─────────────
+const S = {
+  concept: "instrumente", g: "monat", i: N - 1, form: {}, shown: {},
+  a: { order: ["nnm", "lcr", "eve", "pipe", "nsfr", "cet1", "nim", "dep", "bal"], size: {}, auto: true },
+  b: { lanes: ["lcr", "nsfr", "cet1", "eve", "nim", "bal", "dep", "nnm", "pipe"], tall: new Set(["lcr", "nnm"]), view: { t0: -1.5, t1: N + 0.5 } },
+  c: { pinned: null },
+};
+const CONCEPTS = {};
+const cur = () => PERIODS[S.g][S.i];
+
+function setPeriod(g, i) {
+  i = clamp(i, 0, PERIODS[g].length - 1);
+  if (g === S.g && i === S.i) return;
+  S.g = g; S.i = i;
+  renderBrief(true);
+  renderPeriodLabel();
+  const c = CONCEPTS[S.concept];
+  if (c && c.mounted) c.update();
+}
+function setGranularity(g) { setPeriod(g, indexOfMonth(g, cur().to)); }
+
+// ───────────── Lumina's sentence ─────────────
+const briefEl = document.getElementById("brief");
+function nameBtn(r) {
+  return h("button", { class: "name" + (r.level === "alert" ? " name--alert" : ""), type: "button", onclick: () => CONCEPTS[S.concept].focus(r.k.id) }, r.k.name);
+}
+function joinNodes(rs) {
+  const out = [];
+  rs.forEach((r, n) => { if (n > 0) out.push(n === rs.length - 1 ? " und " : ", "); out.push(nameBtn(r)); });
+  return out;
+}
+function renderBrief(changed) {
+  const ev = evalAll(S.g, S.i);
+  const alerts = ev.filter((r) => r.level === "alert"), watches = ev.filter((r) => r.level === "watch"), goods = ev.filter((r) => r.kind === "good");
+  const breach = alerts.filter((r) => r.breach);
+  let parts;
+  if (breach.length) parts = ["Regulatorische Grenze verletzt: ", ...joinNodes(breach), ". Das hat Vorrang."];
+  else if (!alerts.length && !watches.length) parts = ["Alles ruhig. ", ...(goods.length ? ["Gute Nachricht: ", ...joinNodes(goods), "."] : ["Nichts braucht dich."])];
+  else if (!alerts.length) parts = ["Fast alles ruhig. Behalte ", ...joinNodes(watches), " im Auge."];
+  else if (alerts.length === 1 && !watches.length) parts = ["Ruhige Lage. Nur eine Sache braucht dich: ", nameBtn(alerts[0]), "."];
+  else if (alerts.length === 1) parts = ["Eine Sache braucht dich: ", nameBtn(alerts[0]), ". Im Auge behalten: ", ...joinNodes(watches), "."];
+  else parts = [`${["", "Eine", "Zwei", "Drei", "Vier", "Fünf", "Sechs"][alerts.length] || alerts.length} Dinge brauchen dich: `, ...joinNodes(alerts), ".", ...(watches.length ? [" Im Auge behalten: ", ...joinNodes(watches), "."] : [])];
+  if (!breach.length && (alerts.length || watches.length) && goods.length) parts.push(" Gute Nachricht: ", ...joinNodes(goods), ".");
+  briefEl.replaceChildren(...parts);
+  if (changed && !reduced) { briefEl.classList.remove("is-changing"); void briefEl.offsetWidth; briefEl.classList.add("is-changing"); }
+}
+function renderPeriodLabel() {
+  const p = cur();
+  document.getElementById("period-label").textContent = p.long;
+  document.getElementById("period-sub").textContent = `${G_NAME[S.g]} · Stand ${endDate(p)}${p.i < PERIODS[S.g].length - 1 ? " · Rückblick" : ""}`;
+}
+
+// ───────────── Charts ─────────────
+const WINDOW = { monat: 24, quartal: 12, jahr: 8 };
+function trendChart(r) {
+  const { k, g, i } = r;
+  const P = PERIODS[g], j0 = Math.max(0, i - WINDOW[g] + 1), ps = P.slice(j0, i + 1);
+  const vals = ps.map((p) => valueAt(k, p));
+  const tg = ps.map((p) => targetAt(k, p));
+  const flow = k.kind === "flow";
+  const ext = vals.concat(tg.filter((v) => v !== null), k.reg !== null && k.reg !== undefined ? [k.reg] : [], flow ? [0] : []);
+  let lo = Math.min(...ext), hi = Math.max(...ext);
+  const pad = (hi - lo) * 0.12 || Math.abs(hi) * 0.1 || 1;
+  lo -= pad; hi += pad;
+  const n = ps.length, X = (j) => (n === 1 ? 50 : 2 + (j / (n - 1)) * 96), Y = (v) => 100 - ((v - lo) / (hi - lo)) * 100;
+  const col = kindVar(r.kind === "calm" ? "info" : r.kind);
+  const uid = "g" + Math.random().toString(36).slice(2, 8);
+  const clip = sv("rect", { x: 0, y: -10, width: reduced ? 100 : 0, height: 120 });
+  const svg = sv("svg", { viewBox: "0 0 100 100", preserveAspectRatio: "none", "aria-hidden": "true" },
+    sv("defs", {}, sv("linearGradient", { id: uid, x1: 0, y1: 0, x2: 0, y2: 1 }, sv("stop", { offset: 0, "stop-color": col, "stop-opacity": 0.3 }), sv("stop", { offset: 1, "stop-color": col, "stop-opacity": 0 })),
+      sv("clipPath", { id: uid + "c" }, clip)));
+  const t = tg[tg.length - 1];
+  if (t !== null && k.dir) {
+    const ty = Y(t);
+    svg.append(k.dir > 0 ? sv("rect", { x: 0, y: ty, width: 100, height: Math.max(0, 100 - ty), fill: "var(--alert)", opacity: 0.05 })
+      : sv("rect", { x: 0, y: 0, width: 100, height: Math.max(0, ty), fill: "var(--alert)", opacity: 0.05 }));
+  }
+  if (k.reg !== null && k.reg !== undefined) {
+    const ry = Y(k.reg);
+    svg.append(k.dir > 0 ? sv("rect", { x: 0, y: ry, width: 100, height: Math.max(0, 100 - ry), fill: "var(--alert)", opacity: 0.12 })
+      : sv("rect", { x: 0, y: 0, width: 100, height: Math.max(0, ry), fill: "var(--alert)", opacity: 0.12 }));
+    svg.append(sv("line", { x1: 0, x2: 100, y1: ry, y2: ry, stroke: "var(--alert)", "stroke-width": 1, "vector-effect": "non-scaling-stroke", opacity: 0.8 }));
+  }
+  const g2 = sv("g", { "clip-path": `url(#${uid}c)` });
+  if (flow) {
+    const w = Math.min(7, 70 / n), y0 = Y(0);
+    vals.forEach((v, j) => {
+      const y = Y(v);
+      g2.append(sv("rect", { x: X(j) - w / 2, y: Math.min(y, y0), width: w, height: Math.max(0.6, Math.abs(y0 - y)), fill: v < 0 ? "var(--alert)" : j === n - 1 ? col : "var(--star-2)", opacity: j === n - 1 ? 1 : 0.45 }));
+    });
+    svg.append(sv("line", { x1: 0, x2: 100, y1: y0, y2: y0, stroke: "var(--star-2)", "stroke-width": 1, "vector-effect": "non-scaling-stroke", opacity: 0.35 }));
+  } else {
+    const d = vals.map((v, j) => `${j ? "L" : "M"}${X(j).toFixed(2)},${Y(v).toFixed(2)}`).join(" ");
+    g2.append(sv("path", { d: `${d} L${X(n - 1)},100 L${X(0)},100 Z`, fill: `url(#${uid})` }),
+      sv("path", { d, fill: "none", stroke: col, "stroke-width": 1.8, "vector-effect": "non-scaling-stroke", "stroke-linejoin": "round" }));
+  }
+  svg.append(g2);
+  if (t !== null) {
+    const d = tg.map((v, j) => `${j ? "L" : "M"}${X(j).toFixed(2)},${Y(v).toFixed(2)}`).join(" ");
+    svg.append(sv("path", { d, fill: "none", stroke: "var(--brass)", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }));
+  }
+  const box = h("div", { class: "ch", role: "img", "aria-label": `${k.name}: Verlauf der letzten ${n} Perioden, aktuell ${F(k, r.cur)}` }, svg);
+  const lv = vals[n - 1];
+  if (!flow) box.append(h("span", { class: "ch-dot", style: `left:${X(n - 1)}%;top:${Y(lv)}%;color:${col}` }));
+  if (t !== null) box.append(h("span", { class: "ch-lab ch-lab--rule", style: `top:${Y(t)}%`, text: `${k.targetName || "Ziel"} ${F(k, t)}` }));
+  if (k.reg !== null && k.reg !== undefined && Math.abs(Y(k.reg) - Y(t ?? k.reg)) > 9) box.append(h("span", { class: "ch-lab ch-lab--reg", style: `top:${Y(k.reg)}%`, text: `${k.regName || "Minimum"} ${F(k, k.reg)}` }));
+  box.append(h("span", { class: "ch-lab", style: "left:0;bottom:-14px", text: ps[0].label }), h("span", { class: "ch-lab", style: "right:0;bottom:-14px", text: ps[n - 1].label }));
+  animate(700, (e) => clip.setAttribute("width", (e * 102).toFixed(2)));
+  return box;
+}
+
+function ringChart(r, key) {
+  const { k } = r;
+  const peak = Math.max(...r.series);
+  const D = k.dir > 0 ? Math.max(r.cur, r.tgt || 0, k.reg || 0) * 1.28 : k.dir < 0 ? (k.reg || r.cur) * 1.3 : peak * 1.1;
+  const f = clamp(r.cur / D, 0, 1);
+  const col = kindVar(r.kind === "calm" ? "info" : r.kind);
+  const cx = 100, cy = 92, rad = 66;
+  const svg = sv("svg", { viewBox: "0 0 200 186", preserveAspectRatio: "xMidYMid meet", role: "img", "aria-label": `${k.name} ${F(k, r.cur)}` });
+  for (let n = 0; n < 40; n++) {
+    const a = ((-90 + n * 9) * Math.PI) / 180, major = n % 5 === 0;
+    svg.append(sv("line", { x1: cx + Math.cos(a) * (rad + 7), y1: cy + Math.sin(a) * (rad + 7), x2: cx + Math.cos(a) * (rad + (major ? 14 : 10)), y2: cy + Math.sin(a) * (rad + (major ? 14 : 10)), stroke: "var(--star)", "stroke-opacity": major ? 0.3 : 0.12 }));
+  }
+  svg.append(sv("circle", { cx, cy, r: rad, fill: "none", stroke: "var(--star)", "stroke-opacity": 0.08, "stroke-width": 3 }));
+  const from = S.shown[key] ?? 0;
+  S.shown[key] = f;
+  const arc = sv("circle", { cx, cy, r: rad, fill: "none", stroke: col, "stroke-width": 3, "stroke-linecap": "round", pathLength: 100, "stroke-dasharray": `${from * 100} 100`, transform: `rotate(-90 ${cx} ${cy})`, style: `filter: drop-shadow(0 0 5px ${col})` });
+  svg.append(arc);
+  const mark = (v, color, lab) => {
+    const a = (-90 + (v / D) * 360) * (Math.PI / 180);
+    svg.append(sv("line", { x1: cx + Math.cos(a) * (rad - 7), y1: cy + Math.sin(a) * (rad - 7), x2: cx + Math.cos(a) * (rad + 18), y2: cy + Math.sin(a) * (rad + 18), stroke: color, "stroke-width": 1.5 }),
+      sv("text", { x: cx + Math.cos(a) * (rad + 24), y: cy + Math.sin(a) * (rad + 24) + 3, fill: color, "font-family": css("--f-data"), "font-size": 8, "letter-spacing": 0.8, "text-anchor": Math.cos(a) < -0.2 ? "end" : Math.cos(a) > 0.2 ? "start" : "middle" }, lab));
+  };
+  if (k.reg !== null && k.reg !== undefined) mark(k.reg, "var(--alert)", (k.dir < 0 ? "LIMIT " : "MIN ") + compact(k, k.reg));
+  if (r.tgt !== null) mark(r.tgt, "var(--brass)", (k.dir < 0 ? "WARN " : "ZIEL ") + compact(k, r.tgt));
+  const [num, unit] = split(k, r.cur);
+  svg.append(
+    sv("text", { x: cx, y: cy + 5, "text-anchor": "middle", "font-family": css("--f-data"), "font-size": 24, fill: "var(--star)", "letter-spacing": -1 }, num),
+    sv("text", { x: cx, y: cy + 20, "text-anchor": "middle", "font-family": css("--f-data"), "font-size": 8, fill: "var(--star-2)", "letter-spacing": 1 }, unit.toUpperCase()),
+    sv("text", { x: cx, y: cy + 36, "text-anchor": "middle", "font-family": css("--f-voice"), "font-style": "italic", "font-size": 12, fill: "var(--star-2)" },
+      r.tgt !== null ? `${pct(r.cur / r.tgt)} des ${k.dir < 0 ? "Schwellenwerts" : "Ziels"}` : `${pct(r.cur / peak)} des Höchstwerts`));
+  animate(900, (e) => arc.setAttribute("stroke-dasharray", `${(lerp(from, f, e) * 100).toFixed(2)} 100`));
+  return h("div", { class: "ch" }, svg);
+}
+
+function partsChart(r, key) {
+  const { k, g, i } = r, p = PERIODS[g][i];
+  const q = r.ytd ? { from: p.from - 12, to: p.to - 12 } : i > 0 ? PERIODS[g][i - 1] : null;
+  const names = Object.keys(k.parts);
+  const vals = names.map((n) => valueAt(k, p, k.parts[n]));
+  const prevs = names.map((n) => (q ? valueAt(k, q, k.parts[n]) : null));
+  const col = kindVar(r.kind === "calm" ? "info" : r.kind);
+  const fmtPart = (v) => (k.partsMode === "ratio" || k.unit !== "Mio" ? `${thousands(v)} Mio.` : F(k, v));
+  if (k.funnel) {
+    const max = Math.max(...vals);
+    const wrap = h("div", { class: "funnel" }, ...names.map((n, j) => h("div", { class: "funnel-step" },
+      h("span", { text: n }), h("span", { class: "funnel-bar", style: `width:${(vals[j] / max) * 100}%;--c:${col}` }), h("b", { text: thousands(vals[j]) }))),
+      h("span", { class: "ch-lab", style: "position:static", text: `Zusagen ${pct(vals[2] / sum(vals))} des Volumens · ${prevs[0] !== null ? fdelta(k, sum(vals) - sum(prevs), sum(prevs)) + " ggü. " + r.prevNoun : ""}` }));
+    return wrap;
+  }
+  const max = Math.max(...vals, ...prevs.filter((v) => v !== null).map(Math.abs), 1);
+  const prevW = S.shown[key] || {};
+  const widths = {};
+  const rows = names.map((n, j) => {
+    const w = (Math.max(0, vals[j]) / max) * 80;
+    widths[n] = w;
+    const beam = h("span", { class: "beam", style: `width:${prevW[n] ?? 0}%;--c:${vals[j] < 0 ? "var(--alert)" : j === 0 ? col : "var(--star-2)"}` });
+    requestAnimationFrame(() => requestAnimationFrame(() => { beam.style.width = w + "%"; }));
+    const change = prevs[j] !== null ? ` · ${vals[j] - prevs[j] >= 0 ? "+" : "−"}${k.partsMode === "ratio" ? pct(vals[j] / prevs[j] - 1) : thousands(Math.abs(vals[j] - prevs[j]))}` : "";
+    return h("div", { class: "beam-row" }, h("span", { text: n }),
+      h("span", { class: "beam-track" }, beam, prevs[j] !== null ? h("span", { class: "beam-mark", style: `left:${(Math.max(0, prevs[j]) / max) * 80}%` }) : null,
+        h("span", { class: "beam-val", text: fmtPart(vals[j]) + change })));
+  });
+  S.shown[key] = widths;
+  return h("div", { class: "beams" }, ...rows, h("span", { class: "ch-lab", style: "position:static", text: k.partsMode === "ratio" ? "LCR = HQLA ÷ Nettomittelabflüsse · Strich: " + r.prevNoun : "Strich: " + r.prevNoun }));
+}
+
+// ───────────── Module (instrument) ─────────────
+const FORMS = (k) => [["verlauf", "Verlauf"], ...(k.target !== null || k.reg !== null || k.dir ? [["ring", "Ring"]] : []), ...(k.parts ? [["teile", k.funnel ? "Trichter" : "Teile"]] : [])];
+const defaultForm = (k) => (k.funnel ? "teile" : "verlauf");
+
+function countUp(el, key, k, to) {
+  const from = S.shown["v" + key] ?? to;
+  S.shown["v" + key] = to;
+  const paint = (v) => { const [n, u] = split(k, v); el.replaceChildren(n, h("small", { text: u })); };
+  if (from === to) { paint(to); return; }
+  animate(750, (e) => paint(lerp(from, to, e)));
+}
+
+function moduleCard(k, opts = {}) {
+  const r = evaluate(k, S.g, S.i);
+  const size = opts.size || "M";
+  const key = (opts.ns || "") + k.id;
+  const form = S.form[key] || defaultForm(k);
+  const chart = h("div", { class: "mod-chart" });
+  const val = h("span", { class: "mod-val" });
+  const tools = opts.tools ? h("span", { class: "mod-tools" },
+    ...(opts.onSize ? ["S", "M", "L"].map((s) => h("button", { type: "button", "aria-pressed": String(s === size), title: `Grösse ${s}`, onclick: () => opts.onSize(s) }, s)) : []),
+    opts.onRemove ? h("button", { type: "button", title: "Modul entfernen", "aria-label": `${k.name} entfernen`, onclick: opts.onRemove }, "×") : null) : null;
+  const el = h("article", { class: `mod mod--${r.kind} size-${size}`, "data-id": k.id, tabindex: "-1" },
+    h("span", { class: "reg tl" }), h("span", { class: "reg tr" }), h("span", { class: "reg bl" }), h("span", { class: "reg br" }),
+    h("header", { class: "mod-head" },
+      opts.grip ? h("span", { class: "mod-grip label", title: "Ziehen zum Verschieben", "aria-hidden": "true" }, "⠿") : null,
+      h("span", { class: "mod-group label", text: `${GROUPS[k.group]} · ${r.p.label}` }),
+      h("span", { class: "pill", "data-level": r.kind }, h("i"), r.label), tools),
+    h("h3", { class: "mod-name" }, k.name, h("small", { text: k.long })),
+    h("div", { class: "mod-fig" }, val, h("span", { class: "mod-cmp" }, r.delta ? h("span", { text: r.delta }) : null, r.yoyText ? h("span", { text: r.yoyText }) : null)),
+    chart,
+    h("p", { class: "mod-voice" }, h("span", { text: "Lumina" }), r.answer + "." + (r.why ? " " + r.why + "." : "")),
+    k.reg !== null || k.target !== null ? h("div", { class: "mod-rules" },
+      k.reg !== null && k.reg !== undefined ? h("span", { class: "r-reg", text: `${k.regName || "Regulatorisch"} ${k.dir > 0 ? "≥" : "≤"} ${F(k, k.reg)}` }) : null,
+      r.tgt !== null ? h("span", { text: `${k.targetName || "Intern"} ${k.dir > 0 ? "≥" : "≤"} ${F(k, r.tgt)}` }) : null) : null,
+    size !== "S" ? h("div", { class: "mod-forms", role: "group", "aria-label": "Darstellung" },
+      ...FORMS(k).map(([f, label]) => h("button", { type: "button", "aria-pressed": String(f === form), onclick: () => { S.form[key] = f; opts.onForm ? opts.onForm() : null; } }, label))) : null);
+  countUp(val, key, k, r.cur);
+  const draw = () => chart.replaceChildren(size === "S" || form === "verlauf" ? trendChart(r) : form === "ring" ? ringChart(r, "ring" + key) : partsChart(r, "parts" + key));
+  draw();
+  if (opts.grip) el.draggable = true;
+  return el;
+}
+
+// ───────────── Overlays ─────────────
+const toastEl = document.getElementById("toast"), tipEl = document.getElementById("tip");
+let toastTimer = null;
+function toast(msg) {
+  toastEl.textContent = msg; toastEl.hidden = false;
+  toastEl.style.animation = "none"; void toastEl.offsetWidth; toastEl.style.animation = "";
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => (toastEl.hidden = true), 4200);
+}
+function showTip(head, body, x, y) {
+  tipEl.replaceChildren(h("small", { text: head }), body);
+  tipEl.hidden = false;
+  tipEl.style.left = clamp(x + 16, 8, innerWidth - tipEl.offsetWidth - 8) + "px";
+  tipEl.style.top = clamp(y + 16, 8, innerHeight - tipEl.offsetHeight - 8) + "px";
+}
+const hideTip = () => (tipEl.hidden = true);
+function openLibrary(title, intro, ids, onPick) {
+  const scrim = h("div", { class: "scrim" });
+  const close = () => { scrim.remove(); drawer.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  const drawer = h("aside", { class: "drawer", role: "dialog", "aria-modal": "true", "aria-label": title },
+    h("div", { style: "display:flex;justify-content:space-between;align-items:flex-start;gap:12px" }, h("h2", { text: title }), h("button", { class: "btn", type: "button", onclick: close }, "Schliessen")),
+    h("p", { text: intro }),
+    ...(ids.length ? ids.map((id) => { const k = K[id], r = evaluate(k, S.g, S.i); return h("button", { class: "lib-item", type: "button", onclick: () => { close(); onPick(id); } }, h("b", { text: k.name }), h("small", { text: `${GROUPS[k.group]} · ${F(k, r.cur)} · ${r.label}` }), h("span", { text: "+ HINZUFÜGEN" })); })
+      : [h("p", { text: "Alle Kennzahlen sind schon da." })]));
+  scrim.addEventListener("click", close);
+  document.addEventListener("keydown", onKey);
+  document.body.append(scrim, drawer);
+  const first = drawer.querySelector(".lib-item, .btn");
+  if (first) first.focus();
+}
+
+// Brief FLIP helper: animate elements from their previous positions.
+function flip(container, selector, mutate) {
+  const before = new Map();
+  container.querySelectorAll(selector).forEach((el) => before.set(el.dataset.id, el.getBoundingClientRect()));
+  mutate();
+  if (reduced) return;
+  container.querySelectorAll(selector).forEach((el) => {
+    const b = before.get(el.dataset.id);
+    if (!b) return;
+    const a = el.getBoundingClientRect();
+    const dx = b.left - a.left, dy = b.top - a.top;
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+    el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }], { duration: 520, easing: "cubic-bezier(.2,.8,.2,1)" });
+  });
+}
+
+// ───────────── A · Instrumente ─────────────
+function burnDots(g, i) {
+  const ev = evalAll(g, i);
+  const a = ev.filter((r) => r.level === "alert").length, w = ev.filter((r) => r.level === "watch").length, gd = ev.filter((r) => r.kind === "good").length;
+  return h("span", { class: "burn", "aria-label": `${a} brauchen Aufmerksamkeit, ${w} im Auge behalten` },
+    ...Array.from({ length: Math.min(4, a) }, () => h("i")), ...Array.from({ length: Math.min(2, w) }, () => h("i", { class: "w" })), ...(gd ? [h("i", { class: "g" })] : []));
+}
+
+CONCEPTS.instrumente = {
+  el: document.getElementById("concept-instrumente"),
+  mounted: false,
+  rowKeys: {},
+  mount() {
+    this.mounted = true;
+    this.loupe = h("div", { class: "loupe", "aria-label": "Zeitlupe" });
+    this.autoBtn = h("button", { class: "btn btn--brass", type: "button", "aria-pressed": "true", onclick: () => { S.a.auto = !S.a.auto; this.syncAuto(); this.renderGrid(); } }, "✦ Lumina ordnet");
+    this.grid = h("div", { class: "grid" });
+    this.el.append(
+      h("p", { class: "concept-note", text: "Klarheit zuerst. Lumina ordnet die Instrumente nach Dringlichkeit, du kannst sie ziehen, vergrössern und ergänzen. In der Zeitlupe zoomst du von Jahren bis in einzelne Monate." }),
+      this.loupe,
+      h("div", { class: "a-bar" }, h("div", { style: "display:flex;gap:8px;flex-wrap:wrap" }, this.autoBtn,
+        h("button", { class: "btn", type: "button", onclick: () => this.addModule() }, "+ Instrument")),
+        h("span", { class: "label", text: "Ziehen am ⠿ ordnet neu · S M L ändert die Grösse" })),
+      this.grid);
+    this.wireDrag();
+    this.update(true);
+  },
+  update(first) { this.renderLoupe(); this.renderGrid(first ? "all" : null); },
+  syncAuto() { this.autoBtn.setAttribute("aria-pressed", String(S.a.auto)); this.autoBtn.textContent = S.a.auto ? "✦ Lumina ordnet" : "Eigene Anordnung"; },
+  focus(id) {
+    if (!S.a.order.includes(id)) { S.a.order.push(id); this.renderGrid(id); }
+    const el = this.grid.querySelector(`[data-id="${id}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+    el.classList.add("is-new");
+    el.focus({ preventScroll: true });
+    setTimeout(() => el.classList.remove("is-new"), 1800);
+  },
+  addModule() {
+    openLibrary("Instrument hinzufügen", "Jede Kennzahl aus dem Goldlayer kann ein Instrument werden. Lumina setzt die Regeln dazu.",
+      KPIS.filter((k) => !S.a.order.includes(k.id)).map((k) => k.id),
+      (id) => { S.a.order.push(id); this.renderGrid(id); this.focus(id); toast(`${K[id].name} ist jetzt auf deiner Tafel.`); });
+  },
+  renderLoupe() {
+    const p = cur(), yi = PERIODS.jahr.findIndex((y) => y.from <= p.to && p.to <= y.to), year = PERIODS.jahr[yi];
+    const qi = indexOfMonth("quartal", p.to), quarter = PERIODS.quartal[qi];
+    const crumbs = h("nav", { class: "crumbs", "aria-label": "Zeitpfad" },
+      h("button", { type: "button", "aria-current": String(S.g === "jahr"), onclick: () => setPeriod("jahr", yi) }, "Alle Jahre"), h("i", { text: "›" }),
+      h("button", { type: "button", "aria-current": String(S.g === "jahr"), onclick: () => setPeriod("jahr", yi) }, year.label),
+      S.g !== "jahr" ? [h("i", { text: "›" }), h("button", { type: "button", "aria-current": String(S.g === "quartal"), onclick: () => setPeriod("quartal", qi) }, quarter.short)] : null,
+      S.g === "monat" ? [h("i", { text: "›" }), h("button", { type: "button", "aria-current": "true" }, MONTH[p.m])] : null);
+    const seg = h("div", { class: "seg", role: "group", "aria-label": "Auflösung" },
+      ...[["jahr", "Jahre"], ["quartal", "Quartale"], ["monat", "Monate"]].map(([g, l]) => h("button", { type: "button", "aria-pressed": String(S.g === g), onclick: () => setGranularity(g) }, l)));
+    const cell = (g, i, text, pressed, disabled) => h("button", { class: "lcell", type: "button", "aria-pressed": String(pressed), disabled: disabled || null,
+      onclick: () => setPeriod(g, i), title: PERIODS[g][i] ? PERIODS[g][i].long : "" }, h("span", { class: "t", text }), disabled ? h("span", { class: "burn" }) : burnDots(g, i));
+    const rows = [["years", "all", PERIODS.jahr.map((y) => cell("jahr", y.i, y.partial ? `${y.label}*` : y.label, S.g === "jahr" && y.i === yi))]];
+    const qs = [1, 2, 3, 4].map((q) => { const idx = PERIODS.quartal.findIndex((x) => x.y === year.y && x.q === q); return idx < 0 ? cell("quartal", 0, `Q${q}`, false, true) : cell("quartal", idx, `Q${q} ${String(year.y).slice(2)}`, S.g === "quartal" && idx === qi); });
+    rows.push(["quarters", "q" + year.y, qs]);
+    if (S.g !== "jahr") {
+      const ms = [0, 1, 2].map((n) => { const t = ym(quarter.y, (quarter.q - 1) * 3 + n + 1); return t > N - 1 ? cell("monat", 0, MON[mOf(t)], false, true) : cell("monat", t, MON[mOf(t)], S.g === "monat" && t === p.to); });
+      rows.push(["months", "m" + quarter.y + quarter.q, ms]);
+    }
+    const prevKeys = this.rowKeys;
+    this.rowKeys = {};
+    this.loupe.replaceChildren(h("div", { class: "loupe-head" }, crumbs, seg),
+      ...rows.map(([name, key, cells]) => {
+        this.rowKeys[name] = key;
+        const row = h("div", { class: `lrow lrow--${name}`, style: `--n:${cells.length}` }, ...cells);
+        if (prevKeys[name] === key) row.style.animation = "none";
+        return row;
+      }),
+      h("span", { class: "label", text: "Punkte zeigen, was in der Periode brannte: rot braucht dich, gelb im Auge behalten, grün gute Nachricht. * Jahr läuft noch." }));
+  },
+  renderGrid(fresh) {
+    const ids = S.a.auto ? [...S.a.order].sort((a, b) => evaluate(K[b], S.g, S.i).score - evaluate(K[a], S.g, S.i).score) : S.a.order;
+    const autoSize = (id) => { const r = evaluate(K[id], S.g, S.i); return r.level === "alert" ? "L" : r.level === "calm" ? "S" : "M"; };
+    flip(this.grid, ".mod", () => this.grid.replaceChildren(...ids.map((id) => {
+      const el = moduleCard(K[id], {
+        ns: "a", grip: true, tools: true, size: S.a.auto ? autoSize(id) : S.a.size[id] || autoSize(id),
+        onSize: (s) => { if (S.a.auto) { ids.forEach((x) => (S.a.size[x] = S.a.size[x] || autoSize(x))); S.a.order = [...ids]; } S.a.size[id] = s; S.a.auto = false; this.syncAuto(); this.renderGrid(); },
+        onRemove: () => { S.a.order = S.a.order.filter((x) => x !== id); this.renderGrid(); toast(`${K[id].name} entfernt. Über «+ Instrument» kommt es zurück.`); },
+        onForm: () => this.renderGrid(),
+      });
+      if (fresh === "all" || fresh === id) el.classList.add("enter");
+      if (fresh === id) { el.classList.add("is-new"); setTimeout(() => el.classList.remove("is-new"), 1800); }
+      return el;
+    })));
+  },
+  wireDrag() {
+    let dragId = null, last = "";
+    this.grid.addEventListener("dragstart", (e) => {
+      const m = e.target.closest(".mod");
+      if (!m) return;
+      dragId = m.dataset.id;
+      m.classList.add("is-dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", dragId);
+    });
+    this.grid.addEventListener("dragover", (e) => {
+      if (!dragId) return;
+      e.preventDefault();
+      const target = e.target.closest(".mod");
+      if (!target || target.dataset.id === dragId) return;
+      const box = target.getBoundingClientRect(), after = e.clientX > box.left + box.width / 2;
+      const sig = target.dataset.id + after;
+      if (sig === last) return;
+      last = sig;
+      const dragged = this.grid.querySelector(`[data-id="${dragId}"]`);
+      const ref = after ? target.nextSibling : target;
+      if (ref === dragged || ref === dragged.nextSibling) return;
+      flip(this.grid, ".mod", () => this.grid.insertBefore(dragged, ref));
+    });
+    this.grid.addEventListener("dragend", () => {
+      if (!dragId) return;
+      const order = [...this.grid.children].map((c) => c.dataset.id);
+      order.forEach((id) => { if (!S.a.size[id]) { const r = evaluate(K[id], S.g, S.i); S.a.size[id] = r.level === "alert" ? "L" : r.level === "calm" ? "S" : "M"; } });
+      S.a.order = order; S.a.auto = false; dragId = null; last = "";
+      this.syncAuto();
+      this.renderGrid();
+    });
+  },
+};
+
+// ───────────── B · Zeitstrom ─────────────
+const RES_NAME = { jahr: "Jahre", quartal: "Quartale", monat: "Monate" };
+CONCEPTS.zeitstrom = {
+  el: document.getElementById("concept-zeitstrom"),
+  mounted: false,
+  hoverT: null,
+  mount() {
+    this.mounted = true;
+    const presets = [["8 Jahre", -1.5, N + 0.5], ["3 Jahre", N - 36, N + 0.5], ["1 Jahr", N - 12, N + 0.5], ["6 Monate", N - 6, N + 0.5]];
+    this.res = h("span", { class: "label" });
+    this.axis = h("div", { class: "b-axis" });
+    this.lanesBox = h("div");
+    this.cursor = h("div", { class: "b-cursor", hidden: true });
+    this.cursorLab = h("div", { class: "b-cursor-lab", hidden: true });
+    this.pin = h("div", { class: "b-pin" });
+    this.hatch = h("div", { class: "b-now" });
+    this.overlay = h("div", { class: "b-overlay", "aria-hidden": "true" }, this.hatch, this.pin, this.cursor, this.cursorLab);
+    this.stream = h("div", { class: "stream" }, h("div", { class: "b-row b-head" }, h("div", { class: "b-side" }, h("span", { class: "label", text: "Spuren" }), this.res), this.axis), this.lanesBox, this.overlay);
+    this.el.append(
+      h("p", { class: "concept-note", text: "Geschichte zuerst. Jede Kennzahl fliesst als Spur durch acht Jahre. Zoom mit dem Mausrad hinein, die Auflösung folgt von Jahren über Quartale bis zu Monaten. Wo eine Linie rot wird, lag sie unter dem internen Ziel." }),
+      h("div", { class: "b-tools" },
+        h("div", { class: "seg", role: "group", "aria-label": "Zeitraum" }, ...presets.map(([l, a, b]) => h("button", { type: "button", onclick: () => this.animateTo(a, b) }, l))),
+        h("span", { class: "spacer" }),
+        h("button", { class: "btn", type: "button", onclick: () => this.addLane() }, "+ Spur")),
+      this.stream,
+      h("p", { class: "b-hint", text: "Mausrad zoomt · Ziehen verschiebt · Klick wählt die Periode · Doppelklick zoomt hinein · Rauten sind Ereignisse · Namen ziehen ordnet die Spuren neu" }));
+    this.buildLanes();
+    this.wire();
+    this.draw(true);
+  },
+  update() {
+    const v = S.b.view, p = cur();
+    if (p.from < v.t0 || p.to + 1 > v.t1) {
+      const span = Math.max(v.t1 - v.t0, monthsIn(p) * 3);
+      const mid = (p.from + p.to + 1) / 2;
+      this.animateTo(mid - span / 2, mid + span / 2);
+    } else this.draw();
+  },
+  focus(id) {
+    if (!S.b.lanes.includes(id)) { S.b.lanes.push(id); this.buildLanes(); this.draw(true); }
+    const row = this.lanesBox.querySelector(`.lane[data-id="${id}"]`);
+    if (!row) return;
+    row.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+    row.classList.add("is-new");
+    setTimeout(() => row.classList.remove("is-new"), 1800);
+  },
+  addLane() {
+    openLibrary("Spur hinzufügen", "Jede Kennzahl aus dem Goldlayer kann als Spur durch die Zeit laufen.",
+      KPIS.filter((k) => !S.b.lanes.includes(k.id)).map((k) => k.id),
+      (id) => { S.b.lanes.push(id); this.buildLanes(); this.draw(true); this.focus(id); });
+  },
+  removeLane(id) {
+    S.b.lanes = S.b.lanes.filter((x) => x !== id);
+    this.buildLanes(); this.draw(true);
+    toast(`${K[id].name} ausgeblendet. Über «+ Spur» kommt sie zurück.`);
+  },
+  buildLanes() {
+    this.lanes = [];
+    const rows = [];
+    let lastGroup = null;
+    for (const id of S.b.lanes) {
+      const k = K[id];
+      if (k.group !== lastGroup) { rows.push(h("div", { class: "b-group", text: GROUPS[k.group] })); lastGroup = k.group; }
+      const svg = sv("svg", { viewBox: "0 0 1000 100", preserveAspectRatio: "none", "aria-hidden": "true" });
+      const dot = h("span", { class: "lane-dot" }), val = h("div", { class: "lane-val" });
+      const name = h("div", { class: "lane-name", text: k.name, title: "Klick: Spur höher oder tiefer" });
+      const row = h("div", { class: "b-row lane" + (S.b.tall.has(id) ? " lane--tall" : ""), "data-id": id, role: "group", "aria-label": k.long },
+        h("div", { class: "b-side", draggable: "true" }, dot, h("div", { class: "lane-txt" }, name, val),
+          h("button", { class: "lane-x", type: "button", "aria-label": `${k.name} ausblenden`, onclick: () => this.removeLane(id) }, "×")),
+        h("div", { class: "lane-track" }, svg));
+      name.addEventListener("click", () => { if (S.b.tall.has(id)) S.b.tall.delete(id); else S.b.tall.add(id); row.classList.toggle("lane--tall"); });
+      rows.push(row);
+      this.lanes.push({ id, k, svg, dot, val, row, lo: null, hi: null });
+    }
+    this.lanesBox.replaceChildren(...rows);
+  },
+  draw(instant) {
+    const v = S.b.view, span = v.t1 - v.t0;
+    const res = span > 40 ? "jahr" : span > 13 ? "quartal" : "monat";
+    this.resNow = res;
+    this.res.textContent = "Auflösung: " + RES_NAME[res];
+    const X = (t) => ((t - v.t0) / span) * 1000, Xp = (t) => ((t - v.t0) / span) * 100;
+    this.drawAxis(v, span, Xp);
+    const xn = Xp(N);
+    this.hatch.hidden = xn >= 100;
+    this.hatch.style.left = clamp(xn, 0, 100) + "%";
+    const p = cur();
+    this.pin.style.left = Xp(p.from) + "%";
+    this.pin.style.width = Math.max(0.2, Xp(p.to + 1) - Xp(p.from)) + "%";
+    let again = false;
+    for (const L of this.lanes) again = this.drawLane(L, v, res, X, instant) || again;
+    this.updateSide();
+    cancelAnimationFrame(this.raf);
+    if (again) this.raf = requestAnimationFrame(() => this.draw());
+  },
+  drawLane(L, v, res, X, instant) {
+    const k = L.k;
+    const a = clamp(Math.floor(v.t0) - 1, 0, N - 1), b = clamp(Math.ceil(v.t1) + 1, 0, N - 1);
+    let tlo, thi, P = null, vals;
+    if (k.kind === "flow") {
+      P = PERIODS[res].filter((p) => p.to >= a && p.from <= b);
+      vals = P.map((p) => valueAt(k, p));
+      const tg = P.map((p) => targetAt(k, p)).filter((x) => x !== null);
+      tlo = Math.min(0, ...vals); thi = Math.max(0, ...vals, ...tg);
+    } else {
+      vals = k.series.slice(a, b + 1);
+      const dlo = Math.min(...vals), dhi = Math.max(...vals), d = dhi - dlo || Math.abs(dhi) * 0.05 || 1;
+      const th = [k.reg, k.target].filter((x) => x !== null && x !== undefined && x >= dlo - 0.8 * d && x <= dhi + 0.8 * d);
+      tlo = Math.min(dlo, ...th); thi = Math.max(dhi, ...th);
+    }
+    const pad = (thi - tlo) * 0.14 || 1;
+    tlo -= pad; thi += pad;
+    if (L.lo === null || instant || reduced) { L.lo = tlo; L.hi = thi; }
+    else { L.lo += (tlo - L.lo) * 0.3; L.hi += (thi - L.hi) * 0.3; }
+    const moving = Math.abs(L.lo - tlo) + Math.abs(L.hi - thi) > (thi - tlo) * 0.004;
+    const Y = (val) => 100 - ((val - L.lo) / (L.hi - L.lo)) * 100;
+    const nss = { "vector-effect": "non-scaling-stroke" };
+    const kids = [];
+    const gid = "lg-" + k.id;
+    kids.push(sv("defs", {}, sv("linearGradient", { id: gid, x1: 0, y1: 0, x2: 0, y2: 1 }, sv("stop", { offset: 0, "stop-color": "var(--brass)", "stop-opacity": 0.22 }), sv("stop", { offset: 1, "stop-color": "var(--brass)", "stop-opacity": 0 })),
+      k.target !== null && k.dir ? sv("clipPath", { id: gid + "-bad" }, k.dir > 0 ? sv("rect", { x: 0, y: Y(k.target), width: 1000, height: 200 }) : sv("rect", { x: 0, y: -100, width: 1000, height: Y(k.target) + 100 })) : null));
+    if (k.reg !== null && k.reg !== undefined) {
+      const ry = Y(k.reg);
+      kids.push(k.dir > 0 ? sv("rect", { x: 0, y: ry, width: 1000, height: Math.max(0, 100 - ry), fill: "var(--alert)", opacity: 0.1 }) : sv("rect", { x: 0, y: 0, width: 1000, height: Math.max(0, ry), fill: "var(--alert)", opacity: 0.1 }),
+        sv("line", { x1: 0, x2: 1000, y1: ry, y2: ry, stroke: "var(--alert)", "stroke-width": 1, opacity: 0.7, ...nss }));
+    }
+    for (const e of EVENTS) { const x = X(e.t + 0.5); if (x > -5 && x < 1005) kids.push(sv("line", { x1: x, x2: x, y1: 0, y2: 100, stroke: "var(--brass)", "stroke-width": 1, opacity: 0.18, ...nss })); }
+    if (k.kind === "flow") {
+      const y0 = Y(0);
+      kids.push(sv("line", { x1: 0, x2: 1000, y1: y0, y2: y0, stroke: "var(--star-2)", "stroke-width": 1, opacity: 0.3, ...nss }));
+      const sel = cur();
+      P.forEach((p, j) => {
+        const x0 = X(p.from), x1 = X(p.to + 1), gap = Math.min(4, (x1 - x0) * 0.18), y = Y(vals[j]);
+        const inSel = p.to >= sel.from && p.from <= sel.to;
+        kids.push(sv("rect", { x: x0 + gap, y: Math.min(y, y0), width: Math.max(0.5, x1 - x0 - 2 * gap), height: Math.max(0.4, Math.abs(y0 - y)),
+          fill: vals[j] < 0 ? "var(--alert)" : "var(--brass)", opacity: inSel ? 0.95 : 0.42 }));
+        const t = targetAt(k, p);
+        if (t !== null) kids.push(sv("line", { x1: x0 + gap, x2: x1 - gap, y1: Y(t), y2: Y(t), stroke: "var(--star)", "stroke-width": 1, opacity: 0.55, ...nss }));
+      });
+    } else {
+      const pts = vals.map((val, j) => `${X(a + j + 0.5).toFixed(1)},${Y(val).toFixed(2)}`);
+      const d = "M" + pts.join(" L");
+      kids.push(sv("path", { d: `${d} L${X(b + 0.5)},100 L${X(a + 0.5)},100 Z`, fill: `url(#${gid})` }),
+        sv("path", { d, fill: "none", stroke: "var(--star-2)", "stroke-width": 1.5, "stroke-linejoin": "round", ...nss }));
+      if (k.target !== null && k.dir) kids.push(sv("path", { d, fill: "none", stroke: "var(--alert)", "stroke-width": 2.2, "clip-path": `url(#${gid}-bad)`, style: "filter: drop-shadow(0 0 3px var(--alert))", ...nss }));
+      if (k.target !== null) kids.push(sv("line", { x1: 0, x2: 1000, y1: Y(k.target), y2: Y(k.target), stroke: "var(--brass)", "stroke-width": 1, ...nss }));
+    }
+    L.svg.replaceChildren(...kids);
+    return moving;
+  },
+  drawAxis(v, span, Xp) {
+    const items = [];
+    const tick = (x, hgt) => h("span", { class: "tk", style: `left:${x}%;height:${hgt}px` });
+    const lab = (x, text, major) => h("span", { class: "tl" + (major ? " tl--major" : ""), style: `left:${x}%`, text });
+    const first = Math.ceil(v.t0);
+    for (let t = Math.floor(v.t0); t <= Math.ceil(v.t1); t++) {
+      const x = Xp(t);
+      if (x < -2 || x > 102) continue;
+      const m = mOf(t), y = 2019 + Math.floor(t / 12), isYear = m === 0, isQ = m % 3 === 0;
+      if (span > 40) { if (isQ) items.push(tick(x, isYear ? 18 : 7)); if (isYear) items.push(lab(x, String(y), true)); }
+      else if (span > 13) { items.push(tick(x, isYear ? 20 : isQ ? 10 : 4)); if (isYear || t === first) items.push(lab(x, String(y), true)); if (isQ) items.push(lab(x, `Q${m / 3 + 1}`)); }
+      else { items.push(tick(x, isYear ? 20 : 8)); items.push(lab(x, MON[m])); if (isYear || t === first) items.push(lab(x, String(y), true)); }
+    }
+    for (const e of EVENTS) {
+      const x = Xp(e.t + 0.5);
+      if (x < 0 || x > 100) continue;
+      const btn = h("button", { class: "ev", type: "button", style: `left:${x}%`, "aria-label": `Ereignis: ${e.title}` });
+      btn.addEventListener("mouseenter", (ev) => showTip(PERIODS.monat[e.t].long, e.title + ". " + e.text, ev.clientX, ev.clientY));
+      btn.addEventListener("mouseleave", hideTip);
+      btn.addEventListener("click", () => { hideTip(); this.animateTo(e.t - 6, e.t + 7); setPeriod("monat", e.t); toast(`${e.title}: ${e.text}`); });
+      items.push(btn);
+    }
+    this.axis.replaceChildren(...items);
+  },
+  updateSide() {
+    const t = this.hoverT;
+    for (const L of this.lanes) {
+      const r = evaluate(L.k, S.g, S.i);
+      L.dot.setAttribute("data-level", r.kind);
+      if (t !== null && t !== undefined) {
+        const p = L.k.kind === "flow" ? PERIODS[this.resNow][indexOfMonth(this.resNow, t)] : PERIODS.monat[t];
+        L.val.replaceChildren(h("b", { text: F(L.k, valueAt(L.k, p)) }), ` · ${p.label}`);
+      } else {
+        L.val.replaceChildren(h("b", { text: F(L.k, r.cur) }), ` · ${r.label}`);
+      }
+    }
+  },
+  clampView() {
+    const v = S.b.view;
+    let span = clamp(v.t1 - v.t0, 4, N + 5);
+    if (v.t0 < -3) v.t0 = -3;
+    v.t1 = v.t0 + span;
+    if (v.t1 > N + 2) { v.t1 = N + 2; v.t0 = v.t1 - span; }
+  },
+  pan(dt) { const v = S.b.view; v.t0 += dt; v.t1 += dt; this.clampView(); this.draw(); },
+  zoomAt(t, f) {
+    const v = S.b.view, span = v.t1 - v.t0, ns = clamp(span * f, 4, N + 5);
+    v.t0 = t - ((t - v.t0) * ns) / span; v.t1 = v.t0 + ns;
+    this.clampView(); this.draw();
+  },
+  animateTo(t0, t1) {
+    const v = S.b.view, from = { t0: v.t0, t1: v.t1 };
+    if (this.stopAnim) this.stopAnim();
+    this.stopAnim = animate(800, (e) => { v.t0 = lerp(from.t0, t0, e); v.t1 = lerp(from.t1, t1, e); this.clampView(); this.draw(); }, easeInOut);
+  },
+  wire() {
+    const ov = this.overlay, v = S.b.view, ptrs = new Map();
+    let drag = null, pinch = null;
+    const tAt = (cx) => { const b = ov.getBoundingClientRect(); return v.t0 + ((cx - b.left) / b.width) * (v.t1 - v.t0); };
+    ov.addEventListener("pointerdown", (e) => {
+      ov.setPointerCapture(e.pointerId);
+      ptrs.set(e.pointerId, e.clientX);
+      if (ptrs.size === 2) { const [x1, x2] = [...ptrs.values()]; pinch = { d: Math.abs(x1 - x2), span: v.t1 - v.t0, mid: tAt((x1 + x2) / 2) }; drag = null; }
+      else drag = { x: e.clientX, moved: 0 };
+      if (this.stopAnim) this.stopAnim();
+    });
+    ov.addEventListener("pointermove", (e) => {
+      if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, e.clientX);
+      if (pinch && ptrs.size === 2) {
+        const [x1, x2] = [...ptrs.values()];
+        const ns = clamp(pinch.span * (pinch.d / Math.max(20, Math.abs(x1 - x2))), 4, N + 5);
+        v.t0 = pinch.mid - ns / 2; v.t1 = pinch.mid + ns / 2; this.clampView(); this.draw();
+        return;
+      }
+      if (drag) {
+        const b = ov.getBoundingClientRect(), dx = e.clientX - drag.x;
+        drag.moved += Math.abs(dx); drag.x = e.clientX;
+        if (drag.moved > 3) { this.pan((-dx / b.width) * (v.t1 - v.t0)); this.cursor.hidden = this.cursorLab.hidden = true; return; }
+      }
+      const tm = clamp(Math.floor(tAt(e.clientX)), 0, N - 1);
+      this.hoverT = tm;
+      const x = (((tm + 0.5 - v.t0) / (v.t1 - v.t0)) * 100).toFixed(2) + "%";
+      this.cursor.style.left = this.cursorLab.style.left = x;
+      this.cursorLab.textContent = PERIODS.monat[tm].label;
+      this.cursor.hidden = this.cursorLab.hidden = false;
+      this.updateSide();
+    });
+    const end = (e) => {
+      ptrs.delete(e.pointerId);
+      if (pinch) { if (ptrs.size < 2) pinch = null; drag = null; return; }
+      if (drag && drag.moved <= 3 && e.type === "pointerup") {
+        const tm = clamp(Math.floor(tAt(e.clientX)), 0, N - 1);
+        setPeriod(this.resNow, indexOfMonth(this.resNow, tm));
+      }
+      drag = null;
+    };
+    ov.addEventListener("pointerup", end);
+    ov.addEventListener("pointercancel", end);
+    ov.addEventListener("pointerleave", () => { this.hoverT = null; this.cursor.hidden = this.cursorLab.hidden = true; this.updateSide(); });
+    ov.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      if (this.stopAnim) this.stopAnim();
+      if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) this.pan(((e.deltaX || e.deltaY) / 1000) * (v.t1 - v.t0));
+      else this.zoomAt(tAt(e.clientX), Math.exp(e.deltaY * 0.0015));
+    }, { passive: false });
+    ov.addEventListener("dblclick", (e) => { const t = tAt(e.clientX), span = (v.t1 - v.t0) * 0.45; this.animateTo(t - span / 2, t + span / 2); });
+    let dragId = null;
+    this.lanesBox.addEventListener("dragstart", (e) => {
+      const row = e.target.closest(".lane");
+      if (!row) return;
+      dragId = row.dataset.id; row.classList.add("is-dragging");
+      e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", dragId);
+    });
+    this.lanesBox.addEventListener("dragover", (e) => {
+      if (!dragId) return;
+      e.preventDefault();
+      const row = e.target.closest(".lane");
+      if (!row || row.dataset.id === dragId) return;
+      const box = row.getBoundingClientRect(), dragged = this.lanesBox.querySelector(`.lane[data-id="${dragId}"]`);
+      const ref = e.clientY > box.top + box.height / 2 ? row.nextSibling : row;
+      if (ref !== dragged && ref !== dragged.nextSibling) flip(this.lanesBox, ".lane", () => this.lanesBox.insertBefore(dragged, ref));
+    });
+    this.lanesBox.addEventListener("dragend", () => {
+      if (!dragId) return;
+      S.b.lanes = [...this.lanesBox.querySelectorAll(".lane")].map((r) => r.dataset.id);
+      dragId = null;
+      this.buildLanes(); this.draw(true);
+    });
+  },
+};
+
+// ───────────── C · Sternbilder im Astrolabium ─────────────
+const GROUP_ORDER = ["liq", "kap", "zins", "bil", "wachs"];
+function arcPath(r0, r1, a0, a1) {
+  const p = (r, a) => [(r * Math.sin((a * Math.PI) / 180)).toFixed(2), (-r * Math.cos((a * Math.PI) / 180)).toFixed(2)];
+  const large = a1 - a0 > 180 ? 1 : 0;
+  const [x0, y0] = p(r1, a0), [x1, y1] = p(r1, a1), [x2, y2] = p(r0, a1), [x3, y3] = p(r0, a0);
+  return `M${x0},${y0} A${r1},${r1} 0 ${large} 1 ${x1},${y1} L${x2},${y2} A${r0},${r0} 0 ${large} 0 ${x3},${y3} Z`;
+}
+function progressOf(r) {
+  const k = r.k, peak = Math.max(...r.series);
+  const D = k.dir > 0 ? Math.max(r.cur, r.tgt || 0, k.reg || 0) * 1.28 : k.dir < 0 ? (k.reg || r.cur) * 1.3 : peak * 1.1;
+  return { f: clamp(r.cur / D, 0, 1), t: r.tgt !== null ? r.tgt / D : null };
+}
+
+CONCEPTS.sternbilder = {
+  el: document.getElementById("concept-sternbilder"),
+  mounted: false,
+  mount() {
+    this.mounted = true;
+    const kinds = { alert: "--alert", watch: "--watch", good: "--good", info: "--brass", calm: "--star" };
+    const defs = sv("defs", {}, ...Object.entries(kinds).map(([k, v]) => sv("radialGradient", { id: "halo-" + k },
+      sv("stop", { offset: 0, "stop-color": `var(${v})`, "stop-opacity": k === "calm" ? 0.35 : 0.75 }),
+      sv("stop", { offset: 0.35, "stop-color": `var(${v})`, "stop-opacity": k === "calm" ? 0.08 : 0.22 }),
+      sv("stop", { offset: 1, "stop-color": `var(${v})`, "stop-opacity": 0 }))));
+    this.rings = sv("g", { class: "parallax" });
+    this.map = sv("g", { class: "parallax" });
+    this.svg = sv("svg", { viewBox: "-520 -520 1040 1040", role: "group", "aria-label": "Sternkarte der ALCO-Kennzahlen mit Zeitrad" }, defs, this.rings, this.map);
+    this.stage = h("div", { class: "c-stage" }, this.svg);
+    this.dock = h("div", { class: "c-dock" });
+    this.count = h("span", { class: "label" });
+    this.el.append(
+      h("p", { class: "concept-note", text: "Der Atlas, klar gelesen. Je heller ein Stern, desto mehr braucht er dich; der Ring zeigt den Weg zum Ziel. Das Astrolabium ist die Zeit: aussen Jahre, dann Quartale, innen Monate." }),
+      h("div", { class: "c-wrap" }, this.stage,
+        h("aside", { "aria-label": "Angeheftete Sternkarten", style: "display:grid;gap:12px;align-content:start" },
+          h("div", { class: "c-dock-head" }, h("h2", { text: "Deine Sternkarten" }), this.count),
+          h("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
+            h("button", { class: "btn btn--brass", type: "button", onclick: () => { S.c.pinned = null; this.update(); toast("Lumina hat angeheftet, was dich in dieser Periode braucht."); } }, "✦ Lumina wählt"),
+            h("button", { class: "btn", type: "button", onclick: () => { S.c.pinned = []; this.update(); } }, "Alle lösen")),
+          this.dock)));
+    this.buildMap();
+    this.wire();
+    this.update(true);
+  },
+  pinned() {
+    return S.c.pinned || evalAll(S.g, S.i).filter((r) => r.level !== "calm").map((r) => r.k.id);
+  },
+  togglePin(id) {
+    const list = [...this.pinned()];
+    const at = list.indexOf(id);
+    if (at >= 0) list.splice(at, 1); else list.unshift(id);
+    S.c.pinned = list;
+    this.update(false, at < 0 ? id : null);
+  },
+  focus(id) {
+    if (!this.pinned().includes(id)) this.togglePin(id);
+    else this.update(false, id);
+  },
+  buildMap() {
+    this.stars = {};
+    const kids = [];
+    GROUP_ORDER.forEach((gk, gi) => {
+      const ang = ((-90 + gi * 72) * Math.PI) / 180;
+      const rv = [Math.cos(ang), Math.sin(ang)], tv = [-Math.sin(ang), Math.cos(ang)], c = [205 * rv[0], 205 * rv[1]];
+      const members = KPIS.filter((k) => k.group === gk);
+      const offs = members.length === 3 ? [[0, -40], [-74, 30], [74, 30]] : [[-62, -10], [62, 14]];
+      const pts = members.map((k, j) => { const [t, r] = offs[j]; return [c[0] + tv[0] * t + rv[0] * r, c[1] + tv[1] * t + rv[1] * r]; });
+      kids.push(sv("line", { x1: 0, y1: 0, x2: c[0], y2: c[1], stroke: "var(--brass)", "stroke-opacity": 0.16, "stroke-dasharray": "2 6" }));
+      kids.push(sv("path", { d: "M" + pts.map((p) => p.map((x) => x.toFixed(1)).join(",")).join(" L") + (pts.length > 2 ? " Z" : ""), fill: "none", stroke: "var(--star)", "stroke-opacity": 0.16 }));
+      kids.push(sv("text", { x: c[0] + rv[0] * 102, y: c[1] + rv[1] * 102 + 6, "text-anchor": "middle", "font-family": css("--f-voice"), "font-style": "italic", "font-size": 24, fill: "var(--star-2)", "fill-opacity": 0.75, "letter-spacing": 1 }, GROUPS[gk]));
+      members.forEach((k, j) => {
+        const [x, y] = pts[j], dx = x - c[0], left = dx < -4 || (Math.abs(dx) <= 4 && c[0] < 0);
+        const halo = sv("circle", { class: "halo", r: 20, fill: "url(#halo-calm)" });
+        const pulse = sv("circle", { r: 20, fill: "none", stroke: "var(--alert)", "stroke-opacity": 0, visibility: "hidden" },
+          ...(reduced ? [] : [sv("animate", { attributeName: "r", values: "22;46", dur: "2.4s", repeatCount: "indefinite" }), sv("animate", { attributeName: "stroke-opacity", values: "0.6;0", dur: "2.4s", repeatCount: "indefinite" })]));
+        const core = sv("circle", { r: 3, fill: "#fff" });
+        const track = sv("circle", { r: 22, fill: "none", stroke: "var(--star)", "stroke-opacity": 0.1, "stroke-width": 1.2 });
+        const prog = sv("circle", { class: "prog", r: 22, fill: "none", stroke: "var(--star-2)", "stroke-width": 2, "stroke-linecap": "round", pathLength: 100, "stroke-dasharray": "0 100", transform: "rotate(-90)" });
+        const tick = sv("line", { x1: 0, y1: -17, x2: 0, y2: -30, stroke: "var(--brass)", "stroke-width": 1.5, visibility: "hidden" });
+        const name = sv("text", { class: "lab-n", x: left ? -34 : 34, y: -3, "text-anchor": left ? "end" : "start", "font-family": css("--f-data"), "font-size": 11.5, "letter-spacing": 1.4, fill: "var(--star-2)" }, k.name.toUpperCase());
+        const val = sv("text", { x: left ? -34 : 34, y: 14, "text-anchor": left ? "end" : "start", "font-family": css("--f-data"), "font-size": 14, fill: "var(--star)" }, "");
+        const pin = sv("path", { d: "M-31,-25 v-6 h6 M25,-31 h6 v6 M31,25 v6 h-6 M-25,31 h-6 v-6", fill: "none", stroke: "var(--brass)", "stroke-width": 1.4, visibility: "hidden" });
+        const g = sv("g", { class: "star-g", transform: `translate(${x.toFixed(1)},${y.toFixed(1)})`, tabindex: "0", role: "button", "aria-label": k.long }, halo, pulse, track, prog, tick, core, pin, name, val);
+        g.addEventListener("click", () => this.togglePin(k.id));
+        g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); this.togglePin(k.id); } });
+        g.addEventListener("pointerenter", (e) => { const r = evaluate(k, S.g, S.i); showTip(`${GROUPS[k.group]} · ${r.label}`, `${k.name}: ${r.answer}.`, e.clientX, e.clientY); });
+        g.addEventListener("pointerleave", hideTip);
+        this.stars[k.id] = { g, halo, pulse, core, prog, tick, val, pin };
+        kids.push(g);
+      });
+    });
+    kids.unshift(sv("circle", { r: 7, fill: "var(--brass)", style: "filter: drop-shadow(0 0 10px var(--brass))" }),
+      sv("text", { y: 28, "text-anchor": "middle", "font-family": css("--f-data"), "font-size": 10, "letter-spacing": 2, fill: "var(--brass)" }, "GOLDLAYER ALCO"));
+    this.map.replaceChildren(...kids);
+  },
+  renderRings() {
+    const p = cur(), yi = PERIODS.jahr.findIndex((y) => y.from <= p.to && p.to <= y.to), year = PERIODS.jahr[yi];
+    const qi = indexOfMonth("quartal", p.to), quarter = PERIODS.quartal[qi];
+    const kids = [];
+    for (let n = 0; n < 96; n++) {
+      const a = (n * 3.75 * Math.PI) / 180, len = n % 8 === 0 ? 10 : 4;
+      kids.push(sv("line", { x1: 372 * Math.sin(a), y1: -372 * Math.cos(a), x2: (372 + len) * Math.sin(a), y2: -(372 + len) * Math.cos(a), stroke: "var(--star)", "stroke-opacity": n % 8 === 0 ? 0.3 : 0.14 }));
+    }
+    const ring = (items, r0, r1, gap, size) => {
+      const n = items.length, step = 360 / n;
+      items.forEach((it, j) => {
+        const a0 = j * step + gap / 2, a1 = (j + 1) * step - gap / 2, mid = (a0 + a1) / 2;
+        const burn = it.disabled ? 0 : evalAll(it.g, it.i).filter((r) => r.level === "alert").length;
+        const path = sv("path", { class: "arc", d: arcPath(r0, r1, a0, a1),
+          fill: it.selected ? "var(--brass)" : burn ? "var(--alert)" : "var(--star)",
+          "fill-opacity": it.selected ? 0.28 : it.disabled ? 0.02 : burn ? Math.min(0.5, 0.1 + burn * 0.09) : 0.05,
+          stroke: it.selected || it.onPath ? "var(--brass)" : "var(--star)", "stroke-opacity": it.selected ? 1 : it.onPath ? 0.55 : 0.08, "stroke-width": it.selected ? 1.6 : 1 });
+        const lx = ((r0 + r1) / 2) * Math.sin((mid * Math.PI) / 180), ly = (-(r0 + r1) / 2) * Math.cos((mid * Math.PI) / 180);
+        const label = sv("text", { x: lx.toFixed(1), y: (ly + size * 0.36).toFixed(1), "text-anchor": "middle", "font-family": css("--f-data"), "font-size": size, "letter-spacing": 0.8,
+          fill: it.selected ? "var(--star)" : "var(--star-2)", "fill-opacity": it.disabled ? 0.3 : 1, "pointer-events": "none" }, it.label);
+        const g = sv("g", { tabindex: it.disabled ? null : "0", role: "button", "aria-label": it.long || it.label, "aria-pressed": String(!!it.selected) }, path, label);
+        if (!it.disabled) {
+          const go = () => setPeriod(it.g, it.i);
+          g.addEventListener("click", go);
+          g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+          g.addEventListener("pointerenter", (e) => showTip(it.long, `${burn ? burn + " Kennzahlen brauchten dich" : "Ruhige Periode"}. Klick wählt sie.`, e.clientX, e.clientY));
+          g.addEventListener("pointerleave", hideTip);
+        }
+        kids.push(g);
+        if (it.selected) {
+          const a = (mid * Math.PI) / 180;
+          kids.push(sv("path", { d: "M0,-6 L6,0 L0,6 L-6,0 Z", transform: `translate(${((r1 + 10) * Math.sin(a)).toFixed(1)},${(-(r1 + 10) * Math.cos(a)).toFixed(1)}) rotate(${mid})`, fill: "var(--brass)", style: "filter: drop-shadow(0 0 6px var(--brass))" }));
+        }
+      });
+    };
+    ring(PERIODS.jahr.map((y) => ({ g: "jahr", i: y.i, label: y.partial ? y.label + "*" : y.label, long: y.long, selected: S.g === "jahr" && y.i === yi, onPath: y.i === yi })), 466, 500, 1.4, 14);
+    ring([1, 2, 3, 4].map((q) => { const i = PERIODS.quartal.findIndex((x) => x.y === year.y && x.q === q); return i < 0 ? { g: "quartal", i: 0, label: `Q${q}`, disabled: true } : { g: "quartal", i, label: `Q${q} ${String(year.y).slice(2)}`, long: PERIODS.quartal[i].long, selected: S.g === "quartal" && i === qi, onPath: S.g !== "jahr" && i === qi }; }), 428, 458, 1.2, 13);
+    if (S.g === "jahr") {
+      kids.push(sv("circle", { r: 405, fill: "none", stroke: "var(--star)", "stroke-opacity": 0.06, "stroke-width": 26 }),
+        sv("text", { y: -401, "text-anchor": "middle", "font-family": css("--f-data"), "font-size": 10, "letter-spacing": 1.6, fill: "var(--dim)" }, "QUARTAL WÄHLEN FÜR MONATE"));
+    } else {
+      ring([0, 1, 2].map((n) => { const t = ym(quarter.y, (quarter.q - 1) * 3 + n + 1); return t > N - 1 ? { g: "monat", i: 0, label: MON[mOf(t)], disabled: true } : { g: "monat", i: t, label: MON[mOf(t)], long: PERIODS.monat[t].long, selected: S.g === "monat" && t === p.to }; }), 392, 420, 1, 12);
+    }
+    this.rings.replaceChildren(...kids);
+  },
+  updateStars(flash) {
+    const pins = this.pinned();
+    for (const k of KPIS) {
+      const st = this.stars[k.id], r = evaluate(k, S.g, S.i), { f, t } = progressOf(r);
+      st.halo.setAttribute("r", (16 + 58 * r.mag).toFixed(1));
+      st.halo.setAttribute("fill", `url(#halo-${r.kind})`);
+      st.core.setAttribute("r", (2.2 + 4 * r.mag).toFixed(1));
+      st.prog.setAttribute("stroke-dasharray", `${(f * 100).toFixed(1)} 100`);
+      st.prog.setAttribute("stroke", kindVar(r.kind === "calm" ? "info" : r.kind));
+      st.tick.setAttribute("visibility", t !== null ? "visible" : "hidden");
+      if (t !== null) st.tick.setAttribute("transform", `rotate(${(t * 360).toFixed(1)})`);
+      st.pulse.setAttribute("visibility", r.level === "alert" ? "visible" : "hidden");
+      st.val.textContent = F(k, r.cur);
+      st.pin.setAttribute("visibility", pins.includes(k.id) ? "visible" : "hidden");
+      st.g.setAttribute("aria-label", `${k.long}: ${r.answer}. ${pins.includes(k.id) ? "Angeheftet" : "Klick heftet die Karte an"}`);
+      if (flash === k.id && !reduced) st.g.animate([{ opacity: 0.3 }, { opacity: 1 }], { duration: 700 });
+    }
+  },
+  renderDock(flash) {
+    const pins = this.pinned();
+    this.count.textContent = `${pins.length} angeheftet`;
+    if (!pins.length) { this.dock.replaceChildren(h("p", { class: "c-empty", text: "Noch keine Karte angeheftet. Klick auf einen Stern, oder lass Lumina wählen." })); return; }
+    flip(this.dock, ".mod", () => this.dock.replaceChildren(...pins.map((id) => {
+      const el = moduleCard(K[id], { ns: "c", size: "M", tools: true, onRemove: () => this.togglePin(id), onForm: () => this.renderDock() });
+      if (flash === id) { el.classList.add("enter", "is-new"); setTimeout(() => el.classList.remove("is-new"), 1800); }
+      return el;
+    })));
+    if (flash) { const el = this.dock.querySelector(`[data-id="${flash}"]`); if (el) el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" }); }
+  },
+  update(first, flash) {
+    this.renderRings();
+    this.updateStars(flash);
+    this.renderDock(flash);
+    if (first) this.dock.querySelectorAll(".mod").forEach((m) => m.classList.add("enter"));
+  },
+  wire() {
+    this.stage.addEventListener("pointermove", (e) => {
+      if (reduced) return;
+      const b = this.stage.getBoundingClientRect();
+      const mx = (e.clientX - b.left) / b.width - 0.5, my = (e.clientY - b.top) / b.height - 0.5;
+      this.map.style.transform = `translate(${(-mx * 14).toFixed(1)}px, ${(-my * 14).toFixed(1)}px)`;
+      this.rings.style.transform = `rotate(${(mx * 3).toFixed(2)}deg)`;
+    });
+    this.stage.addEventListener("pointerleave", () => { this.map.style.transform = ""; this.rings.style.transform = ""; });
+  },
+};
+
+// ───────────── Start ─────────────
+function showConcept(name) {
+  if (!CONCEPTS[name]) name = "instrumente";
+  S.concept = name;
+  document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.concept === name)));
+  for (const [n, c] of Object.entries(CONCEPTS)) c.el.hidden = n !== name;
+  const c = CONCEPTS[name];
+  if (!c.mounted) c.mount(); else c.update();
+  if (location.hash.slice(1) !== name) location.hash = name;
+}
+document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => showConcept(t.dataset.concept)));
+addEventListener("hashchange", () => { const n = location.hash.slice(1); if (CONCEPTS[n] && n !== S.concept) showConcept(n); });
+document.addEventListener("keydown", (e) => {
+  if (e.target.closest && e.target.closest("input, textarea")) return;
+  if (e.key === "[") setPeriod(S.g, S.i - 1);
+  else if (e.key === "]") setPeriod(S.g, S.i + 1);
+});
+renderBrief(false);
+renderPeriodLabel();
+showConcept(location.hash.slice(1));
+</script>

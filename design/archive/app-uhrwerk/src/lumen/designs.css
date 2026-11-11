@@ -1,0 +1,46 @@
+/* Lumen: the design languages of Lumantic. Each is one block of tokens; the
+   components only read tokens. A corporate design is one more block:
+   :root[data-design="firma"] { --accent: …; --f-ui: …; --radius: …; }
+   Status colours (--alert, --watch, --good) keep their meaning in every design. */
+:root {
+  --bg: #05070f; --bg-2: #0b1122; --surface: rgba(12, 17, 34, .74); --surface-2: rgba(255, 255, 255, .03); --chrome: rgba(7, 10, 20, .82);
+  --ink: #eee8d9; --ink-2: #b4ae9f; --dim: #7d7a71;
+  --line: rgba(238, 232, 217, .11); --line-2: rgba(238, 232, 217, .24);
+  --accent: #d6b06a; --alert: #ff6b4d; --watch: #f3b746; --good: #63d39f;
+  --c1: #d6b06a; --c2: #6f9fd6; --c3: #c58bd0;
+  --halo: 1; --mark: 1; --radius: 0px; --blur: 10px; --shadow: none; --dash: none;
+  --f-display: "Cormorant Garamond", Georgia, serif; --f-voice: "Cormorant Garamond", Georgia, serif;
+  --f-ui: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif; --f-data: "Geist Mono", ui-monospace, Consolas, monospace;
+  --voice-style: italic; --voice-size: 1.15; --display-weight: 600; --label-case: uppercase;
+  --page: radial-gradient(ellipse 70% 55% at 30% 0%, color-mix(in srgb, #d6b06a 7%, #0b1122) 0%, transparent 70%);
+  --accent-soft: color-mix(in srgb, var(--accent) 15%, transparent);
+  --past: color-mix(in srgb, var(--accent) 9%, transparent);
+  color-scheme: dark;
+}
+:root[data-design="zifferblatt"] {
+  --bg: #eceef1; --bg-2: #ffffff; --surface: #ffffff; --surface-2: #f5f6f8; --chrome: rgba(246, 247, 249, .9);
+  --ink: #15223d; --ink-2: #4b5772; --dim: #8892a6;
+  --line: rgba(21, 34, 61, .1); --line-2: rgba(21, 34, 61, .2);
+  --accent: #2348b5; --alert: #c63f2b; --watch: #b07a0a; --good: #1c7c52;
+  --c1: #2348b5; --c2: #7b8db8; --c3: #c9a24a;
+  --halo: 0; --mark: 0; --radius: 14px; --blur: 0px; --shadow: 0 1px 2px rgba(21, 34, 61, .05), 0 10px 30px rgba(21, 34, 61, .07); --dash: none;
+  --f-display: "Manrope", system-ui, sans-serif; --f-voice: "Newsreader", Georgia, serif;
+  --f-ui: "Manrope", system-ui, sans-serif; --f-data: "IBM Plex Mono", ui-monospace, monospace;
+  --voice-style: italic; --voice-size: 1.05; --display-weight: 700; --label-case: uppercase;
+  --page: radial-gradient(ellipse 60% 50% at 70% 0%, #ffffff 0%, transparent 70%);
+  color-scheme: light;
+}
+:root[data-design="messtisch"] {
+  --bg: #0b1f36; --bg-2: #0f2744; --surface: rgba(13, 36, 63, .86); --surface-2: rgba(127, 211, 247, .04); --chrome: rgba(9, 27, 48, .9);
+  --ink: #e4f0f9; --ink-2: #9dbfd7; --dim: #6889a4;
+  --line: rgba(150, 205, 240, .16); --line-2: rgba(150, 205, 240, .34);
+  --accent: #7fd3f7; --alert: #ff7a59; --watch: #f2c14e; --good: #6fe3b0;
+  --c1: #7fd3f7; --c2: #f2c14e; --c3: #c6a6ff;
+  --halo: .35; --mark: 1; --radius: 2px; --blur: 0px; --shadow: none; --dash: 4 3;
+  --f-display: "IBM Plex Sans Condensed", system-ui, sans-serif; --f-voice: "IBM Plex Sans Condensed", system-ui, sans-serif;
+  --f-ui: "IBM Plex Sans Condensed", system-ui, sans-serif; --f-data: "IBM Plex Mono", ui-monospace, monospace;
+  --voice-style: italic; --voice-size: 1; --display-weight: 600; --label-case: uppercase;
+  --page: linear-gradient(rgba(127, 211, 247, .06) 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, rgba(127, 211, 247, .06) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(rgba(127, 211, 247, .1) 1px, transparent 1px) 0 0 / 120px 120px, linear-gradient(90deg, rgba(127, 211, 247, .1) 1px, transparent 1px) 0 0 / 120px 120px;
+  color-scheme: dark;
+}

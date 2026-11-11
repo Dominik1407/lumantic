@@ -1,0 +1,97 @@
+{
+  "data": {
+    "type": "duckdb",
+    "name": "ALCO",
+    "path": "goldlayer/gold.duckdb",
+    "schema": "gold",
+    "duckdb": "",
+    "windmill": {
+      "url": "",
+      "workspace": "lumantic",
+      "describe": "f/lumantic/describe",
+      "query": "f/lumantic/query"
+    }
+  },
+  "metrics": "",
+  "kosmen": [
+    {
+      "id": "firmenkunden",
+      "data": {
+        "type": "files",
+        "name": "Firmenkunden",
+        "path": "goldlayer/firmenkunden",
+        "schema": "gold",
+        "duckdb": "",
+        "windmill": {
+          "url": "",
+          "workspace": "lumantic",
+          "describe": "f/lumantic/describe",
+          "query": "f/lumantic/query"
+        }
+      },
+      "metrics": "config/beispiele/firmenkunden.json"
+    },
+    {
+      "id": "privatkunden",
+      "data": {
+        "type": "files",
+        "name": "Privatkunden",
+        "path": "goldlayer/privatkunden",
+        "schema": "gold",
+        "duckdb": "",
+        "windmill": {
+          "url": "",
+          "workspace": "lumantic",
+          "describe": "f/lumantic/describe",
+          "query": "f/lumantic/query"
+        }
+      },
+      "metrics": "config/beispiele/privatkunden.json"
+    }
+  ],
+  "ai": {
+    "enabled": true,
+    "provider": "anthropic",
+    "model": "claude-opus-5-5",
+    "baseURL": ""
+  },
+  "ui": {
+    "design": "nebel",
+    "font": "",
+    "accent": "",
+    "motion": "voll",
+    "textSize": "normal",
+    "start": "heute",
+    "lens": "1J",
+    "hints": true
+  },
+  "brand": {
+    "name": "Musterbank",
+    "logo": "musterbank.svg",
+    "logoDark": "musterbank-dunkel.svg",
+    "designs": [
+      {
+        "id": "musterbank",
+        "name": "Musterbank",
+        "base": "kreide",
+        "colors": {
+          "bg": "#ffffff",
+          "bg2": "#f4f6f9",
+          "ink": "#0b1f3a",
+          "ink2": "#33445e",
+          "dim": "#5a6a80",
+          "line": "#c9d2de",
+          "grid": "#d6dde7",
+          "accent": "#00539f",
+          "accentInk": "#ffffff"
+        },
+        "fonts": {
+          "text": "Source Sans 3",
+          "ui": "Source Sans 3",
+          "mono": "IBM Plex Mono"
+        },
+        "fontFiles": []
+      }
+    ]
+  }
+}
