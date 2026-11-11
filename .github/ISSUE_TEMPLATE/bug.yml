@@ -1,0 +1,46 @@
+name: Bug report
+description: Something does not work as it should.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: And what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open …
+        2. Click …
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Data source
+      options:
+        - DuckDB
+        - Files (CSV or Parquet)
+        - Windmill
+        - Snowflake
+        - Databricks
+        - Not relevant
+  - type: input
+    id: version
+    attributes:
+      label: Lumantic version
+      description: Shown in the settings under «Über».
+  - type: input
+    id: system
+    attributes:
+      label: System and browser
+      placeholder: Windows 11, Edge 142
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or logs
+      description: Please remove tokens and real figures first.

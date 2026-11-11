@@ -332,3 +332,15 @@ Bildschirmfotos in `scripts/ui-test/shots/` ab.
 - Lagebericht als Nachricht in Teams oder per Mail, jeden Morgen
 - Windmill, Snowflake und Databricks gegen echte Instanzen testen
 - Korrektur für Mehrfachvergleiche, wenn Lumina sehr viele Reihen prüft
+
+## Mitmachen
+
+Ideen und Fehler sind als Issue jederzeit willkommen. Pull Requests bitte erst nach Absprache in
+einem Issue; wie das geht und wo Hilfe am meisten bringt, steht in
+[CONTRIBUTING.md](CONTRIBUTING.md) (englisch). Sicherheitslücken bitte privat melden, siehe
+[SECURITY.md](SECURITY.md).
+
+## Lizenz
+
+Lumantic steht unter der [Apache License 2.0](LICENSE). Hinweise zu den mitgelieferten Schriften
+stehen in [NOTICE](NOTICE).
