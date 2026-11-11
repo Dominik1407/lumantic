@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"lumantic/internal/card"
+	"github.com/Dominik1407/lumantic/internal/card"
 )
 
 var ErrNotFound = errors.New("Nicht gefunden")

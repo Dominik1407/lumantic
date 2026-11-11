@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"lumantic/internal/adapter"
-	"lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/config"
 )
 
 func TestDueAndNext(t *testing.T) {

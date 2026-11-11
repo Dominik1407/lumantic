@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"lumantic/internal/config"
-	"lumantic/internal/katalog"
-	"lumantic/internal/metrics"
+	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/katalog"
+	"github.com/Dominik1407/lumantic/internal/metrics"
 )
 
 // Key figures can be added, changed and removed from the settings, per Kosmos

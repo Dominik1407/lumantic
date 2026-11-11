@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"lumantic/internal/adapter"
-	"lumantic/internal/auth"
-	"lumantic/internal/config"
-	"lumantic/internal/metrics"
+	"github.com/Dominik1407/lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/auth"
+	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/metrics"
 )
 
 // Who may do what. The login (internal/auth) says who someone is; the settings

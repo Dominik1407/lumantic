@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/config"
 )
 
 // guard protects the changing endpoints from other websites: the server runs

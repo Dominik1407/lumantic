@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/config"
 )
 
 // secrets stands in for the secrets of one Kosmos.

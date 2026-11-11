@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"lumantic/internal/config"
-	"lumantic/internal/store"
+	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/store"
 )
 
 // restart opens the config and the store of e again, the way a new process would.

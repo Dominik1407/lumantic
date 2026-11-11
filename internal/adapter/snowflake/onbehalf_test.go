@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/adapter"
 )
 
 // In the person's name, Snowflake gets their login token as an OAuth token and

@@ -8,8 +8,8 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"lumantic/internal/ai"
-	"lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/ai"
+	"github.com/Dominik1407/lumantic/internal/config"
 )
 
 // askLumina answers a question about the month the page shows. The app sends

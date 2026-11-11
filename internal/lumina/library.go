@@ -1,6 +1,6 @@
 package lumina
 
-import "lumantic/internal/card"
+import "github.com/Dominik1407/lumantic/internal/card"
 
 // entry is a ready-made question for the demo gold layer. The library is the
 // start board, the source of suggestions, and the offline fallback when no

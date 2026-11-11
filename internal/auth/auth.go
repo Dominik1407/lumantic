@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/config"
 )
 
 // User is a signed-in person.

@@ -11,12 +11,12 @@ import (
 	"os"
 	"time"
 
-	"lumantic/internal/auth"
-	"lumantic/internal/config"
-	"lumantic/internal/lumina"
-	"lumantic/internal/server"
-	"lumantic/internal/store"
-	"lumantic/web"
+	"github.com/Dominik1407/lumantic/internal/auth"
+	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/lumina"
+	"github.com/Dominik1407/lumantic/internal/server"
+	"github.com/Dominik1407/lumantic/internal/store"
+	"github.com/Dominik1407/lumantic/web"
 )
 
 // loopback says whether an address listens only on this machine.

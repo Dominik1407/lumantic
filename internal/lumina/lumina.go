@@ -16,8 +16,8 @@ import (
 	"github.com/anthropics/anthropic-sdk-go/v2"
 	"github.com/anthropics/anthropic-sdk-go/v2/option"
 
-	"lumantic/internal/card"
-	"lumantic/internal/catalog"
+	"github.com/Dominik1407/lumantic/internal/card"
+	"github.com/Dominik1407/lumantic/internal/catalog"
 )
 
 type Translator interface {

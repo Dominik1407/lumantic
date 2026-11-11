@@ -10,9 +10,9 @@ import (
 	"sync"
 	"testing"
 
-	"lumantic/internal/adapter"
-	"lumantic/internal/config"
-	"lumantic/internal/source"
+	"github.com/Dominik1407/lumantic/internal/adapter"
+	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/source"
 )
 
 // fakeDatabricks answers the SQL Statement API from one small table, enough for
