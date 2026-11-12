@@ -21,46 +21,15 @@ import (
 	"github.com/Dominik1407/lumantic/internal/metrics"
 )
 
-// Table is one table of an example gold layer, with what its columns mean.
-type Table struct {
-	Name, Desc string
-	Columns    []Column
-	Rows       [][]string
-}
-
-type Column struct{ Name, Type, Desc string }
-
-func export(ts []table) []Table {
-	out := make([]Table, len(ts))
-	for i, t := range ts {
-		cols := make([]Column, len(t.cols))
-		for j, c := range t.cols {
-			cols[j] = Column{c.name, c.typ, c.desc}
-		}
-		out[i] = Table{Name: t.name, Desc: t.desc, Columns: cols, Rows: t.rows}
-	}
-	return out
-}
-
-// Layer is a gold layer kept as a folder of CSV files.
-type Layer struct {
-	Folder string
-	Tables []Table
-}
-
 // ALCO is the ALCO gold layer as it stands on the day today.
 func ALCO(today time.Time) (ts []Table) {
-	at(today, func() { ts = export(alcoTables()) })
+	at(today, func() { ts = alcoTables() })
 	return ts
 }
 
 // Folders are Firmenkunden, Privatkunden and Industrie as they stand on the day today.
 func Folders(today time.Time) (ls []Layer) {
-	at(today, func() {
-		for _, l := range folderLayers() {
-			ls = append(ls, Layer{Folder: l.folder, Tables: export(l.tables)})
-		}
-	})
+	at(today, func() { ls = folderLayers() })
 	return ls
 }
 
@@ -70,25 +39,21 @@ func WriteCSV(dir string, ts []Table) error {
 		return err
 	}
 	for _, t := range ts {
-		tb := table{name: t.Name, desc: t.Desc, rows: t.Rows}
-		for _, c := range t.Columns {
-			tb.cols = append(tb.cols, column{c.Name, c.Type, c.Desc})
-		}
-		if err := writeCSV(filepath.Join(dir, t.Name+".csv"), tb); err != nil {
+		if err := writeCSV(filepath.Join(dir, t.Name+".csv"), t); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// Example is one Kosmos of a first start.
-type Example struct {
+// example is one Kosmos of a first start.
+type example struct {
 	ID, Name, Folder, Schema, Defs string
 }
 
-// Examples are the Kosmen of a first start, Industrie first: Lumantic fits any
+// examples are the Kosmen of a first start, Industrie first: Lumantic fits any
 // trade, not only banks.
-var Examples = []Example{
+var examples = []example{
 	{ID: "industrie", Name: "Industrie", Folder: "industrie", Schema: "gold", Defs: "industrie.json"},
 	{ID: "alco", Name: "ALCO", Folder: "alco", Schema: "gold_alco", Defs: "alco.json"},
 }
@@ -98,7 +63,7 @@ var Examples = []Example{
 // saves a setting.
 func Config(dir string) config.Config {
 	c := config.Defaults()
-	for i, e := range Examples {
+	for i, e := range examples {
 		d := config.Data{Type: "files", Name: e.Name, Path: filepath.Join(dir, e.Folder), Schema: e.Schema, Example: true}
 		config.NormalizeData(&d)
 		m := filepath.Join(dir, e.Defs)
@@ -132,13 +97,13 @@ func Write(dir string, today time.Time) error {
 }
 
 func write(dir string) error {
-	layers := map[string][]table{"alco": alcoTables(), "industrie": industrieTables()}
-	for _, e := range Examples {
+	layers := map[string][]Table{"alco": alcoTables(), "industrie": industrieTables()}
+	for _, e := range examples {
 		folder := filepath.Join(dir, e.Folder)
 		if err := os.RemoveAll(folder); err != nil {
 			return err
 		}
-		if err := WriteCSV(folder, export(layers[e.ID])); err != nil {
+		if err := WriteCSV(folder, layers[e.ID]); err != nil {
 			return err
 		}
 		c, err := definitions(e)
@@ -156,7 +121,7 @@ func write(dir string) error {
 }
 
 // definitions are the definitions of an example as the program carries them.
-func definitions(e Example) (*metrics.Config, error) {
+func definitions(e example) (*metrics.Config, error) {
 	if e.ID == "alco" {
 		return metrics.Default(), nil
 	}

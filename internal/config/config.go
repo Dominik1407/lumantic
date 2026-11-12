@@ -301,24 +301,36 @@ func (m *Manager) Begin(c Config) {
 	}
 }
 
+// Sources are the data sources of every Kosmos, the first one first.
+func (c Config) Sources() []Data {
+	out := []Data{c.Data}
+	for _, k := range c.Kosmen {
+		out = append(out, k.Data)
+	}
+	return out
+}
+
 // Examples says whether every Kosmos shows only the examples Lumantic writes itself.
 func (c Config) Examples() bool {
-	if !c.Data.Example {
-		return false
-	}
-	for _, k := range c.Kosmen {
-		if !k.Data.Example {
+	for _, d := range c.Sources() {
+		if !d.Example {
 			return false
 		}
 	}
 	return true
 }
 
-// Moved says whether b reads from another place than a: another kind of
-// source, file, folder, schema or connection. A new name is no move.
-func Moved(a, b Data) bool {
+// Adopt makes an example that gets another source the person's own: no
+// example any more. It says whether that happened; the example's key figures
+// then go too. A new name alone changes nothing.
+func Adopt(before Data, after *Data) bool {
+	a, b := before, *after
 	a.Name, b.Name, a.Example, b.Example, a.DuckDB, b.DuckDB = "", "", false, false, "", ""
-	return !reflect.DeepEqual(a, b)
+	if !before.Example || reflect.DeepEqual(a, b) {
+		return false
+	}
+	after.Example = false
+	return true
 }
 
 // Dir is the folder of the config file; kennzahlen.json and brand/ live there.

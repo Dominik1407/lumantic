@@ -52,8 +52,8 @@ func (s *Server) getKosmen(w http.ResponseWriter, r *http.Request) {
 		if s.sees(u, rm) {
 			info := s.infoOf(rm)
 			// In English a Kosmos named like its definitions reads by their English title.
-			if k := s.get(rm.id); k != nil && k.merged != nil && i18n.Wants(r) && k.merged.Title == info.Name && k.merged.En["title"] != "" {
-				info.Name = k.merged.En["title"]
+			if k := s.get(rm.id); k != nil && k.merged != nil && k.merged.Title == info.Name {
+				info.Name = k.merged.En.Or(i18n.Wants(r), "title", info.Name)
 			}
 			out = append(out, info)
 		}

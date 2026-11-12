@@ -321,8 +321,8 @@ func (s *Server) putSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	// An example that gets another source is the person's own from then on: no
 	// example any more, and the example's definitions go with it.
-	if file.Data.Example && config.Moved(file.Data, cand.Data) {
-		cand.Data.Example, cand.Metrics = false, ""
+	if config.Adopt(file.Data, &cand.Data) {
+		cand.Metrics = ""
 	}
 	if err := config.Validate(cand); err != nil {
 		fail(w, 422, err.Error())
@@ -412,8 +412,8 @@ func (s *Server) putRoomData(r *http.Request, id string, raw json.RawMessage) er
 	}
 	cur := s.get(id)
 	// An example that gets another source is the person's own from then on.
-	if before.Example && config.Moved(before, d) {
-		d.Example, c.Kosmen[i].Metrics = false, ""
+	if config.Adopt(before, &d) {
+		c.Kosmen[i].Metrics = ""
 		defs, _ := defsFor(room{id: id, data: d})
 		cur = &kosmos{defs: defs, perPerson: cur.perPerson}
 	}

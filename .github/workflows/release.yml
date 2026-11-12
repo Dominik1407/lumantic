@@ -111,14 +111,8 @@ jobs:
           ext=""; [ "${{ matrix.goos }}" = windows ] && ext=".exe"
           export LUMANTIC_HOME="$RUNNER_TEMP/lumantic-home" LUMANTIC_BROWSER=0 LUMANTIC_ADDR=127.0.0.1:8099
           "./out/lumantic$ext" > "$RUNNER_TEMP/lumantic.log" 2>&1 &
-          pid=$!
-          for i in $(seq 1 60); do curl -fs http://127.0.0.1:8099/healthz >/dev/null && break; sleep 1; done
-          curl -fs http://127.0.0.1:8099/api/kosmen > kosmen.json
-          kill $pid || true
-          cat "$RUNNER_TEMP/lumantic.log"
-          cat kosmen.json
-          ready=$(grep -o '"ok":true' kosmen.json | wc -l)
-          [ "$ready" -ge 2 ] || { echo "the examples are not ready"; exit 1; }
+          trap 'kill $! || true; cat "$RUNNER_TEMP/lumantic.log"' EXIT
+          bash scripts/smoke.sh http://127.0.0.1:8099
 
       - uses: actions/download-artifact@v4
         with:
@@ -163,13 +157,12 @@ jobs:
         run: |
           docker buildx build --platform ${{ matrix.platform }} --load -t lumantic:try .
           docker run -d --name try -p 127.0.0.1:8080:8080 lumantic:try
-          for i in $(seq 1 90); do
+          trap 'docker logs try' EXIT
+          bash scripts/smoke.sh http://127.0.0.1:8080
+          for i in $(seq 1 45); do
             [ "$(docker inspect -f '{{.State.Health.Status}}' try)" = healthy ] && break; sleep 2
           done
-          docker logs try
           docker inspect -f '{{.State.Health.Status}}' try | grep -q healthy
-          ready=$(curl -fs http://127.0.0.1:8080/api/kosmen | grep -o '"ok":true' | wc -l)
-          [ "$ready" -ge 2 ] || { echo "the examples are not ready"; exit 1; }
           docker exec try id -u | grep -qv '^0$'
 
       - name: Log in to ghcr.io

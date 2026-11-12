@@ -31,7 +31,7 @@ func DuckDBBin(configured string) (string, error) {
 	}
 	p, err := exec.LookPath(bin)
 	if err != nil {
-		return "", fmt.Errorf("Das DuckDB-Programm wurde nicht gefunden (%s). Installieren mit «winget install DuckDB.cli» oder den Pfad unter Daten eintragen.", bin)
+		return "", adapter.NoDuckDB(bin)
 	}
 	return p, nil
 }

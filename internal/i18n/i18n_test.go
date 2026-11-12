@@ -39,6 +39,7 @@ func TestWhichLanguage(t *testing.T) {
 		{"/api/me", "en", "", true},
 		{"/api/me", "en-GB,de;q=0.8", "", true},
 		{"/api/me", "de-CH,de;q=0.9,en;q=0.8", "", false},
+		{"/api/me", "fr-CH,fr;q=0.9", "", true}, // like the interface: German only for German
 		{"/api/me", "", "", false},
 		{"/auth/callback", "de-CH", "en", true}, // the choice in Lumantic beats the browser's
 		{"/api/events?lang=en", "de", "de", true},
@@ -57,7 +58,7 @@ func TestWhichLanguage(t *testing.T) {
 	}
 }
 
-var verbRe = regexp.MustCompile(`%(\[\d+\])?[sqvwd]`)
+var verbRe = regexp.MustCompile(`%[sqvwd]`)
 
 func TestTableIsSound(t *testing.T) {
 	seen := map[string]bool{}
@@ -114,5 +115,13 @@ func TestEveryMessageHasItsEnglish(t *testing.T) {
 	}
 	if missing > 0 {
 		t.Logf("%d messages without English; add them to en.go", missing)
+	}
+}
+
+// A per cent sign in a message stays one.
+func TestPercentInAMessage(t *testing.T) {
+	de := "Kennzahl x: Einheit muss %, Mio, Mrd, Tsd, Stk, Tage, h oder Zahl sein"
+	if got := EN(de); got != "Key figure x: unit must be %, Mio, Mrd, Tsd, Stk, Tage, h or Zahl" {
+		t.Fatal(got)
 	}
 }

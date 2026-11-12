@@ -3,7 +3,7 @@
 // «Daten» is about the Kosmos the page shows: its source and its key figures. In the main menu, where the page is in
 // no Kosmos, the same place is «Kosmen»: the list of all, and the form for one more.
 // Every change applies at once. New figures or a new source rebuild the room when the sheet closes.
-import { isEn, switchLang, tr } from "./i18n";
+import { isEn, MON, monthLabel, pick, switchLang, tr } from "./i18n";
 import type { KosmosRoom } from "virtual:kosmos";
 import { api, ApiError, type Catalog, type DataSource, type Grain, type KosmosInfo, type KpiDef, type KpiList, type SecretKey, type SecretState, type Settings, type SourceSecrets, type TestResult } from "./api";
 import { $, h } from "./dom";
@@ -27,11 +27,10 @@ export interface SettingsHost {
   catalog(kpi?: string): void; // the Sternkatalog, at a figure's entry if one is named
 }
 
-// A figure's or topic's name in the language of the interface: the English one where the team wrote it.
-const say = (o: { name: string; en?: Record<string, string> }) => (isEn() && o.en?.name) || o.name;
+// A figure's or topic's name in the language of the interface.
+const say = (o: { name: string; en?: Record<string, string> }) => pick(o, "name", o.name);
 const TABS: [Tab, string][] = [["darstellung", tr("Darstellung", "Look")], ["start", tr("Start", "Start")], ["daten", tr("Daten", "Data")], ["lumina", "Lumina"], ["ueber", tr("Über", "About")]];
 const REOPEN = "lumantic.reopen";
-const MON = isEn() ? ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] : ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
 export const TYPES = [
   { v: "duckdb", name: tr("DuckDB-Datei", "DuckDB file"), note: tr("Eine .duckdb-Datei mit dem Goldlayer", "A .duckdb file with the gold layer") },
   { v: "files", name: tr("Ordner mit Parquet- oder CSV-Dateien", "Folder of Parquet or CSV files"), note: tr("Jede Datei wird eine Tabelle", "Every file becomes a table") },
@@ -46,7 +45,6 @@ const UNITS = [{ v: "%", name: "%" }, { v: "Mio", name: tr("Mio. CHF", "CHF m") 
   { v: "Stk", name: tr("Stück", "Pieces") }, { v: "Tage", name: tr("Tage", "Days") }, { v: "h", name: tr("Stunden", "Hours") }, { v: "Zahl", name: tr("Zahl", "Number") }] as const;
 const KINDS = [{ v: "stock", name: tr("Bestand am Monatsende", "Balance at the end of the month") }, { v: "flow", name: tr("Summe im Monat", "Sum over the month") }, { v: "avg", name: tr("Durchschnitt der Monate", "Average of the months") }] as const;
 
-const monthLabel = (ym: string) => { const [y, m] = ym.split("-").map(Number); return y && m ? `${MON[m - 1]} ${y}` : ym; };
 const thousands = (v: number) => Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, tr("’", ","));
 function ago(iso: string) {
   const t = Date.parse(iso);

@@ -1,7 +1,7 @@
 // The Go server's JSON API (internal/server). Numbers come straight from the gold layer.
 // A Kosmos is one room over one data source. Everything about a Kosmos (figures, pages, source, key figures) is asked
 // with ?k=<id>; setKosmos says once which one this page is in. Designs, Lumina and the brand are shared by all.
-import { LANG, tr } from "./i18n";
+import { tr } from "./i18n";
 
 
 type Series = (number | null)[];
@@ -189,7 +189,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     res = await fetch(path, {
       method,
       // The server answers in the language of the interface: its messages, and Lumina.
-      headers: body === undefined ? { "Accept-Language": LANG } : { "Content-Type": "application/json", "Accept-Language": LANG },
+      headers: body === undefined ? {} : { "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {

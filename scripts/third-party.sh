@@ -31,10 +31,8 @@ cd "$(dirname "$0")/.."
       echo
     done
 
-  # DuckDB inside the bindings: its version is written in the module's, 0.10506.0 is DuckDB 1.5.6.
-  v=$(go list -m -f '{{.Version}}' github.com/duckdb/duckdb-go-bindings)
-  n=${v#v0.}; n=${n%%.*}
-  duckdb="v${n:0:1}.$((10#${n:1:2})).$((10#${n:3:2}))"
+  # DuckDB inside the bindings, with the third-party code in its source.
+  duckdb=$(bash scripts/duckdb-version.sh)
   tmp=$(mktemp -d)
   trap 'rm -rf "$tmp"' EXIT
   curl -fsSL "https://github.com/duckdb/duckdb/archive/refs/tags/$duckdb.tar.gz" | tar -xz -C "$tmp"

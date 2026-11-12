@@ -14,7 +14,7 @@ import "math"
 // further, the EBIT margin misses the higher budget of 2026, and the plants'
 // OEE keeps getting better.
 
-func industrieTables() []table {
+func industrieTables() []Table {
 	r := &mulberry{s: 7331}
 	q := alcoMonths
 	f2 := func(v float64) string { return ftoa(v, 2) }
@@ -56,20 +56,20 @@ func industrieTables() []table {
 
 	gesamtBy, lagerBy := drift(gesamt, []float64{0.38, 0.41, 0.21}, 7), drift(lagerwert, []float64{0.44, 0.35, 0.21}, 10)
 
-	finanzen := table{name: "finanzen_monat", desc: "Umsatz und Auftragseingang pro Monat und Sparte in Mio. CHF",
-		cols: []column{{"monat", "DATE", monthCol}, {"sparte", "VARCHAR", "Sparte"},
+	finanzen := Table{Name: "finanzen_monat", Desc: "Umsatz und Auftragseingang pro Monat und Sparte in Mio. CHF",
+		Cols: []Column{{"monat", "DATE", monthCol}, {"sparte", "VARCHAR", "Sparte"},
 			{"umsatz_mio", "DOUBLE", "Fakturierter Nettoumsatz"}, {"auftragseingang_mio", "DOUBLE", "Neu eingegangene Bestellungen"}}}
-	kpi := table{name: "kpi_monat", desc: "Kennzahlen der ganzen Gruppe pro Monat",
-		cols: []column{{"monat", "DATE", monthCol}, {"ebit_marge_pct", "DOUBLE", "EBIT in Prozent des Umsatzes"},
+	kpi := Table{Name: "kpi_monat", Desc: "Kennzahlen der ganzen Gruppe pro Monat",
+		Cols: []Column{{"monat", "DATE", monthCol}, {"ebit_marge_pct", "DOUBLE", "EBIT in Prozent des Umsatzes"},
 			{"materialquote_pct", "DOUBLE", "Materialaufwand in Prozent des Umsatzes"}, {"oee_pct", "DOUBLE", "Gesamtanlageneffektivität aller Werke"},
 			{"liefertreue_pct", "DOUBLE", "Pünktlich und vollständig gelieferte Aufträge in Prozent"},
 			{"lagerreichweite_tage", "DOUBLE", "Reichweite des Lagers in Arbeitstagen"},
 			{"ausschussquote_pct", "DOUBLE", "Ausschuss in Prozent der gefertigten Teile"},
 			{"ausschuss_stk", "DOUBLE", "Teile mit Fehler"}, {"gesamt_stk", "DOUBLE", "Gefertigte Teile insgesamt"}}}
-	produktion := table{name: "produktion_monat", desc: "Gefertigte Teile pro Monat und Werk",
-		cols: []column{{"monat", "DATE", monthCol}, {"werk", "VARCHAR", "Werk"}, {"gutteile_stk", "DOUBLE", "Fehlerfreie Teile"}}}
-	lager := table{name: "lager_monat", desc: "Lagerwert pro Werk per Monatsende in Mio. CHF",
-		cols: []column{{"monat", "DATE", monthCol}, {"werk", "VARCHAR", "Werk"}, {"lagerwert_mio", "DOUBLE", "Wert des Lagers per Monatsende"}}}
+	produktion := Table{Name: "produktion_monat", Desc: "Gefertigte Teile pro Monat und Werk",
+		Cols: []Column{{"monat", "DATE", monthCol}, {"werk", "VARCHAR", "Werk"}, {"gutteile_stk", "DOUBLE", "Fehlerfreie Teile"}}}
+	lager := Table{Name: "lager_monat", Desc: "Lagerwert pro Werk per Monatsende in Mio. CHF",
+		Cols: []Column{{"monat", "DATE", monthCol}, {"werk", "VARCHAR", "Werk"}, {"lagerwert_mio", "DOUBLE", "Wert des Lagers per Monatsende"}}}
 	var gut [3][]float64
 	ausM := make([]float64, q)
 	for i := range gut {
@@ -79,24 +79,24 @@ func industrieTables() []table {
 		d := monthDate(t)
 		ausM[t] = gesamt[t] * quote[t] / 100
 		for i, s := range sparten {
-			finanzen.rows = append(finanzen.rows, []string{d, s, f2(umsatzBy[i][t]), f2(eingangBy[i][t])})
+			finanzen.Rows = append(finanzen.Rows, []string{d, s, f2(umsatzBy[i][t]), f2(eingangBy[i][t])})
 		}
 		aus := gesamt[t] * quote[t] / 100
-		kpi.rows = append(kpi.rows, []string{d, f2(ebit[t]), f2(material[t]), f2(oee[t]), f2(otif[t]), f2(reich[t]), f2(quote[t]), f0(aus), f0(gesamt[t])})
+		kpi.Rows = append(kpi.Rows, []string{d, f2(ebit[t]), f2(material[t]), f2(oee[t]), f2(otif[t]), f2(reich[t]), f2(quote[t]), f0(aus), f0(gesamt[t])})
 		for i, w := range werke {
 			gut[i][t] = gesamtBy[i][t] * (1 - quote[t]/100)
-			produktion.rows = append(produktion.rows, []string{d, w, f0(gut[i][t])})
-			lager.rows = append(lager.rows, []string{d, w, f2(lagerBy[i][t])})
+			produktion.Rows = append(produktion.Rows, []string{d, w, f0(gut[i][t])})
+			lager.Rows = append(lager.Rows, []string{d, w, f2(lagerBy[i][t])})
 		}
 	}
 
 	// The company catalog, as the controlling team keeps it beside the data.
-	katalog := table{name: "lumantic_kennzahlen", desc: "Fachkatalog: was die Kennzahlen bedeuten",
-		cols: []column{{"id", "VARCHAR", ""}, {"name", "VARCHAR", ""}, {"definition", "VARCHAR", ""}, {"thema", "VARCHAR", ""},
+	katalog := Table{Name: "lumantic_kennzahlen", Desc: "Fachkatalog: was die Kennzahlen bedeuten",
+		Cols: []Column{{"id", "VARCHAR", ""}, {"name", "VARCHAR", ""}, {"definition", "VARCHAR", ""}, {"thema", "VARCHAR", ""},
 			{"einheit", "VARCHAR", ""}, {"art", "VARCHAR", ""}, {"richtung", "VARCHAR", ""}, {"tabelle", "VARCHAR", ""},
 			{"wert_spalte", "VARCHAR", ""}, {"teile_spalte", "VARCHAR", ""}, {"eigner", "VARCHAR", ""}, {"berechnung", "VARCHAR", ""},
 			{"name_en", "VARCHAR", ""}, {"definition_en", "VARCHAR", ""}, {"thema_en", "VARCHAR", ""}},
-		rows: [][]string{
+		Rows: [][]string{
 			{"umsatz", "Umsatz", "Fakturierter Nettoumsatz ohne MWST, nach Sparte.", "Finanzen", "Mio. CHF", "Fluss", "höher ist besser",
 				"gold.finanzen_monat", "umsatz_mio", "sparte", "Finanzen · M. Keller", "Rechnungen im Monat abzüglich Gutschriften",
 				"Revenue", "Invoiced net revenue without VAT, by division.", "Finance"},
@@ -116,10 +116,10 @@ func industrieTables() []table {
 	// Sales have an annual budget, as controlling sets it; Lumantic spreads it over the months and days.
 	// Budgets hold for calendar years: the year the story ends in, and the one before.
 	y25, y26 := cal.year(2025), cal.year(2026)
-	ziele := table{name: "lumantic_ziele", desc: "Fachkatalog: Ziele und Grenzen mit Gültigkeit",
-		cols: []column{{"kennzahl_id", "VARCHAR", ""}, {"art", "VARCHAR", ""}, {"wert", "DOUBLE", ""}, {"name", "VARCHAR", ""},
+	ziele := Table{Name: "lumantic_ziele", Desc: "Fachkatalog: Ziele und Grenzen mit Gültigkeit",
+		Cols: []Column{{"kennzahl_id", "VARCHAR", ""}, {"art", "VARCHAR", ""}, {"wert", "DOUBLE", ""}, {"name", "VARCHAR", ""},
 			{"gueltig_ab", "VARCHAR", ""}, {"gueltig_bis", "VARCHAR", ""}, {"periode", "VARCHAR", ""}},
-		rows: [][]string{
+		Rows: [][]string{
 			{"umsatz", "Ziel", "480", "Budget " + y25, y25 + "-01-01", y25 + "-12-31", "Jahr"},
 			{"umsatz", "Ziel", "500", "Budget " + y26, y26 + "-01-01", y26 + "-12-31", "Jahr"},
 			{"ebit_marge", "Ziel", "8.0", "Budget " + y25, y25 + "-01-01", y25 + "-12-31", ""},
@@ -129,10 +129,10 @@ func industrieTables() []table {
 			{"liefertreue", "Ziel", "95", "Ziel", "", "", ""},
 			{"liefertreue", "Grenze", "90", "Mindestwert", "", "", ""},
 		}}
-	begriffe := table{name: "lumantic_begriffe", desc: "Fachkatalog: die Wörter des Hauses",
-		cols: []column{{"begriff", "VARCHAR", ""}, {"definition", "VARCHAR", ""}, {"synonyme", "VARCHAR", ""}, {"kennzahl_id", "VARCHAR", ""},
+	begriffe := Table{Name: "lumantic_begriffe", Desc: "Fachkatalog: die Wörter des Hauses",
+		Cols: []Column{{"begriff", "VARCHAR", ""}, {"definition", "VARCHAR", ""}, {"synonyme", "VARCHAR", ""}, {"kennzahl_id", "VARCHAR", ""},
 			{"begriff_en", "VARCHAR", ""}, {"definition_en", "VARCHAR", ""}},
-		rows: [][]string{
+		Rows: [][]string{
 			{"OEE", "Gesamtanlageneffektivität: wie viel von der geplanten Zeit eine Anlage gute Teile im Soll-Takt fertigt.", "Anlageneffektivität; GAE; Overall Equipment Effectiveness", "oee",
 				"OEE", "Overall equipment effectiveness: how much of the planned time a machine makes good parts at the target cycle."},
 			{"OTIF", "On Time In Full: pünktlich und vollständig geliefert.", "Liefertreue; Termintreue", "liefertreue", "OTIF", "On time in full: delivered on time and complete."},
@@ -140,5 +140,5 @@ func industrieTables() []table {
 			{"Book-to-Bill", "Auftragseingang geteilt durch Umsatz. Über 1 wächst der Auftragsbestand, unter 1 schmilzt er.", "Auftragsdeckung", "",
 				"Book-to-bill", "Order intake divided by revenue. Above 1 the order backlog grows, below 1 it shrinks."},
 		}}
-	return append([]table{finanzen, kpi, produktion, lager, katalog, ziele, begriffe}, industrieDaily(&mulberry{s: 4417}, gut, gesamt, ausM)...)
+	return append([]Table{finanzen, kpi, produktion, lager, katalog, ziele, begriffe}, industrieDaily(&mulberry{s: 4417}, gut, gesamt, ausM)...)
 }

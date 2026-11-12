@@ -69,29 +69,36 @@ func mOf(t int) int { return int(cal.month(t).Month()) - 1 }
 
 func monthDate(t int) string { return cal.month(t).Format("2006-01-02") }
 
-type column struct{ name, typ, desc string }
+// Table is one table of an example gold layer, with what its columns mean.
+type Table struct {
+	Name, Desc string
+	Cols       []Column
+	Rows       [][]string
+}
 
-type table struct {
-	name, desc string
-	cols       []column
-	rows       [][]string
+type Column struct{ Name, Type, Desc string }
+
+// Layer is a gold layer kept as a folder of CSV files.
+type Layer struct {
+	Folder string
+	Tables []Table
 }
 
 func itoa(v int) string               { return strconv.Itoa(v) }
 func ftoa(v float64, prec int) string { return strconv.FormatFloat(v, 'f', prec, 64) }
 
-func writeCSV(path string, t table) error {
+func writeCSV(path string, t Table) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	w := csv.NewWriter(f)
-	head := make([]string, len(t.cols))
-	for i, c := range t.cols {
-		head[i] = c.name
+	head := make([]string, len(t.Cols))
+	for i, c := range t.Cols {
+		head[i] = c.Name
 	}
 	w.Write(head)
-	w.WriteAll(t.rows)
+	w.WriteAll(t.Rows)
 	return w.Error()
 }

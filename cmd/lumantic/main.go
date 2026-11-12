@@ -119,6 +119,12 @@ func main() {
 		cfg.Begin(beispiele.Config("beispiele"))
 	}
 	writeExamples(cfg.Effective())
+	// A Lumantic that runs for days writes them anew each day; the folders are watched, so the Kosmen follow.
+	go func() {
+		for range time.Tick(time.Hour) {
+			writeExamples(cfg.Effective())
+		}
+	}()
 
 	st, err := store.Open(env("LUMANTIC_DATA", boardPath), lumina.StartBoard(), store.StartNotes)
 	if err != nil {
@@ -185,10 +191,11 @@ func main() {
 	log.Fatal(http.Serve(ln, srv.Routes()))
 }
 
-// writeExamples writes the examples of the day where the settings expect them.
+// writeExamples writes the examples of the day where the settings expect them;
+// beispiele.Write does nothing when they are already today's.
 func writeExamples(c config.Config) {
 	dirs := map[string]bool{}
-	for _, d := range append([]config.Data{c.Data}, kosmenData(c)...) {
+	for _, d := range c.Sources() {
 		if d.Example {
 			dirs[filepath.Dir(d.Path)] = true
 		}
@@ -198,14 +205,6 @@ func writeExamples(c config.Config) {
 			log.Printf("Beispiele: %v", err)
 		}
 	}
-}
-
-func kosmenData(c config.Config) []config.Data {
-	out := make([]config.Data, len(c.Kosmen))
-	for i, k := range c.Kosmen {
-		out[i] = k.Data
-	}
-	return out
 }
 
 // openBrowser shows Lumantic in the person's browser; LUMANTIC_BROWSER=0 keeps it closed.

@@ -10,7 +10,7 @@ import (
 // today. Each month's days add up to its monthly figures exactly; the running
 // month follows the last one. On the last two working days a press in Brno
 // stands still, so the running week falls behind its plan.
-func industrieDaily(r *mulberry, gut [3][]float64, gesamt, aus []float64) []table {
+func industrieDaily(r *mulberry, gut [3][]float64, gesamt, aus []float64) []Table {
 	f0 := func(v float64) string { return ftoa(math.Round(v), 0) }
 	f2 := func(v float64) string { return ftoa(v, 2) }
 	werke := []string{"Aarau", "Brno", "Suzhou"}
@@ -60,10 +60,10 @@ func industrieDaily(r *mulberry, gut [3][]float64, gesamt, aus []float64) []tabl
 		return out
 	}
 
-	prod := table{name: "produktion_tag", desc: "Gefertigte Gutteile pro Arbeitstag und Werk",
-		cols: []column{{"tag", "DATE", "Arbeitstag"}, {"werk", "VARCHAR", "Werk"}, {"gutteile_stk", "DOUBLE", "Fehlerfreie Teile"}}}
-	qual := table{name: "qualitaet_tag", desc: "Ausschuss der ganzen Gruppe pro Arbeitstag",
-		cols: []column{{"tag", "DATE", "Arbeitstag"}, {"ausschussquote_pct", "DOUBLE", "Ausschuss in Prozent der gefertigten Teile"},
+	prod := Table{Name: "produktion_tag", Desc: "Gefertigte Gutteile pro Arbeitstag und Werk",
+		Cols: []Column{{"tag", "DATE", "Arbeitstag"}, {"werk", "VARCHAR", "Werk"}, {"gutteile_stk", "DOUBLE", "Fehlerfreie Teile"}}}
+	qual := Table{Name: "qualitaet_tag", Desc: "Ausschuss der ganzen Gruppe pro Arbeitstag",
+		Cols: []Column{{"tag", "DATE", "Arbeitstag"}, {"ausschussquote_pct", "DOUBLE", "Ausschuss in Prozent der gefertigten Teile"},
 			{"ausschuss_stk", "DOUBLE", "Teile mit Fehler"}, {"gesamt_stk", "DOUBLE", "Gefertigte Teile insgesamt"}}}
 	for _, m := range months {
 		byWerk := [3][]float64{spread(gut[0], m, 0.08), spread(gut[1], m, 0.08), spread(gut[2], m, 0.08)}
@@ -75,12 +75,12 @@ func industrieDaily(r *mulberry, gut [3][]float64, gesamt, aus []float64) []tabl
 				if w == "Brno" && !d.Before(stop) {
 					v *= 0.38 // the press stands still
 				}
-				prod.rows = append(prod.rows, []string{day, w, f0(v)})
+				prod.Rows = append(prod.Rows, []string{day, w, f0(v)})
 			}
-			qual.rows = append(qual.rows, []string{day, f2(scrap[i] / ges[i] * 100), f0(scrap[i]), f0(ges[i])})
+			qual.Rows = append(qual.Rows, []string{day, f2(scrap[i] / ges[i] * 100), f0(scrap[i]), f0(ges[i])})
 		}
 	}
-	return []table{prod, qual}
+	return []Table{prod, qual}
 }
 
 // workdaysOf counts Monday to Friday in month t.

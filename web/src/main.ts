@@ -38,7 +38,7 @@ import { P, flush, initPrefs, saveKosmos, setPref, storedKosmos } from "./prefs"
 import { applyLook, designOf, installCorporate } from "./themes";
 import { createSettings, TYPES } from "./settings";
 import { createCatalog } from "./catalog";
-import { isEn, settleLang, translateStatic, tr } from "./i18n";
+import { LANG, settleLang, translateStatic, tr } from "./i18n";
 
 const LENS_BACK = { "1M": 1, "1Q": 3, "1J": 12 } as const;
 const systemStill = matchMedia("(prefers-reduced-motion: reduce)");
@@ -130,7 +130,7 @@ function welcome(): HTMLElement {
 interface Fresh { kosmos: string; ok: boolean; changed: boolean; at: string; by: string }
 function listen() {
   if (typeof EventSource === "undefined") return;
-  new EventSource(`/api/events?lang=${isEn() ? "en" : "de"}`).addEventListener("refresh", (msg) => {
+  new EventSource("/api/events").addEventListener("refresh", (msg) => {
     let ev: Fresh;
     try { ev = JSON.parse((msg as MessageEvent).data); } catch { return; }
     // A read by hand comes from the settings, which rebuild the room themselves.
@@ -204,7 +204,7 @@ async function bootRoom(id: string) {
     sessionStorage.removeItem("lumantic.arrive");
     sessionStorage.removeItem("lumantic.resume");
   } catch { /* the usual opening */ }
-  room = bootKosmos({ ...data, lang: isEn() ? "en" : "de" }, {
+  room = bootKosmos({ ...data, lang: LANG }, {
     reduced: still,
     save: saveKosmos,
     stored: storedKosmos,

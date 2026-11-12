@@ -9,13 +9,8 @@ import "math"
 // second and third Kosmos show (definitions in config/beispiele/). All figures
 // are invented.
 
-type folderLayer struct {
-	folder string
-	tables []table
-}
-
-func folderLayers() []folderLayer {
-	return []folderLayer{{"firmenkunden", firmenkundenTables()}, {"privatkunden", privatkundenTables()}, {"industrie", industrieTables()}}
+func folderLayers() []Layer {
+	return []Layer{{"firmenkunden", firmenkundenTables()}, {"privatkunden", privatkundenTables()}, {"industrie", industrieTables()}}
 }
 
 // drift splits a total into parts whose weights move slowly, so the parts
@@ -38,7 +33,7 @@ func drift(total []float64, weights []float64, period float64) [][]float64 {
 	return out
 }
 
-func firmenkundenTables() []table {
+func firmenkundenTables() []Table {
 	r := &mulberry{s: 2207}
 	q := alcoMonths
 	f4 := func(v float64) string { return ftoa(v, 4) }
@@ -64,28 +59,28 @@ func firmenkundenTables() []table {
 		neuBy[0][t] = neu[t] - hold
 	}
 
-	kredite := table{name: "kredite_monat", desc: "Kredite an Firmenkunden pro Monat und Segment in Mio. CHF",
-		cols: []column{{"monat", "DATE", monthCol}, {"segment", "VARCHAR", "Kundensegment"},
+	kredite := Table{Name: "kredite_monat", Desc: "Kredite an Firmenkunden pro Monat und Segment in Mio. CHF",
+		Cols: []Column{{"monat", "DATE", monthCol}, {"segment", "VARCHAR", "Kundensegment"},
 			{"kreditvolumen_mio_chf", "DOUBLE", "Ausstehende Kredite per Monatsende"}, {"neugeschaeft_mio_chf", "DOUBLE", "Neu ausbezahlte Kredite im Monat"}}}
-	qual := table{name: "qualitaet_monat", desc: "Ertrag und Risiko des Firmenkundengeschäfts per Monatsende",
-		cols: []column{{"monat", "DATE", monthCol}, {"kreditmarge_pct", "DOUBLE", "Marge über dem Refinanzierungssatz in Prozent"},
+	qual := Table{Name: "qualitaet_monat", Desc: "Ertrag und Risiko des Firmenkundengeschäfts per Monatsende",
+		Cols: []Column{{"monat", "DATE", monthCol}, {"kreditmarge_pct", "DOUBLE", "Marge über dem Refinanzierungssatz in Prozent"},
 			{"ausfallquote_pct", "DOUBLE", "Anteil notleidender Kredite am Volumen in Prozent"},
 			{"limitenauslastung_pct", "DOUBLE", "Beanspruchte Kreditlimiten in Prozent der zugesagten"},
 			{"wertberichtigungen_mio_chf", "DOUBLE", "Bestand an Wertberichtigungen in Mio. CHF"}}}
-	einlagen := table{name: "einlagen_monat", desc: "Einlagen der Firmenkunden per Monatsende in Mio. CHF",
-		cols: []column{{"monat", "DATE", monthCol}, {"firmeneinlagen_mio_chf", "DOUBLE", "Verpflichtungen gegenüber Firmenkunden"}}}
+	einlagen := Table{Name: "einlagen_monat", Desc: "Einlagen der Firmenkunden per Monatsende in Mio. CHF",
+		Cols: []Column{{"monat", "DATE", monthCol}, {"firmeneinlagen_mio_chf", "DOUBLE", "Verpflichtungen gegenüber Firmenkunden"}}}
 	for t := 0; t < q; t++ {
 		d := monthDate(t)
 		for i, s := range segs {
-			kredite.rows = append(kredite.rows, []string{d, s, f4(volBy[i][t]), f4(neuBy[i][t])})
+			kredite.Rows = append(kredite.Rows, []string{d, s, f4(volBy[i][t]), f4(neuBy[i][t])})
 		}
-		qual.rows = append(qual.rows, []string{d, f4(marge[t]), f4(npl[t]), f4(limit[t]), f4(wb[t])})
-		einlagen.rows = append(einlagen.rows, []string{d, f4(einl[t])})
+		qual.Rows = append(qual.Rows, []string{d, f4(marge[t]), f4(npl[t]), f4(limit[t]), f4(wb[t])})
+		einlagen.Rows = append(einlagen.Rows, []string{d, f4(einl[t])})
 	}
-	return []table{kredite, qual, einlagen}
+	return []Table{kredite, qual, einlagen}
 }
 
-func privatkundenTables() []table {
+func privatkundenTables() []Table {
 	r := &mulberry{s: 4071}
 	q := alcoMonths
 	f4 := func(v float64) string { return ftoa(v, 4) }
@@ -117,23 +112,23 @@ func privatkundenTables() []table {
 	cir := keys(r, []key{{0, 63.5}, {ym(2021, 12), 62.4}, {ym(2023, 9), 58.1}, {ym(2025, 6), 59.8}, {ym(2026, 10), 59.4}}, 0.35, q)
 
 	hypoBy, neuBy := drift(hypo, []float64{0.34, 0.41, 0.25}, 11), drift(neu, []float64{0.3, 0.38, 0.32}, 6)
-	hyp := table{name: "hypotheken_monat", desc: "Hypotheken an Privatkunden pro Monat und Laufzeit in Mio. CHF",
-		cols: []column{{"monat", "DATE", monthCol}, {"laufzeit", "VARCHAR", "Art und Laufzeit der Hypothek"},
+	hyp := Table{Name: "hypotheken_monat", Desc: "Hypotheken an Privatkunden pro Monat und Laufzeit in Mio. CHF",
+		Cols: []Column{{"monat", "DATE", monthCol}, {"laufzeit", "VARCHAR", "Art und Laufzeit der Hypothek"},
 			{"bestand_mio_chf", "DOUBLE", "Hypothekarbestand per Monatsende"}, {"neugeschaeft_mio_chf", "DOUBLE", "Neu ausbezahlte Hypotheken im Monat"}}}
-	kunden := table{name: "kunden_monat", desc: "Kundenbeziehung und Effizienz pro Monat",
-		cols: []column{{"monat", "DATE", monthCol}, {"digitalquote_pct", "DOUBLE", "Anteil der Aufträge über App und E-Banking in Prozent"},
+	kunden := Table{Name: "kunden_monat", Desc: "Kundenbeziehung und Effizienz pro Monat",
+		Cols: []Column{{"monat", "DATE", monthCol}, {"digitalquote_pct", "DOUBLE", "Anteil der Aufträge über App und E-Banking in Prozent"},
 			{"kuendigungsquote_pct", "DOUBLE", "Aufgelöste Kundenbeziehungen in Prozent des Bestands, pro Monat"},
 			{"cost_income_pct", "DOUBLE", "Geschäftsaufwand in Prozent des Geschäftsertrags, rollierend zwölf Monate"}}}
-	anlagen := table{name: "anlagen_monat", desc: "Vorsorge und Zahlungsverkehr der Privatkunden in Mio. CHF",
-		cols: []column{{"monat", "DATE", monthCol}, {"vorsorge_mio_chf", "DOUBLE", "Vorsorgegelder der Säule 3a per Monatsende"},
+	anlagen := Table{Name: "anlagen_monat", Desc: "Vorsorge und Zahlungsverkehr der Privatkunden in Mio. CHF",
+		Cols: []Column{{"monat", "DATE", monthCol}, {"vorsorge_mio_chf", "DOUBLE", "Vorsorgegelder der Säule 3a per Monatsende"},
 			{"kartenumsatz_mio_chf", "DOUBLE", "Umsatz mit Debit- und Kreditkarten im Monat"}}}
 	for t := 0; t < q; t++ {
 		d := monthDate(t)
 		for i, s := range terms {
-			hyp.rows = append(hyp.rows, []string{d, s, f4(hypoBy[i][t]), f4(neuBy[i][t])})
+			hyp.Rows = append(hyp.Rows, []string{d, s, f4(hypoBy[i][t]), f4(neuBy[i][t])})
 		}
-		kunden.rows = append(kunden.rows, []string{d, f4(digital[t]), f4(churn[t]), f4(cir[t])})
-		anlagen.rows = append(anlagen.rows, []string{d, f4(vorsorge[t]), f4(karten[t])})
+		kunden.Rows = append(kunden.Rows, []string{d, f4(digital[t]), f4(churn[t]), f4(cir[t])})
+		anlagen.Rows = append(anlagen.Rows, []string{d, f4(vorsorge[t]), f4(karten[t])})
 	}
-	return []table{hyp, kunden, anlagen}
+	return []Table{hyp, kunden, anlagen}
 }

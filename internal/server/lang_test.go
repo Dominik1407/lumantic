@@ -22,6 +22,12 @@ func TestEnglish(t *testing.T) {
 		t.Fatalf("saving the language: %d %v", code, out)
 	}
 
+	// What people write is never translated, even when it reads like a message.
+	e.do("PUT", "/api/workspace", `{"notiz":"Das Ziel","satz":"Der Markt antwortet mit Zurückhaltung."}`)
+	if _, w := e.do("GET", "/api/workspace", "", "Accept-Language", "en"); w["notiz"] != "Das Ziel" || w["satz"] != "Der Markt antwortet mit Zurückhaltung." {
+		t.Fatalf("the workspace was translated: %v", w)
+	}
+
 	_, m := e.do("GET", "/api/metrics", "", "Accept-Language", "en")
 	k := m["kpis"].([]any)[0].(map[string]any)
 	if k["name"] != "Wert" || get(k, "en.name") != "Value" || get(m, "en.title") != "Test EN" || get(m["groups"].([]any)[0].(map[string]any), "en.name") != "A EN" {

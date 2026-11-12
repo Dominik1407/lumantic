@@ -13,10 +13,11 @@ RUN npm run build
 FROM golang:1.25-bookworm AS server
 WORKDIR /src
 COPY go.mod go.sum ./
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY . .
 COPY --from=web /src/web/dist ./web/dist
-RUN CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o /out/lumantic ./cmd/lumantic \
+RUN --mount=type=cache,target=/root/.cache/go-build --mount=type=cache,target=/go/pkg/mod \
+    CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o /out/lumantic ./cmd/lumantic \
  && CGO_ENABLED=1 bash scripts/third-party.sh /out/THIRD_PARTY_NOTICES.txt
 
 FROM debian:bookworm-slim
