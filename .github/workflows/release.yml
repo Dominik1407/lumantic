@@ -1,0 +1,257 @@
+name: Release
+
+# A tag v* builds Lumantic for Windows, macOS and Linux with DuckDB built in,
+# tries each program once (it must start and show the examples), and publishes
+# the files with checksums on GitHub Releases and the image for amd64 and
+# arm64 on ghcr.io. A tag with a dash (v0.11.0-rc.1) is a pre-release and
+# leaves "latest" where it is.
+#
+# Each program is built on a runner of its own system: cgo does not cross
+# compile well, and native runners need no further tools. The two Macs are
+# built on one Apple-silicon runner, Intel through clang -arch x86_64. Linux is
+# built on Ubuntu 22.04 for an older glibc, so it runs on most distributions.
+#
+# A push to another branch that changes this pipeline runs it as a trial: it
+# builds and tries everything and publishes nothing.
+on:
+  push:
+    tags: ["v*"]
+    branches-ignore: [main]
+    paths:
+      - .github/workflows/release.yml
+      - Dockerfile
+      - scripts/third-party.sh
+      - cmd/lumantic/**
+      - go.mod
+
+permissions:
+  contents: read
+
+env:
+  PUBLISH: ${{ startsWith(github.ref, 'refs/tags/v') }}
+
+jobs:
+  notices:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Licences of everything inside
+        env:
+          CGO_ENABLED: "1"
+        run: bash scripts/third-party.sh THIRD_PARTY_NOTICES.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: notices
+          path: THIRD_PARTY_NOTICES.txt
+
+  build:
+    needs: notices
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, goos: windows, goarch: amd64 }
+          - { os: macos-latest, goos: darwin, goarch: arm64 }
+          - { os: macos-latest, goos: darwin, goarch: amd64, cross: true }
+          - { os: ubuntu-22.04, goos: linux, goarch: amd64 }
+          - { os: ubuntu-22.04-arm, goos: linux, goarch: arm64 }
+    name: build (${{ matrix.goos }}/${{ matrix.goarch }})
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Build interface
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: C compiler (Windows)
+        if: matrix.goos == 'windows'
+        uses: msys2/setup-msys2@v2
+        id: msys2
+        with:
+          msystem: UCRT64
+          install: mingw-w64-ucrt-x86_64-gcc
+      - name: Put gcc on the path (Windows)
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        run: Add-Content $env:GITHUB_PATH "${{ steps.msys2.outputs.msys2-location }}\ucrt64\bin"
+
+      - name: Build
+        env:
+          CGO_ENABLED: "1"
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          ext=""; [ "$GOOS" = windows ] && ext=".exe"
+          flags="-s -w"
+          # libstdc++ inside the program, so it runs without a matching C++ runtime.
+          [ "$GOOS" = linux ] && flags="$flags -extldflags '-static-libstdc++ -static-libgcc'"
+          if [ "${{ matrix.cross }}" = true ]; then
+            export CC="clang -arch x86_64" CGO_CFLAGS="-arch x86_64" CGO_LDFLAGS="-arch x86_64"
+          fi
+          mkdir -p out
+          go build -trimpath -ldflags "$flags" -o "out/lumantic$ext" ./cmd/lumantic
+          file "out/lumantic$ext" || true
+
+      # The program must start without anything installed and show the examples:
+      # DuckDB built in reads their CSV files.
+      - name: Try it
+        if: ${{ !matrix.cross }}
+        run: |
+          ext=""; [ "${{ matrix.goos }}" = windows ] && ext=".exe"
+          export LUMANTIC_HOME="$RUNNER_TEMP/lumantic-home" LUMANTIC_BROWSER=0 LUMANTIC_ADDR=127.0.0.1:8099
+          "./out/lumantic$ext" > "$RUNNER_TEMP/lumantic.log" 2>&1 &
+          pid=$!
+          for i in $(seq 1 60); do curl -fs http://127.0.0.1:8099/healthz >/dev/null && break; sleep 1; done
+          curl -fs http://127.0.0.1:8099/api/kosmen > kosmen.json
+          kill $pid || true
+          cat "$RUNNER_TEMP/lumantic.log"
+          cat kosmen.json
+          ready=$(grep -o '"ok":true' kosmen.json | wc -l)
+          [ "$ready" -ge 2 ] || { echo "the examples are not ready"; exit 1; }
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: notices
+          path: out
+
+      - name: Pack
+        run: |
+          version=${GITHUB_REF_NAME#v}; [ "$PUBLISH" = true ] || version=test
+          name="lumantic_${version}_${{ matrix.goos }}_${{ matrix.goarch }}"
+          cp LICENSE NOTICE README.md out/
+          mkdir -p dist
+          if [ "${{ matrix.goos }}" = windows ]; then
+            (cd out && 7z a -tzip "../dist/$name.zip" . >/dev/null)
+          else
+            tar -czf "dist/$name.tar.gz" -C out .
+          fi
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/*
+
+  image:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04, platform: linux/amd64, arch: amd64 }
+          - { os: ubuntu-24.04-arm, platform: linux/arm64, arch: arm64 }
+    name: image (${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build and try it
+        run: |
+          docker buildx build --platform ${{ matrix.platform }} --load -t lumantic:try .
+          docker run -d --name try -p 127.0.0.1:8080:8080 lumantic:try
+          for i in $(seq 1 90); do
+            [ "$(docker inspect -f '{{.State.Health.Status}}' try)" = healthy ] && break; sleep 2
+          done
+          docker logs try
+          docker inspect -f '{{.State.Health.Status}}' try | grep -q healthy
+          ready=$(curl -fs http://127.0.0.1:8080/api/kosmen | grep -o '"ok":true' | wc -l)
+          [ "$ready" -ge 2 ] || { echo "the examples are not ready"; exit 1; }
+          docker exec try id -u | grep -qv '^0$'
+
+      - name: Log in to ghcr.io
+        if: env.PUBLISH == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push by digest
+        if: env.PUBLISH == 'true'
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.licenses=Apache-2.0
+            org.opencontainers.image.description=Lumantic: a calm surface over a team's gold layer
+          outputs: type=image,name=ghcr.io/dominik1407/lumantic,push-by-digest=true,name-canonical=true,push=true
+
+      - name: Keep the digest
+        if: env.PUBLISH == 'true'
+        run: |
+          mkdir -p digests
+          d="${{ steps.push.outputs.digest }}"
+          touch "digests/${d#sha256:}"
+      - uses: actions/upload-artifact@v4
+        if: env.PUBLISH == 'true'
+        with:
+          name: digest-${{ matrix.arch }}
+          path: digests/*
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, image]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: build-*
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: digest-*
+          path: digests
+          merge-multiple: true
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Image for both systems
+        working-directory: digests
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          tags="-t ghcr.io/dominik1407/lumantic:$version"
+          case "$version" in *-*) ;; *) tags="$tags -t ghcr.io/dominik1407/lumantic:latest" ;; esac
+          docker buildx imagetools create $tags $(printf 'ghcr.io/dominik1407/lumantic@sha256:%s ' *)
+          docker buildx imagetools inspect "ghcr.io/dominik1407/lumantic:$version"
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pre=""; case "$GITHUB_REF_NAME" in *-*) pre="--prerelease" ;; esac
+          gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "Lumantic ${GITHUB_REF_NAME#v}" --generate-notes $pre

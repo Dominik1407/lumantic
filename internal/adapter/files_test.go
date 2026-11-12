@@ -9,9 +9,13 @@ import (
 	"testing"
 )
 
-// duckdbBin finds the DuckDB CLI or skips: these tests run the real program.
+// duckdbBin says which DuckDB the tests run: "" for the one built into the
+// program, else the CLI; without either they skip.
 func duckdbBin(t *testing.T) string {
 	t.Helper()
+	if BuiltIn() {
+		return ""
+	}
 	for _, c := range []string{os.Getenv("LUMANTIC_DUCKDB"), "duckdb",
 		filepath.Join(os.Getenv("LOCALAPPDATA"), `Microsoft\WinGet\Packages\DuckDB.cli_Microsoft.Winget.Source_8wekyb3d8bbwe\duckdb.exe`)} {
 		if c == "" {
@@ -25,6 +29,22 @@ func duckdbBin(t *testing.T) string {
 	return ""
 }
 
+// write runs sql in an empty DuckDB that may write files, to prepare a test.
+func write(t *testing.T, bin, sql string) {
+	t.Helper()
+	if bin == "" {
+		if _, err := builtIn(context.Background(), "", sql+"\nSELECT 1 AS ok;"); err != nil {
+			t.Fatalf("preparing: %v", err)
+		}
+		return
+	}
+	cmd := exec.Command(bin)
+	cmd.Stdin = strings.NewReader(sql)
+	if b, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("preparing: %v %s", err, b)
+	}
+}
+
 func TestFilesReadsCSVAndParquet(t *testing.T) {
 	bin := duckdbBin(t)
 	dir := t.TempDir()
@@ -34,11 +54,7 @@ func TestFilesReadsCSVAndParquet(t *testing.T) {
 	out := filepath.ToSlash(dir)
 	sql := "COPY (SELECT DATE '2026-01-31' + INTERVAL (i) MONTH AS monat, 10.0 * i AS betrag_mio FROM range(3) t(i)) TO '" + out + "/liquiditaet.parquet' (FORMAT parquet);\n" +
 		"COPY (SELECT DATE '2026-01-31' AS monat, 5.0 AS betrag_mio) TO '" + out + "/neugeld/part-0.parquet' (FORMAT parquet);\n"
-	cmd := exec.Command(bin)
-	cmd.Stdin = strings.NewReader(sql)
-	if b, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("writing parquet: %v %s", err, b)
-	}
+	write(t, bin, sql)
 
 	f := NewFiles(bin, dir, "gold", "Testordner")
 	cat, err := f.Describe(context.Background())
@@ -66,8 +82,10 @@ func TestFilesReadsCSVAndParquet(t *testing.T) {
 	if s, _ := Float(rows[0], "s"); s != 30 {
 		t.Fatalf("sum %v", rows)
 	}
-	// the process may read only inside the folder
-	if _, err := f.Query(context.Background(), `SELECT * FROM read_csv_auto('C:/Windows/win.ini')`); err == nil {
+	// a query may read only inside the folder
+	outside := filepath.Join(t.TempDir(), "geheim.csv")
+	os.WriteFile(outside, []byte("a\n1\n"), 0o644)
+	if _, err := f.Query(context.Background(), "SELECT * FROM read_csv_auto("+QuoteLiteral(filepath.ToSlash(outside))+")"); err == nil {
 		t.Fatal("reading outside the folder must fail")
 	}
 }

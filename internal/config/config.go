@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"sync"
@@ -52,10 +53,14 @@ type Data struct {
 	Name       string     `json:"name"`   // shown in the app
 	Path       string     `json:"path"`   // duckdb: database file · files: folder with .parquet/.csv
 	Schema     string     `json:"schema"` // duckdb, snowflake, databricks: schema prefix to expose · files: schema of the views
-	DuckDB     string     `json:"duckdb"` // path to the DuckDB CLI; empty = PATH
+	DuckDB     string     `json:"duckdb"` // path to the DuckDB CLI; empty = the DuckDB built in, else PATH
 	Snowflake  Snowflake  `json:"snowflake,omitzero"`
 	Databricks Databricks `json:"databricks,omitzero"`
 	Windmill   Windmill   `json:"windmill"`
+	// Example marks the example data Lumantic writes itself (internal/beispiele):
+	// written anew each day, and the only data an instance without login may
+	// show to others. Another source in its place is no example any more.
+	Example bool `json:"example,omitempty"`
 }
 
 type AI struct {
@@ -284,6 +289,37 @@ func Open(path, secretsPath string, lookup func(string) (string, bool)) (*Manage
 }
 
 func (m *Manager) Path() string { return m.path }
+
+// Begin starts from c when there is no file yet: the configuration of a first
+// start (the examples). Nothing is written until someone saves a setting.
+func (m *Manager) Begin(c Config) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if !m.exists {
+		normalize(&c)
+		m.file = c
+	}
+}
+
+// Examples says whether every Kosmos shows only the examples Lumantic writes itself.
+func (c Config) Examples() bool {
+	if !c.Data.Example {
+		return false
+	}
+	for _, k := range c.Kosmen {
+		if !k.Data.Example {
+			return false
+		}
+	}
+	return true
+}
+
+// Moved says whether b reads from another place than a: another kind of
+// source, file, folder, schema or connection. A new name is no move.
+func Moved(a, b Data) bool {
+	a.Name, b.Name, a.Example, b.Example, a.DuckDB, b.DuckDB = "", "", false, false, "", ""
+	return !reflect.DeepEqual(a, b)
+}
 
 // Dir is the folder of the config file; kennzahlen.json and brand/ live there.
 func (m *Manager) Dir() string { return filepath.Dir(m.path) }

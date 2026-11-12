@@ -1,8 +1,10 @@
-// Command seed builds the demo gold layers "Retail Banking" (weekly) and
-// "ALCO" (monthly and daily): one CSV per table plus goldlayer/gold.duckdb,
-// whose table and column comments are the data catalog Lumantic reads. It also
-// writes "Firmenkunden" and "Privatkunden" as plain folders of CSV files
-// (kosmen.go). All figures are invented.
+// Command seed builds the demo gold layers for development: "Retail Banking"
+// (weekly, for the first board) and "ALCO" (monthly and daily) as CSV files
+// plus goldlayer/gold.duckdb, whose table and column comments are the data
+// catalog Lumantic reads, and "Firmenkunden", "Privatkunden" and "Industrie" as
+// plain folders of CSV files. ALCO and the folders come from internal/beispiele,
+// placed so that their story ends in the month before today. All figures are
+// invented.
 package main
 
 import (
@@ -17,6 +19,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Dominik1407/lumantic/internal/beispiele"
 )
 
 type column struct{ name, typ, desc string }
@@ -57,7 +61,7 @@ func main() {
 		tables         []table
 	}{
 		{"gold_retail", "retail", []table{newCustomers(), costs(), loanApplications(), feedback(), mortgages(), counters()}},
-		{"gold_alco", "alco", alcoTables()},
+		{"gold_alco", "alco", from(beispiele.ALCO(time.Now()))},
 	}
 
 	var script strings.Builder
@@ -102,17 +106,24 @@ func main() {
 // writeFolders writes the gold layers kept as plain folders of CSV files, for
 // the further Kosmen.
 func writeFolders(dir string) {
-	for _, l := range folderLayers() {
-		if err := os.MkdirAll(filepath.Join(dir, l.folder), 0o755); err != nil {
+	for _, l := range beispiele.Folders(time.Now()) {
+		if err := beispiele.WriteCSV(filepath.Join(dir, l.Folder), l.Tables); err != nil {
 			log.Fatal(err)
 		}
-		for _, t := range l.tables {
-			if err := writeCSV(filepath.Join(dir, l.folder, t.name+".csv"), t); err != nil {
-				log.Fatal(err)
-			}
-		}
-		log.Printf("Goldlayer gebaut: %s (%d CSV-Dateien)", filepath.Join(dir, l.folder), len(l.tables))
+		log.Printf("Goldlayer gebaut: %s (%d CSV-Dateien)", filepath.Join(dir, l.Folder), len(l.Tables))
 	}
+}
+
+// from takes tables of internal/beispiele into the form this tool writes.
+func from(ts []beispiele.Table) []table {
+	out := make([]table, len(ts))
+	for i, t := range ts {
+		out[i] = table{name: t.Name, desc: t.Desc, rows: t.Rows}
+		for _, c := range t.Columns {
+			out[i].cols = append(out[i].cols, column{c.Name, c.Type, c.Desc})
+		}
+	}
+	return out
 }
 
 func lit(s string) string { return "'" + strings.ReplaceAll(s, "'", "''") + "'" }

@@ -1,8 +1,11 @@
 name: CI
 
+# Every push and pull request: vet and test on Linux and Windows, once with
+# DuckDB built in (cgo, as the downloads and the image are built) and once
+# without a C compiler, where DuckDB runs as the CLI (as for contributors
+# without gcc).
 on:
   push:
-    branches: [main]
   pull_request:
 
 permissions:
@@ -14,7 +17,11 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+        cgo: ["1", "0"]
+    name: test (${{ matrix.os }}, ${{ matrix.cgo == '1' && 'DuckDB built in' || 'DuckDB CLI' }})
     runs-on: ${{ matrix.os }}
+    env:
+      CGO_ENABLED: ${{ matrix.cgo }}
     steps:
       - uses: actions/checkout@v7
 
@@ -33,6 +40,32 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
+
+      # DuckDB's prebuilt library for Windows wants the UCRT gcc of MSYS2.
+      - name: C compiler (Windows)
+        if: runner.os == 'Windows' && matrix.cgo == '1'
+        uses: msys2/setup-msys2@v2
+        id: msys2
+        with:
+          msystem: UCRT64
+          install: mingw-w64-ucrt-x86_64-gcc
+      - name: Put gcc on the path (Windows)
+        if: runner.os == 'Windows' && matrix.cgo == '1'
+        shell: pwsh
+        run: Add-Content $env:GITHUB_PATH "${{ steps.msys2.outputs.msys2-location }}\ucrt64\bin"
+
+      # Without cgo the DuckDB tests run the CLI, the same version as the one built in.
+      - name: DuckDB CLI
+        if: matrix.cgo == '0'
+        shell: bash
+        run: |
+          v=$(go list -m -f '{{.Version}}' github.com/duckdb/duckdb-go-bindings); n=${v#v0.}; n=${n%%.*}
+          duckdb="v${n:0:1}.$((10#${n:1:2})).$((10#${n:3:2}))"
+          case "$RUNNER_OS" in Windows) zip=duckdb_cli-windows-amd64.zip ;; *) zip=duckdb_cli-linux-amd64.zip ;; esac
+          mkdir -p "$RUNNER_TEMP/duckdb"
+          curl -fsSL -o "$RUNNER_TEMP/duckdb.zip" "https://github.com/duckdb/duckdb/releases/download/$duckdb/$zip"
+          unzip -q "$RUNNER_TEMP/duckdb.zip" -d "$RUNNER_TEMP/duckdb"
+          echo "LUMANTIC_DUCKDB=$(ls "$RUNNER_TEMP"/duckdb/duckdb*)" >> "$GITHUB_ENV"
 
       - name: Vet
         run: go vet ./...

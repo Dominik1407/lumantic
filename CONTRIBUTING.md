@@ -16,7 +16,7 @@ how it should look and feel. Contributions are welcome, in a curated way:
 | Catalog readers | `internal/katalog/` | Today the company catalog is read from three views with fixed names. Readers for catalog tools (such as Unity Catalog tags or Snowflake semantic views) are welcome. |
 | Corporate designs | `config/brand/`, `brand` in `config/lumantic.example.json` | Templates that show how a company brings its own logo, fonts and colours. |
 | Key figure templates | `config/beispiele/` | Ready-made key figures for a domain, such as retail banking, industry or insurance. |
-| Translations | `web/src/` | The interface is German today. Making it translatable is a welcome first step; please open an issue before starting. |
+| Translations | `web/src/`, `internal/i18n/` | The interface speaks German and English: texts stand in place as `tr("Heute", "Today")`, the server's messages are in `internal/i18n/en.go`. Further languages: please open an issue before starting. |
 
 ## What stays with the maintainer
 
@@ -26,17 +26,21 @@ and critique are very welcome as issues; changes there come from the maintainer.
 
 ## Getting started
 
-You need Go 1.25+, Node 20+ and the DuckDB CLI. On Windows, `.\scripts\run.ps1` builds and
-starts everything. By hand:
+You need Go 1.25+ and Node 20+. A C compiler is optional: with one (gcc or clang, on Windows
+the UCRT gcc of MSYS2), Go builds DuckDB into the program, as the releases do; without one,
+`go run` and `go test` work as well and Lumantic asks the DuckDB CLI
+(`winget install DuckDB.cli`, or `LUMANTIC_DUCKDB` with its path). The CI tests both. On
+Windows, `.\scripts\run.ps1` builds and starts everything. By hand:
 
 ```sh
-go run ./cmd/seed -duckdb <path to duckdb>   # example gold layer in goldlayer/
+go run ./cmd/seed -duckdb <path to duckdb>   # example gold layers in goldlayer/
 go run ./cmd/lumantic                        # API on :8080
 cd web && npm ci && npm run dev              # interface on :5173 with live reload
 ```
 
-Without `config/lumantic.json`, Lumantic opens with its first-start welcome. The file is
-created when you save settings in the app and is not part of the repository.
+In a folder with `config/lumantic.json`, or with `LUMANTIC_CONFIG`, paths stay relative to the
+working folder. Without either, Lumantic keeps its data in your settings folder and starts with
+the examples (see `config/README.md`, «Datenort»).
 
 ## Before you send a pull request
 

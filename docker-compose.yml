@@ -1,0 +1,36 @@
+# Lumantic neben dem Lakehouse: der Goldlayer als Ordner mit Parquet- oder
+# CSV-Dateien, nur lesend eingehängt. Starten mit «docker compose up -d», dann
+# http://127.0.0.1:8080 öffnen. Alle Einstellungen: config/README.md.
+services:
+  lumantic:
+    image: ghcr.io/dominik1407/lumantic:latest
+    restart: unless-stopped
+    ports:
+      # Nur auf diesem Rechner. Für andere erst eine Anmeldung einrichten (unten),
+      # dann zum Beispiel "8080:8080".
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - lumantic-data:/data              # Einstellungen, Tokens, Arbeitsstände
+      - ./goldlayer:/goldlayer:ro        # euer Goldlayer
+    environment:
+      LUMANTIC_ADAPTER: files
+      LUMANTIC_GOLD: /goldlayer
+      LUMANTIC_SCHEMA: gold              # die Tabellen heissen dann gold.<datei>
+      LUMANTIC_SOURCE: Goldlayer         # der Name in der App
+      TZ: Europe/Zurich                  # für die Zeiten, zu denen Lumantic neu liest
+      # Ohne Anmeldung startet Lumantic mit eigenen Daten nur mit diesem Schalter.
+      # Er passt, solange der Port nur auf diesem Rechner offen ist.
+      LUMANTIC_OPEN: "1"
+      # Anmeldung, danach LUMANTIC_OPEN entfernen. Mit OpenID Connect (Authentik,
+      # Entra ID, Keycloak), siehe config/README.md, «Anmeldung und Rechte»:
+      # LUMANTIC_AUTH: oidc
+      # LUMANTIC_ADMINS: GG-Lumantic-Admin
+      # OIDC_ISSUER: https://authentik.example.ch/application/o/lumantic/
+      # OIDC_CLIENT_ID: lumantic
+      # OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
+      # LUMANTIC_URL: https://lumantic.example.ch
+      # Über einen Proxy davor (Authentik-Outpost, Kopfzeilen) LUMANTIC_AUTH: proxy,
+      # und die Adresse des Proxys in /data/lumantic.json unter «auth.proxy.trust».
+
+volumes:
+  lumantic-data:

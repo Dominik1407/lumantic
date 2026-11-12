@@ -69,7 +69,7 @@ func (s *Server) edits(u auth.User, rm room) bool {
 func (s *Server) gate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		if strings.HasPrefix(path, "/auth/") || (path == "/api/refresh" && r.Header.Get("Authorization") != "" && r.Header.Get("Sec-Fetch-Site") != "same-origin") {
+		if strings.HasPrefix(path, "/auth/") || path == "/healthz" || (path == "/api/refresh" && r.Header.Get("Authorization") != "" && r.Header.Get("Sec-Fetch-Site") != "same-origin") {
 			next.ServeHTTP(w, r)
 			return
 		}

@@ -1,0 +1,14 @@
+.git
+.github
+bin
+data
+goldlayer
+config/lumantic.json
+config/keys
+web/node_modules
+web/dist/assets
+scripts/ui-test/shots
+scripts/ui-test/edge-cdp-*
+site
+design
+*.tmp
