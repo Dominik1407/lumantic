@@ -15,6 +15,7 @@ declare module "virtual:kosmos" {
     settingsOpen(): boolean;
     prefs(): { hints: boolean; start: string; lastPage: string };
     leave(): void; // to the main menu, when there is more than one Kosmos
+    many(): boolean; // there is more than one Kosmos, so K leads to the main menu
     openCatalog(kpi?: string): void; // the Sternkatalog, at a figure's entry if one is named
     closeCatalog(): boolean;
     catalogOpen(): boolean;

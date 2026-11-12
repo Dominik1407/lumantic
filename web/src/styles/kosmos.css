@@ -129,9 +129,11 @@ kbd { font: 400 9.5px/1 var(--f-mono); border: 1px solid var(--line-2); padding:
 .fine { font: 400 9px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
 .back { display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; padding: 6px 7px 6px 14px; border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent); border-radius: 999px; background: var(--bg-2); box-shadow: 0 0 16px 12px color-mix(in srgb, var(--bg) 92%, transparent); font: 400 10.5px/1 var(--f-mono); letter-spacing: .06em; color: var(--ink); animation: pop .3s ease-out; }
 .back span { padding: 6px 10px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); }
-.bottom { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+/* The places stay in the middle of the screen whatever stands left and right of them. */
+.bottom { display: grid; grid-template-columns: 1fr minmax(0, max-content) 1fr; align-items: center; gap: 12px; }
 .idee-btn { border: 1px solid var(--line-2); border-radius: 999px; background: color-mix(in srgb, var(--bg) 74%, transparent); padding: 8px 13px; font: 400 10px/1 var(--f-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-2); }
 .idee-btn:hover, .idee-btn[aria-expanded="true"] { color: var(--ink); border-color: var(--accent); }
+.corner { display: flex; gap: 6px; }
 .places { justify-self: center; display: flex; align-items: center; gap: 2px; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
 .places::-webkit-scrollbar { display: none; }
 .places button { flex: none; display: inline-flex; align-items: center; gap: 7px; border: 0; background: none; padding: 8px 9px; font: 400 10.5px/1 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); white-space: nowrap; }
@@ -167,6 +169,33 @@ kbd { font: 400 9.5px/1 var(--f-mono); border: 1px solid var(--line-2); padding:
 .idee a:hover { text-decoration: underline; }
 .idee .fine { font: 400 9px/1.8 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
 .idee .fine button { border: 0; border-bottom: 1px solid currentColor; background: none; padding: 0; font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink-2); }
+/* ── Tasten: the keys of the room as a small card of keycaps. Quiet type, keycaps with a little depth, and a key
+   pressed while it is open gives under the finger and lights up in the accent. ── */
+.keys { position: absolute; z-index: 10; left: max(16px, env(safe-area-inset-left, 0px)); bottom: 60px; width: min(720px, calc(100% - 32px)); max-height: calc(100% - 84px); overflow-y: auto;
+  padding: 26px 30px 24px; background: var(--bg-2); border: 1px solid var(--line-2); box-shadow: 0 28px 70px -34px color-mix(in srgb, var(--ink) 34%, transparent); animation: pop .22s ease-out; }
+.keys-head { display: flex; align-items: baseline; gap: 16px; padding-right: 28px; margin-bottom: 18px; }
+.keys-head h2 { margin: 0; font: var(--w-hl) var(--fs-idee)/1.05 var(--f-text); letter-spacing: -.01em; }
+.keys-hint { margin: 0; font: 400 9px/1.4 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.keys-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; }
+.keys-col { display: grid; align-content: start; gap: 18px; }
+.keys-group h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; font: 400 9px/1 var(--f-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+.keys-group h3::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.keys-row { display: grid; grid-template-columns: 104px minmax(0, 1fr); align-items: center; gap: 12px; padding: 4px 0; animation: keyin .36s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i) * 16ms); }
+@keyframes keyin { from { opacity: 0; translate: 0 4px; } }
+.keys-caps { display: inline-flex; align-items: center; gap: 4px; }
+.keys-to { font: 400 9px/1 var(--f-mono); letter-spacing: .08em; color: var(--dim); }
+.keys-what { font: 400 13px/1.35 var(--f-text); color: var(--ink-2); transition: color .3s; }
+.kc { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 7px; border: 1px solid var(--line-2); border-bottom-width: 2px; border-radius: 6px;
+  background: linear-gradient(180deg, var(--bg-2), color-mix(in srgb, var(--bg) 70%, var(--bg-2)));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--sky-glow) 85%, transparent), 0 1px 2px color-mix(in srgb, var(--ink) 7%, transparent);
+  font: 500 10.5px/1 var(--f-mono); letter-spacing: 0; color: var(--ink);
+  transition: translate .12s ease-out, border-bottom-width .12s, background-color .3s, color .3s, box-shadow .3s; }
+.kc.is-wide { padding: 0 9px; font-size: 9.5px; letter-spacing: .06em; }
+.keys-row.is-hit .kc { translate: 0 1px; border-bottom-width: 1px; border-color: var(--accent); background: var(--accent); color: var(--accent-ink);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent); }
+.keys-row.is-hit .keys-what { color: var(--ink); }
+@media (max-width: 700px) { .keys-grid { grid-template-columns: 1fr; gap: 18px; } .keys { padding: 20px 18px; } }
+@media (hover: none), (max-width: 700px) { .keys-btn { display: none; } }
 .idee-x { position: absolute; top: 12px; right: 12px; border: 0; background: none; padding: 6px 8px; color: var(--ink-2); font: 400 12px/1 var(--f-mono); }
 .idee-x:hover { color: var(--ink); }
 

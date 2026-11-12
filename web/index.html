@@ -26,7 +26,10 @@
           <button class="back" id="back" type="button" hidden></button>
         </header>
         <footer class="bottom">
-          <button class="idee-btn" id="btn-idee" type="button" aria-expanded="false" aria-controls="idee">Idee</button>
+          <div class="corner">
+            <button class="idee-btn" id="btn-idee" type="button" aria-expanded="false" aria-controls="idee">Idee</button>
+            <button class="idee-btn keys-btn" id="btn-keys" type="button" aria-expanded="false" aria-controls="keys" title="Alle Tasten (?)">Tasten</button>
+          </div>
           <nav class="places" id="places" aria-label="Orte"></nav>
           <span class="spacer" aria-hidden="true"></span>
         </footer>
@@ -37,7 +40,7 @@
         <p>Eine Seite ist ein Sternbild aus der Nähe, ein Sternbild ist eine Seite aus der Ferne, und jeder Stern ist ein Block. Lumina schreibt «Heute» und hält eine Seite pro Thema. Alles andere baust du, indem du Sterne greifst und zusammenlegst.</p>
         <h3>Probier das</h3>
         <ul>
-          <li>Dreh das Mausrad heraus und wieder hinein: Die Seite faltet sich zum Sternbild und zurück. Die Wörter unten fliegen zu den Themen, <kbd>H</kbd> zurück zu heute.</li>
+          <li>Dreh das Mausrad neben der Seite heraus und wieder hinein: Die Seite faltet sich zum Sternbild und zurück. Über einer langen Seite liest du mit dem Rad weiter. Die Wörter unten fliegen zu den Themen, <kbd>H</kbd> zurück zu heute, <kbd>?</kbd> zeigt alle Tasten.</li>
           <li>Greif einen Stern und zieh ihn ins Leere: Der Block beginnt dort eine eigene Seite. Zieh einen zweiten dazu. Von Luminas Seiten nimmst du Kopien mit.</li>
           <li>Tippe am Seitenende <kbd>/</kbd> für einen Baustein, <kbd>[[</kbd> für eine Kennzahl in deiner Notiz oder eine Frage mit Fragezeichen. Ein Doppelklick ins Leere beginnt eine neue Seite.</li>
           <li>Zieh die Zeitlinse über einen Block: Er zeigt den Monat der Linse. Das Mausrad über der Linse stellt ihn, ein Doppelklick auf den Rand taucht ein, <kbd>Z</kbd> springt zurück. <kbd>,</kbd> öffnet die Einstellungen.</li>
@@ -51,6 +54,14 @@
           <li><a href="https://hal.archives-ouvertes.fr/hal-01024278" target="_blank" rel="noopener">Goffin, Willett, Fekete, Isenberg 2014: Word-Scale Visualizations</a>. Wortgrosse Grafiken im Satz.</li>
         </ul>
         <p class="fine" id="idee-fine"></p>
+      </aside>
+      <aside class="keys" id="keys" hidden aria-label="Tasten">
+        <header class="keys-head">
+          <h2>Tasten</h2>
+          <p class="keys-hint">Drück eine, sie leuchtet hier auf.</p>
+        </header>
+        <button class="idee-x" id="keys-x" type="button" aria-label="Schliessen">×</button>
+        <div class="keys-grid" id="keys-grid"></div>
       </aside>
       <div class="menu" id="menu" role="listbox" aria-label="Auswahl" hidden></div>
       <div class="tip" id="tip" role="tooltip" hidden></div>

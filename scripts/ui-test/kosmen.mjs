@@ -62,6 +62,11 @@ export default async (t) => {
   check("the design came along", (await q(`return document.documentElement.dataset.design`)) === "nebel");
   check("the corner names the Kosmos", (await q(`return document.querySelector("#brand .kname")?.textContent`)) === "Firmenkunden");
   check("its pages are its own figures", (await q(`return window.__kosmos.KPIS.length`)) === 4);
+  await q(`document.activeElement?.blur(); return 1`);
+  await t.key("?");
+  check("with several Kosmen the legend of the keys names K", await until(`return !!document.querySelector('#keys .keys-row[data-key="k"]')`, 3000));
+  await t.key("Escape");
+  await t.wait(300);
   await t.shot("k04-firmenkunden");
   await t.key(",");
   await t.wait(350);

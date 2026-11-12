@@ -172,6 +172,7 @@ function showEmpty(err: unknown) {
   $("places").replaceChildren(gear(() => sheet.toggle()));
   // The idea note belongs to the room; its place stays, so the gear sits where it always does.
   $("btn-idee").style.visibility = "hidden";
+  $("btn-keys").style.visibility = "hidden";
   document.addEventListener("keydown", (e) => {
     const t = e.target as HTMLElement;
     if (e.key === "Escape") { sheet.close(); return; }
@@ -214,6 +215,7 @@ async function bootRoom(id: string) {
     // Back with new figures: the room opens on the page the person was reading, without the long opening.
     prefs: () => (resumed ? { ...P, start: "zuletzt" } : P),
     leave,
+    many: () => kosmen.length > 1,
     openCatalog: (kpi) => void catalog.open(kpi || ""),
     closeCatalog: () => catalog.close(),
     catalogOpen: () => catalog.isOpen(),

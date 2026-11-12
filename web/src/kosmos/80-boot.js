@@ -1,6 +1,6 @@
 // ═════ Kosmos · the note about the idea, resetting, the opening, what the host may change ═════
 const ideeEl = $("idee"), ideeBtn = $("btn-idee");
-function toggleIdee(force) { const open = force === undefined ? ideeEl.hidden : force; ideeEl.hidden = !open; ideeBtn.setAttribute("aria-expanded", String(open)); }
+function toggleIdee(force) { const open = force === undefined ? ideeEl.hidden : force; if (open) closeKeys(); ideeEl.hidden = !open; ideeBtn.setAttribute("aria-expanded", String(open)); }
 const closeIdee = () => (ideeEl.hidden ? false : (toggleIdee(false), true));
 ideeBtn.addEventListener("click", () => { userInput(); toggleIdee(); });
 $("idee-x").addEventListener("click", () => toggleIdee(false));

@@ -29,6 +29,7 @@ export default async (t) => {
     await t.key("Escape");
     await t.wait(300);
     check("phone: Esc closes", !(await open()));
+    check("phone: no legend of keys without a keyboard", await q(`return getComputedStyle(document.getElementById("btn-keys")).display === "none"`));
     return done();
   }
   if (still) {
@@ -296,6 +297,30 @@ export default async (t) => {
   await q(`document.activeElement?.blur(); return 1`);
   await t.key("c");
   check("and C opens it again", await until(`return !document.getElementById("katalog").hidden`, 4000));
+  await t.key("Escape");
+  await t.wait(300);
+
+  // ── the keys: a small legend of the room, and a key pressed lights up in it
+  await q(`document.activeElement?.blur(); return 1`);
+  await t.key("?");
+  check("? opens the legend of the keys", await until(`return !document.getElementById("keys").hidden && document.querySelectorAll("#keys .keys-row").length === 18`, 3000),
+    await q(`return document.querySelectorAll("#keys .keys-row").length`));
+  await t.key("h");
+  await t.wait(120);
+  check("a key pressed lights up in it and still does what it does", await q(`return !!document.querySelector('#keys .keys-row[data-key="h"].is-hit') && !document.getElementById("keys").hidden`)
+    && await until(`return window.__kosmos.activeId === "heute"`, 3000));
+  check("one Kosmos alone has no way to the others in it", await q(`return !document.querySelector('#keys .keys-row[data-key="k"]')`));
+  await t.shot("14d-tasten");
+  await t.key("Escape");
+  await t.wait(300);
+  check("Esc closes it", await q(`return document.getElementById("keys").hidden`));
+  await t.clickSel("#btn-keys");
+  await t.wait(300);
+  check("the button beside «Idee» opens it too", await q(`return !document.getElementById("keys").hidden && document.getElementById("btn-keys").getAttribute("aria-expanded") === "true"`));
+  await q(`document.activeElement?.blur(); return 1`);
+  await t.key("i");
+  await t.wait(300);
+  check("I opens the idea in its place", await q(`return document.getElementById("keys").hidden && !document.getElementById("idee").hidden`));
   await t.key("Escape");
   await t.wait(300);
 
