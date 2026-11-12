@@ -183,19 +183,18 @@
     <section class="sec mid" id="start">
       <p class="kick rv">Start</p>
       <h2 class="rv" style="--i:1">Run it on your machine.</h2>
-      <p class="txt rv" style="--i:2">You need Go 1.25 or newer, Node 20 or newer and the DuckDB CLI. The seed writes four invented gold layers to look around in: a bank’s ALCO, corporate clients, retail clients, and a maker of drives.</p>
-<pre class="code rv" style="--i:3" aria-label="Commands to run Lumantic"><b>git clone</b> https://github.com/Dominik1407/lumantic
-<b>cd</b> lumantic
+      <p class="txt rv" style="--i:2">One file for Windows, macOS or Linux, and nothing to install: DuckDB is built in. Start it, and your browser opens with two invented gold layers to look around in, a maker of drives and a bank’s ALCO, whose figures run up to last month.</p>
+<pre class="code rv" style="--i:3" aria-label="Commands to run Lumantic"><u># download, unpack, start lumantic (on Windows: double-click)</u>
+<b>github.com</b>/Dominik1407/lumantic/releases/latest
 
-<u># Windows: builds everything, seeds the examples, starts</u>
-<b>.\scripts\run.ps1</b> -Seed
+<u># with Docker, on http://127.0.0.1:8080</u>
+<b>docker run</b> -p 127.0.0.1:8080:8080 -v lumantic-data:/data \
+  ghcr.io/dominik1407/lumantic
 
-<u># by hand, anywhere</u>
-<b>go run</b> ./cmd/seed -duckdb &lt;path to duckdb&gt;
-<b>cd</b> web &amp;&amp; <b>npm ci</b> &amp;&amp; <b>npm run</b> build &amp;&amp; <b>cd</b> ..
-<b>go run</b> ./cmd/lumantic          <u># http://127.0.0.1:8080</u></pre>
-      <p class="cta rv" style="--i:4"><a class="btn" href="https://github.com/Dominik1407/lumantic">Lumantic on GitHub <span aria-hidden="true">↗</span></a><a class="lk" href="https://github.com/Dominik1407/lumantic/blob/main/CONTRIBUTING.md">How to contribute</a></p>
-      <p class="fine rv" style="--i:5">Without a config Lumantic asks where your gold layer is · Copy config/lumantic.example.json to config/lumantic.json to open all four examples<br>Open, but curated: issues always, pull requests after agreement</p>
+<u># from source: Go 1.25+ and Node 20+, see the README</u>
+<b>git clone</b> https://github.com/Dominik1407/lumantic</pre>
+      <p class="cta rv" style="--i:4"><a class="btn" href="https://github.com/Dominik1407/lumantic/releases/latest">Download <span aria-hidden="true">↓</span></a><a class="lk" href="https://github.com/Dominik1407/lumantic">Lumantic on GitHub</a><a class="lk" href="https://github.com/Dominik1407/lumantic/blob/main/CONTRIBUTING.md">How to contribute</a></p>
+      <p class="fine rv" style="--i:5">Not signed yet: Windows and macOS ask once before the first start · Your own gold layer goes in under Settings › Data<br>Open, but curated: issues always, pull requests after agreement</p>
     </section>
   </main>
 
