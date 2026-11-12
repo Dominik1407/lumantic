@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lumantic · Quiet until it matters.</title>
+  <meta name="description" content="Dashboards that build themselves. Lumantic reads your data every morning, turns it into calm pages and only speaks up when a number needs you.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-8 -8 80 80'%3E%3Crect x='-8' y='-8' width='80' height='80' rx='18' fill='%23fff'/%3E%3Crect x='6' y='6' width='23' height='23' rx='6' fill='%2319203a'/%3E%3Crect x='6' y='35' width='23' height='23' rx='6' fill='%2319203a'/%3E%3Ccircle cx='46.5' cy='46.5' r='11.5' fill='%234a4ec2'/%3E%3C/svg%3E">
+  <!-- A placeholder until the real site is designed: the mark, the line, the way to the code. -->
+  <style>
+    :root { --bg: #f6f6f9; --ink: #19203a; --ink-2: #576081; --accent: #4a4ec2; color-scheme: light dark; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #0e1220; --ink: #e9edf8; --ink-2: #a9b1cc; --accent: #8f93ff; } }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body { display: grid; place-items: center; padding: 24px 16px; background: var(--bg); color: var(--ink);
+      font: 400 17px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 34rem; }
+    .mark { display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 22px; letter-spacing: -.01em; }
+    .mark svg { width: 34px; height: 34px; }
+    .mark .b { fill: var(--ink); } .mark .s { fill: var(--accent); }
+    h1 { margin: 2.2em 0 .4em; font-size: clamp(32px, 7vw, 48px); line-height: 1.05; letter-spacing: -.025em; font-weight: 650; }
+    p { margin: 0; color: var(--ink-2); }
+    a { display: inline-block; margin-top: 2em; color: var(--accent); text-decoration: none; border-bottom: 1px solid currentColor; }
+    a:hover { border-bottom-width: 2px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="mark">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect class="b" x="6" y="6" width="23" height="23" rx="6"/><rect class="b" x="6" y="35" width="23" height="23" rx="6"/><circle class="s" cx="46.5" cy="46.5" r="11.5"/></svg>
+      lumantic
+    </div>
+    <h1>Quiet until it matters.</h1>
+    <p>Dashboards that build themselves. Lumantic reads your data every morning, turns it into calm pages and only speaks up when a number needs you.</p>
+    <a href="https://github.com/Dominik1407/lumantic">Lumantic on GitHub →</a>
+  </main>
+</body>
+</html>
