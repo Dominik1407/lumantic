@@ -7,7 +7,8 @@ name: Release
 # leaves "latest" where it is.
 #
 # Each program is built on a runner of its own system: cgo does not cross
-# compile well, and native runners need no further tools. The two Macs are
+# compile well, and native runners need no further tools (Windows uses the
+# MinGW gcc the runner brings; the gcc 16 of MSYS2 does not fit DuckDB's library). The two Macs are
 # built on one Apple-silicon runner, Intel through clang -arch x86_64. Linux is
 # built on Ubuntu 22.04 for an older glibc, so it runs on most distributions.
 #
@@ -81,17 +82,9 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: C compiler (Windows)
-        if: matrix.goos == 'windows'
-        uses: msys2/setup-msys2@v2
-        id: msys2
-        with:
-          msystem: UCRT64
-          install: mingw-w64-ucrt-x86_64-gcc
-      - name: Put gcc on the path (Windows)
-        if: matrix.goos == 'windows'
-        shell: pwsh
-        run: Add-Content $env:GITHUB_PATH "${{ steps.msys2.outputs.msys2-location }}\ucrt64\bin"
+      # Windows links with the MinGW gcc of the runner, as duckdb-go tests it.
+      - name: C compiler
+        run: ${{ matrix.goos == 'darwin' && 'clang --version' || 'gcc --version' }}
 
       - name: Build
         env:

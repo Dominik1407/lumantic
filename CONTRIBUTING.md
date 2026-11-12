@@ -26,8 +26,9 @@ and critique are very welcome as issues; changes there come from the maintainer.
 
 ## Getting started
 
-You need Go 1.25+ and Node 20+. A C compiler is optional: with one (gcc or clang, on Windows
-the UCRT gcc of MSYS2), Go builds DuckDB into the program, as the releases do; without one,
+You need Go 1.25+ and Node 20+. A C compiler is optional: with one (gcc or clang; on Windows
+MinGW-w64 with gcc 15, as DuckDB's library does not link with gcc 16), Go builds DuckDB into
+the program, as the releases do; without one,
 `go run` and `go test` work as well and Lumantic asks the DuckDB CLI
 (`winget install DuckDB.cli`, or `LUMANTIC_DUCKDB` with its path). The CI tests both. On
 Windows, `.\scripts\run.ps1` builds and starts everything. By hand:

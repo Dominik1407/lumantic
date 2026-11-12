@@ -47,9 +47,9 @@ Taste `,`).
 
 ### Aus dem Quellcode
 
-Voraussetzungen: Go 1.25+ und Node 20+. Mit einem C-Compiler (gcc oder clang, unter Windows
-der UCRT-gcc von MSYS2) baut Go DuckDB ein; ohne fragt Lumantic die DuckDB-CLI
-(`winget install DuckDB.cli`).
+Voraussetzungen: Go 1.25+ und Node 20+. Mit einem C-Compiler (gcc oder clang; unter Windows
+MinGW-w64 mit gcc 15, das gcc 16 von MSYS2 passt nicht zu DuckDBs Bibliothek) baut Go DuckDB
+ein; ohne fragt Lumantic die DuckDB-CLI (`winget install DuckDB.cli`).
 
 ```powershell
 .\scripts\run.ps1          # baut alles und startet auf http://127.0.0.1:8080
