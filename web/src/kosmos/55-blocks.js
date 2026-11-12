@@ -1,7 +1,7 @@
 // ═════ Kosmos · the blocks of a page. Every block is its own instance, with its own form, evidence and month. ═════
 const shortWhy = (s) => (s.length < 112 ? s : s.split(". ").pop());
-// A figure in few characters, for the quiet line: «117 %», «33.9 Mrd.», «1’150 Mio.».
-const shortF = (k, v) => (k.unit === "%" ? v.toFixed(k.dec) + " %" : k.unit === "Mrd" ? (v / 1000).toFixed(1) + " Mrd." : (v < 0 ? "−" : "") + amount(k, v));
+// A figure in few characters, for the quiet line: «117 %», «33.9 Mrd.», «1’150 Mio.»; «117%», «CHF 33.9bn», «CHF 1,150m».
+const shortF = (k, v) => (k.unit === "%" ? v.toFixed(k.dec) + tr(" %", "%") : !EN && k.unit === "Mrd" ? (v / 1000).toFixed(1) + " Mrd." : (v < 0 ? "−" : "") + amount(k, v));
 // After a block changed (form, evidence, month): redraw it, recolour its star, measure its page again.
 function refreshBlock(b, mode) {
   const v = VIEWS.get(b.id), pg = pages.get(b.page);
@@ -19,12 +19,12 @@ function syncTag(v, m) {
   const text = periodOf(m).label + (held ? " ×" : "");
   if (v.tag.textContent !== text) v.tag.textContent = text;
   v.tag.dataset.pin = String(held);
-  v.tag.title = held ? "Festgehalten. Ein Klick lässt den Baustein wieder mitlaufen." : `Ein Klick hält ${THIS[G]} auf dem Baustein fest.`;
+  v.tag.title = held ? tr("Festgehalten. Ein Klick lässt den Baustein wieder mitlaufen.", "Held. A click lets the block follow the room again.") : tr(`Ein Klick hält ${THIS[G]} auf dem Baustein fest.`, `A click holds ${THIS[G]} on the block.`);
 }
 const tagEl = () => h("button", { class: "tag", type: "button", "data-tag": "1", hidden: true });
 function toolsEl(b) {
-  const kids = b.kind === "kpi" ? FORMS.map((f) => h("button", { class: "fm", type: "button", "data-form": f, title: `Als ${FORM_NAME[f]} zeigen`, text: FORM_NAME[f] })) : [];
-  if (!b.auto) kids.push(h("button", { class: "rm", type: "button", "data-rm": "1", "aria-label": "Baustein entfernen", title: "Entfernen (Entf)" }, "×"));
+  const kids = b.kind === "kpi" ? FORMS.map((f) => h("button", { class: "fm", type: "button", "data-form": f, title: tr(`Als ${FORM_NAME[f]} zeigen`, `Show as ${FORM_NAME[f].toLowerCase()}`), text: FORM_NAME[f] })) : [];
+  if (!b.auto) kids.push(h("button", { class: "rm", type: "button", "data-rm": "1", "aria-label": tr("Baustein entfernen", "Remove block"), title: tr("Entfernen (Entf)", "Remove (Del)") }, "×"));
   return h("span", { class: "tools" }, ...kids);
 }
 
@@ -34,7 +34,7 @@ function kpiView(b) {
   const stw = h("span", { class: "stw" }), tag = tagEl(), lroll = makeRoll(shortF(k, k.series[T.base]), "num"), lsp = sparkEl(k);
   // In the one-line form and above a chart the figure stands in the label line itself.
   const lv = h("span", { class: "lv", hidden: true }, factEl("trend", [lroll], "val"), sparkButton(lsp));
-  const home = away ? h("button", { class: "home", type: "button", "data-home": k.id, title: `Zu ${k.name} auf der Seite ${GROUPS[k.group]} fliegen` }, "→ " + GROUPS[k.group]) : null;
+  const home = away ? h("button", { class: "home", type: "button", "data-home": k.id, title: tr(`Zu ${k.name} auf der Seite ${GROUPS[k.group]} fliegen`, `Fly to ${k.name} on the page ${GROUPS[k.group]}`) }, "→ " + GROUPS[k.group]) : null;
   const main = h("div", { class: "main" }), evPad = h("div", { class: "ev-pad" }), evBox = h("div", { class: "ev", "data-open": "false" }, h("div", { class: "ev-in" }, evPad));
   const el = h("section", { class: "blk", "data-id": b.id, "aria-label": k.name }, h("div", { class: "lbl" }, h("span", { class: "nm", text: k.name }), stw, lv, tag, home, toolsEl(b)), main, evBox);
   const v = { b, k, el, main, evBox, evPad, tag, form: null, sents: new Map(), para: null, big: null, evKind: null, evFixed: false, chart: null, cap: null, fresh: true, m: T.base };
@@ -43,7 +43,7 @@ function kpiView(b) {
     const r = shownOf(k, m), form = FORMS.includes(b.form) ? b.form : "satz", inLabel = form === "zeile" || form === "diagramm";
     el.dataset.kind = r.kind;
     // In days and weeks a figure without daily values shows its month, and says so.
-    swapText(stw, r.label + (fine(G) && r.g !== G ? (hasFine(k) ? " · Monat" : " · nur monatlich erhoben") : ""), mode);
+    swapText(stw, r.label + (fine(G) && r.g !== G ? (hasFine(k) ? tr(" · Monat", " · month") : tr(" · nur monatlich erhoben", " · monthly only")) : ""), mode);
     syncTag(v, m);
     if (v.form !== form) {
       v.form = form; v.sents.clear(); v.para = v.big = null;
@@ -81,9 +81,9 @@ function syncEvidence(v, want, m, mode) {
   if (v.evKind === want && v.evFixed === fixed) { v.cap.textContent = whyFor(k, want, m); v.chart.draw(m, false); return; }
   const wasOpen = v.evKind !== null, shown = want === "run" ? "trend" : want;
   v.evFixed = fixed;
-  const chips = h("div", { class: "chips", role: "group", "aria-label": `Ansichten für ${k.name}` },
+  const chips = h("div", { class: "chips", role: "group", "aria-label": tr(`Ansichten für ${k.name}`, `Views of ${k.name}`) },
     ...viewsFor(k).map((vw) => h("button", { class: "chipb", type: "button", "data-view": vw.kind, "aria-pressed": String(vw.kind === shown) }, vw.name)),
-    fixed ? null : h("button", { class: "evx", type: "button", "data-view": "", "aria-label": "Beleg schliessen", title: "Schliessen" }, "×"));
+    fixed ? null : h("button", { class: "evx", type: "button", "data-view": "", "aria-label": tr("Beleg schliessen", "Close the evidence"), title: tr("Schliessen", "Close") }, "×"));
   v.cap = h("p", { class: "cap", text: whyFor(k, want, m) });
   v.chart = makeChart(want, k, want === "compare" ? { ks: COMPARE } : null);
   v.evKind = want;
@@ -116,12 +116,12 @@ function growInto(v) {
 // «Ruhig»: every calm figure of the page in one line. Each keeps a small star and lifts out on a click.
 function quietView(b) {
   const pg = pages.get(b.page), count = h("span", { class: "stw" }), tag = tagEl(), line = h("p", { class: "qline" }), items = new Map();
-  const el = h("section", { class: "blk quiet", "data-id": b.id, "aria-label": "Ruhige Kennzahlen" }, h("div", { class: "lbl" }, h("span", { class: "nm", text: "Ruhig" }), count, tag), line);
+  const el = h("section", { class: "blk quiet", "data-id": b.id, "aria-label": tr("Ruhige Kennzahlen", "Calm figures") }, h("div", { class: "lbl" }, h("span", { class: "nm", text: tr("Ruhig", "Calm") }), count, tag), line);
   const v = { b, el, tag, items, fresh: true, m: T.base };
   v.update = (m, mode) => {
     v.m = m;
     const ks = quietKpis(pg), live = mode !== "init" && mode !== "none" && !reduced && !v.fresh;
-    count.textContent = ks.length === 1 ? "eine Kennzahl" : ks.length + " Kennzahlen";
+    count.textContent = ks.length === 1 ? tr("eine Kennzahl", "one figure") : ks.length + tr(" Kennzahlen", " figures");
     syncTag(v, m);
     const keep = new Set(ks.map((k) => k.id));
     for (const [kid, it] of items) if (!keep.has(kid)) { it.el.remove(); items.delete(kid); }
@@ -130,7 +130,7 @@ function quietView(b) {
       let it = items.get(k.id);
       if (!it) {
         const roll = makeRoll(shortF(k, k.series[m]), "num"), sp = sparkEl(k), mk = h("span", { class: "qmk", hidden: true });
-        it = { el: h("button", { class: "qi", type: "button", "data-k": k.id, title: `${k.name} (${k.long}): als eigenen Baustein zeigen` }, h("span", { class: "qn", text: SHORT[k.id] + " " }), roll, sp, mk), roll, sp, mk, pos: [0, 0] };
+        it = { el: h("button", { class: "qi", type: "button", "data-k": k.id, title: tr(`${k.name} (${k.long}): als eigenen Baustein zeigen`, `${k.name} (${k.long}): show as a block of its own`) }, h("span", { class: "qn", text: SHORT[k.id] + " " }), roll, sp, mk), roll, sp, mk, pos: [0, 0] };
         items.set(k.id, it);
         if (live) it.el.animate([{ opacity: 0.2 }, { opacity: 1 }], { duration: 360, easing: "ease-out" });
       }
@@ -151,7 +151,7 @@ function quietView(b) {
 function chipEl(k, m) {
   const roll = makeRoll(F(k, shownOf(k, m).cur), "num"), sp = sparkEl(k);
   sparkSet(sp, m);
-  const c = h("span", { class: "chip", contenteditable: "false", "data-k": k.id, title: `${k.long}: zur Seite ${GROUPS[k.group]} fliegen` }, h("span", { class: "cn", text: k.name }), " ", roll, sp);
+  const c = h("span", { class: "chip", contenteditable: "false", "data-k": k.id, title: tr(`${k.long}: zur Seite ${GROUPS[k.group]} fliegen`, `${k.long}: fly to the page ${GROUPS[k.group]}`) }, h("span", { class: "cn", text: k.name }), " ", roll, sp);
   c._roll = roll; c._sp = sp;
   return c;
 }
@@ -168,8 +168,8 @@ function readNote(p) {
   return out;
 }
 function noteView(b) {
-  const p = h("p", { class: "para ed", contenteditable: "true", spellcheck: "false", role: "textbox", "aria-label": "Notiz", "data-ph": "Leere Notiz. Schreib etwas, [[ fügt eine Kennzahl ein." }), tag = tagEl();
-  const el = h("section", { class: "blk note", "data-id": b.id, "aria-label": "Notiz" }, h("div", { class: "lbl" }, h("span", { class: "nm", text: "Notiz" }), tag, toolsEl(b)), p);
+  const p = h("p", { class: "para ed", contenteditable: "true", spellcheck: "false", role: "textbox", "aria-label": tr("Notiz", "Note"), "data-ph": tr("Leere Notiz. Schreib etwas, [[ fügt eine Kennzahl ein.", "Empty note. Write something; [[ adds a figure.") }), tag = tagEl();
+  const el = h("section", { class: "blk note", "data-id": b.id, "aria-label": tr("Notiz", "Note") }, h("div", { class: "lbl" }, h("span", { class: "nm", text: tr("Notiz", "Note") }), tag, toolsEl(b)), p);
   fillNote(p, b.segs || [], effM(b));
   wireEditor(p, {
     change: () => { if (blocks.has(b.id)) { b.segs = readNote(p); save(); } },
@@ -182,24 +182,24 @@ function noteView(b) {
 }
 // Lumina's suggestion: a quiet line that becomes a chart on a click or with Tab.
 function ghostView(b) {
-  const text = h("span", { class: "gtext", "data-ghost": "yes", title: "Übernehmen" });
-  const acts = h("span", { class: "gacts" }, h("button", { class: "gyes", type: "button", "data-ghost": "yes" }, "Übernehmen", h("kbd", { text: "Tab" })),
-    h("button", { class: "gno", type: "button", "data-ghost": "no", "aria-label": "Vorschlag verwerfen", title: "Verwerfen" }, "×"));
-  const el = h("section", { class: "blk ghost", "data-id": b.id, "aria-label": "Vorschlag von Lumina" }, h("p", { class: "gline" }, text, " ", acts));
+  const text = h("span", { class: "gtext", "data-ghost": "yes", title: tr("Übernehmen", "Accept") });
+  const acts = h("span", { class: "gacts" }, h("button", { class: "gyes", type: "button", "data-ghost": "yes" }, tr("Übernehmen", "Accept"), h("kbd", { text: "Tab" })),
+    h("button", { class: "gno", type: "button", "data-ghost": "no", "aria-label": tr("Vorschlag verwerfen", "Dismiss the suggestion"), title: tr("Verwerfen", "Dismiss") }, "×"));
+  const el = h("section", { class: "blk ghost", "data-id": b.id, "aria-label": tr("Vorschlag von Lumina", "Suggestion from Lumina") }, h("p", { class: "gline" }, text, " ", acts));
   const v = { b, el, fresh: true, m: T.base, sig: "" };
   v.update = (m) => {
     v.m = m;
     const kind = b.cid.split(":")[0], k = K[b.k], sig = b.cid + "|" + m;
     if (v.sig === sig) return;
     v.sig = sig;
-    text.replaceChildren(h("span", { class: "gst", "aria-hidden": "true", text: "✦" }), " Dazu passt: ", h("b", { text: `${VIEW_NAME[kind]} von ${k.name}` }), ". " + shortWhy(whyFor(k, kind, m)));
+    text.replaceChildren(h("span", { class: "gst", "aria-hidden": "true", text: "✦" }), tr(" Dazu passt: ", " This fits: "), h("b", { text: tr(`${VIEW_NAME[kind]} von ${k.name}`, `${VIEW_NAME[kind]} of ${k.name}`) }), ". " + shortWhy(whyFor(k, kind, m)));
   };
   return v;
 }
 // Lumina's answer to a question: the question as its label, her answer as text. It stays until removed, like a note.
 function answerView(b) {
-  const el = h("section", { class: "blk answer", "data-id": b.id, "aria-label": "Antwort von Lumina" },
-    h("div", { class: "lbl" }, h("span", { class: "nm" }, h("span", { class: "gst", "aria-hidden": "true", text: "✦ " }), "Antwort"), h("span", { class: "aq", text: b.q || "" }), toolsEl(b)),
+  const el = h("section", { class: "blk answer", "data-id": b.id, "aria-label": tr("Antwort von Lumina", "Answer from Lumina") },
+    h("div", { class: "lbl" }, h("span", { class: "nm" }, h("span", { class: "gst", "aria-hidden": "true", text: "✦ " }), tr("Antwort", "Answer")), h("span", { class: "aq", text: b.q || "" }), toolsEl(b)),
     h("p", { class: "para", text: b.text || "" }));
   const v = { b, el, fresh: true, m: T.base };
   v.update = (m) => { v.m = m; };
@@ -212,23 +212,23 @@ function viewOf(b) {
 }
 
 // ───────────── A page: head, blocks, the line where new blocks begin ─────────────
-const INS_PH = ["/ Baustein · [[ Kennzahl · oder frag", "Notiz schreiben. Enter legt sie ab, [[ fügt eine Kennzahl ein."];
+const INS_PH = EN ? ["/ block · [[ figure · or ask", "Write a note. Enter puts it down, [[ adds a figure."] : ["/ Baustein · [[ Kennzahl · oder frag", "Notiz schreiben. Enter legt sie ab, [[ fügt eine Kennzahl ein."];
 let RULER_CUR = null;
 function buildPage(pg) {
   const head = h("header", { class: "phead" }), list = h("div", { class: "pblocks" });
-  const ins = h("div", { class: "ins ed", contenteditable: "true", role: "textbox", "aria-multiline": "false", spellcheck: "false", "aria-label": "Neuer Baustein, Notiz oder Frage an Lumina", "data-ph": INS_PH[0] });
+  const ins = h("div", { class: "ins ed", contenteditable: "true", role: "textbox", "aria-multiline": "false", spellcheck: "false", "aria-label": tr("Neuer Baustein, Notiz oder Frage an Lumina", "New block, note or question for Lumina"), "data-ph": INS_PH[0] });
   const say = h("p", { class: "insay", "aria-live": "polite" }), mark = h("div", { class: "dropmark", hidden: true });
   pg.el = h("article", { class: "page", "data-id": pg.id }, head, list, h("div", { class: "insrow" }, ins, say), mark);
   Object.assign(pg, { head, list, ins, say, mark, insNote: false });
   if (pg.sys === "heute") {
-    pg.tagEl = h("span", { class: "dl-tag", text: "Heute" });
-    pg.when = h("button", { class: "when", type: "button", title: "Ziehen reist durch die Monate" });
-    pg.play = h("button", { class: "play", type: "button", "aria-pressed": "false", "aria-label": "Geschichte abspielen", title: "Geschichte abspielen (Leertaste)" }, "▶");
+    pg.tagEl = h("span", { class: "dl-tag", text: tr("Heute", "Today") });
+    pg.when = h("button", { class: "when", type: "button", title: tr("Ziehen reist durch die Monate", "Drag to travel through the months") });
+    pg.play = h("button", { class: "play", type: "button", "aria-pressed": "false", "aria-label": tr("Geschichte abspielen", "Play the story"), title: tr("Geschichte abspielen (Leertaste)", "Play the story (Space)") }, "▶");
     // The raster the pages are read in. The status of «Heute» and the main menu keeps the Kosmos' own.
-    pg.grain = h("span", { class: "grain", role: "radiogroup", "aria-label": "Raster" },
+    pg.grain = h("span", { class: "grain", role: "radiogroup", "aria-label": tr("Raster", "Raster") },
       ...GRAINS.map((g) => h("button", { class: "gb", type: "button", role: "radio", "data-grain": g, "aria-checked": String(g === G), "aria-disabled": AVAILABLE.includes(g) ? null : "true",
-        title: AVAILABLE.includes(g) ? `In ${RUN_NOUN[g]} lesen (G)` : "Keine Kennzahl dieses Kosmos hat Tageswerte" }, GRAIN_NAME[g])));
-    pg.ruler = h("div", { class: "ruler", role: "slider", tabindex: "-1", "aria-label": "Zeitlineal: Monat wählen" });
+        title: AVAILABLE.includes(g) ? tr(`In ${RUN_NOUN[g]} lesen (G)`, `Read in ${RUN_NOUN[g]} (G)`) : tr("Keine Kennzahl dieses Kosmos hat Tageswerte", "No figure of this Kosmos has daily values") }, GRAIN_NAME[g])));
+    pg.ruler = h("div", { class: "ruler", role: "slider", tabindex: "-1", "aria-label": tr("Zeitlineal: Monat wählen", "Time ruler: pick a month") });
     pg.rr = h("div", { class: "rr", "data-open": "false" }, h("div", {}, pg.ruler));
     pg.hl = h("h2", { class: "hl" });
     head.append(h("div", { class: "dl" }, pg.tagEl, pg.when, pg.play, pg.grain), pg.rr, pg.hl);
@@ -238,7 +238,7 @@ function buildPage(pg) {
     pg.hl = h("h2", { class: "hl" });
     head.append(h("div", { class: "dl" }, pg.tagEl, pg.whenTxt), pg.hl);
   } else {
-    pg.titleEl = h("div", { class: "ptitle ed", contenteditable: "true", spellcheck: "false", role: "textbox", "aria-label": "Titel der Seite", "data-ph": "Titel" }, pg.title);
+    pg.titleEl = h("div", { class: "ptitle ed", contenteditable: "true", spellcheck: "false", role: "textbox", "aria-label": tr("Titel der Seite", "Title of the page"), "data-ph": tr("Titel", "Title") }, pg.title);
     pg.titleEl.addEventListener("input", () => {
       if (!pg.titleEl.textContent) pg.titleEl.replaceChildren();
       pg.title = pg.titleEl.textContent.replace(/\s+/g, " ").trim().slice(0, 60);
@@ -260,9 +260,9 @@ function buildPage(pg) {
 function updateHead(pg, mode) {
   const m = T.base, per = periodOf(m), past = !atToday();
   if (pg.sys === "heute") {
-    pg.tagEl.textContent = past ? "Rückblick" : "Heute";
+    pg.tagEl.textContent = past ? tr("Rückblick", "Looking back") : tr("Heute", "Today");
     swapText(pg.when, per.long, mode);
-    pg.when.setAttribute("aria-label", `${per.long}. Ziehen oder Pfeiltasten wechseln ${ACC[G]}.`);
+    pg.when.setAttribute("aria-label", tr(`${per.long}. Ziehen oder Pfeiltasten wechseln ${ACC[G]}.`, `${per.long}. Drag or use the arrow keys to change ${ACC[G]}.`));
     if (RULER_CUR) {
       const pm = PERIODS.monat[m];
       RULER_CUR.style.left = (m / TODAY) * 100 + "%";
@@ -290,10 +290,10 @@ function updateLabel(pg) {
   if (pg.sys === "heute") sub = h("i", { text: headlineFor(T.base, "all") });
   else if (pg.sys) {
     const c = levelCounts(T.base, scopeOf(pg), true), kind = c.alert ? "alert" : c.watch ? "watch" : c.good ? "good" : "calm";
-    sub = h("small", { "data-kind": kind, text: c.alert ? (c.alert === 1 ? "eine Sache braucht dich" : `${c.alert} Dinge brauchen dich`) : c.watch ? "im Auge behalten" : c.good ? "gute Nachricht" : "alles ruhig" });
-  } else sub = h("small", { text: pg.blocks.length === 1 ? "ein Baustein" : pg.blocks.length + " Bausteine" });
-  pg.lab.replaceChildren(pg.sys === "heute" && !atToday() ? "Rückblick" : pageName(pg), sub);
-  pg.lab.setAttribute("aria-label", `Zur Seite ${pageName(pg)} fliegen`);
+    sub = h("small", { "data-kind": kind, text: c.alert ? (c.alert === 1 ? tr("eine Sache braucht dich", "one thing needs you") : tr(`${c.alert} Dinge brauchen dich`, `${c.alert} things need you`)) : c.watch ? tr("im Auge behalten", "keep an eye on it") : c.good ? tr("gute Nachricht", "good news") : tr("alles ruhig", "all calm") });
+  } else sub = h("small", { text: pg.blocks.length === 1 ? tr("ein Baustein", "one block") : pg.blocks.length + tr(" Bausteine", " blocks") });
+  pg.lab.replaceChildren(pg.sys === "heute" && !atToday() ? tr("Rückblick", "Looking back") : pageName(pg), sub);
+  pg.lab.setAttribute("aria-label", tr(`Zur Seite ${pageName(pg)} fliegen`, `Fly to the page ${pageName(pg)}`));
 }
 // A block that is new on its page fades in under its star.
 function born(b) {

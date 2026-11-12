@@ -1,17 +1,19 @@
 {
   "title": "Industrie",
   "source": "Goldlayer · Musterwerk AG",
+  "en": { "title": "Industry", "source": "Gold layer · Musterwerk AG" },
   "groups": [
-    { "id": "finanzen", "name": "Finanzen" },
-    { "id": "vertrieb", "name": "Vertrieb" },
-    { "id": "produktion", "name": "Produktion" },
-    { "id": "logistik", "name": "Logistik" }
+    { "id": "finanzen", "name": "Finanzen", "en": { "name": "Finance" } },
+    { "id": "vertrieb", "name": "Vertrieb", "en": { "name": "Sales" } },
+    { "id": "produktion", "name": "Produktion", "en": { "name": "Production" } },
+    { "id": "logistik", "name": "Logistik", "en": { "name": "Logistics" } }
   ],
   "kpis": [
     {
       "id": "gutteile", "group": "produktion", "name": "Gutteile", "long": "Fehlerfreie Teile aller Werke", "short": "Gutteile",
       "unit": "Stk", "dec": 0, "kind": "flow", "dir": 1, "target": 185000, "targetName": "Monatsplan",
       "desc": "Fehlerfreie Teile, die die Werke im Monat gefertigt haben.",
+      "en": { "name": "Good parts", "long": "Defect-free parts of all plants", "short": "Good parts", "desc": "Defect-free parts the plants made in the month.", "targetName": "Monthly plan" },
       "owner": "Produktion · Werkleitung",
       "monthly": { "table": "gold.produktion_monat", "value": "gutteile_stk" },
       "daily": { "table": "gold.produktion_tag", "value": "gutteile_stk" },
@@ -21,6 +23,7 @@
       "id": "ausschuss", "group": "produktion", "name": "Ausschussquote", "long": "Ausschuss in Prozent der gefertigten Teile", "short": "Ausschuss",
       "unit": "%", "dec": 1, "kind": "ratio", "dir": -1, "target": 2.5, "targetName": "Zielwert", "limit": 3.5, "limitName": "Höchstwert",
       "desc": "Anteil der gefertigten Teile, die nicht verkauft werden können.",
+      "en": { "name": "Scrap rate", "long": "Scrap as a percentage of parts made", "short": "Scrap", "desc": "Share of the parts made that cannot be sold.", "targetName": "Target value", "limitName": "Maximum" },
       "formula": "Teile mit Fehler ÷ gefertigte Teile",
       "owner": "Qualität",
       "monthly": { "table": "gold.kpi_monat", "value": "ausschussquote_pct" },
@@ -31,6 +34,7 @@
       "id": "reichweite", "group": "logistik", "name": "Lagerreichweite", "long": "Reichweite des Lagers in Arbeitstagen", "short": "Reichweite",
       "unit": "Tage", "dec": 0, "kind": "stock", "dir": -1, "target": 45, "targetName": "Zielwert", "limit": 60, "limitName": "Höchstwert",
       "desc": "Wie viele Arbeitstage der Lagerbestand beim heutigen Verbrauch reicht.",
+      "en": { "name": "Days of inventory", "long": "Inventory coverage in working days", "short": "Coverage", "desc": "How many working days the stock lasts at today’s consumption.", "targetName": "Target value", "limitName": "Maximum" },
       "formula": "Lagerwert ÷ Materialverbrauch pro Arbeitstag",
       "owner": "Logistik",
       "monthly": { "table": "gold.kpi_monat", "value": "lagerreichweite_tage" }
@@ -39,6 +43,7 @@
       "id": "lagerwert", "group": "logistik", "name": "Lagerwert", "long": "Wert des Lagers aller Werke", "short": "Lagerwert",
       "unit": "Mio", "dec": 0, "kind": "stock", "dir": -1,
       "desc": "Wert von Material, Halbfabrikaten und Fertigware per Monatsende.",
+      "en": { "name": "Inventory value", "long": "Value of the inventory of all plants", "short": "Inventory", "desc": "Value of materials, semi-finished and finished goods at month end." },
       "monthly": { "table": "gold.lager_monat", "value": "lagerwert_mio" },
       "parts": { "mode": "sum", "split": "werk", "order": ["Aarau", "Brno", "Suzhou"] }
     },
@@ -46,21 +51,23 @@
       "id": "materialquote", "group": "finanzen", "name": "Materialquote", "long": "Materialaufwand in Prozent des Umsatzes", "short": "Material",
       "unit": "%", "dec": 1, "kind": "avg", "dir": -1, "target": 45.5, "targetName": "Budget",
       "desc": "Wie viel vom Umsatz für Material ausgegeben wird.",
+      "en": { "name": "Material ratio", "long": "Material costs as a percentage of revenue", "short": "Material", "desc": "How much of revenue is spent on material.", "targetName": "Budget" },
       "monthly": { "table": "gold.kpi_monat", "value": "materialquote_pct" }
     }
   ],
   "extra": {
     "auftragseingang": {
       "desc": "Bestellungen, die im Monat neu eingegangen sind, zum Auftragswert.",
-      "owner": "Vertrieb · A. Rossi", "dir": 1, "target": 42, "targetName": "Monatsziel"
+      "owner": "Vertrieb · A. Rossi", "dir": 1, "target": 42, "targetName": "Monatsziel",
+      "en": { "desc": "Orders newly received in the month, at order value.", "targetName": "Monthly target" }
     },
-    "liefertreue": { "formula": "Pünktlich und vollständig gelieferte Aufträge ÷ alle Aufträge des Monats" }
+    "liefertreue": { "formula": "Pünktlich und vollständig gelieferte Aufträge ÷ alle Aufträge des Monats", "en": { "formula": "Orders delivered on time and in full ÷ all orders of the month" } }
   },
   "terms": [
-    { "term": "Lagerreichweite", "definition": "Wie lange der Bestand beim heutigen Verbrauch reicht.", "synonyms": ["Days on Hand", "Reichweite"], "kpi": "reichweite" },
-    { "term": "Gutteile", "definition": "Teile ohne Fehler, die verkauft werden können.", "synonyms": ["Gutstück", "i.O.-Teile"], "kpi": "gutteile" }
+    { "term": "Lagerreichweite", "definition": "Wie lange der Bestand beim heutigen Verbrauch reicht.", "synonyms": ["Days on Hand", "Reichweite"], "kpi": "reichweite", "en": { "term": "Days of inventory", "definition": "How long the stock lasts at today’s consumption." } },
+    { "term": "Gutteile", "definition": "Teile ohne Fehler, die verkauft werden können.", "synonyms": ["Gutstück", "i.O.-Teile"], "kpi": "gutteile", "en": { "term": "Good parts", "definition": "Parts without defects that can be sold." } }
   ],
   "events": [
-    { "month": "2026-08", "title": "Lieferant in Asien", "text": "Ein Zulieferer für Steuerplatinen liefert verspätet und unvollständig." }
+    { "month": "2026-08", "title": "Lieferant in Asien", "text": "Ein Zulieferer für Steuerplatinen liefert verspätet und unvollständig.", "en": { "title": "Supplier in Asia", "text": "A supplier of control boards delivers late and incomplete." } }
   ]
 }

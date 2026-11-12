@@ -4,19 +4,19 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Lumantic</title>
-    <meta name="description" content="Lumantic: Seiten aus Bausteinen über dem Goldlayer. Quiet until it matters.">
+    <meta name="description" content="Lumantic: Seiten aus Bausteinen über dem Goldlayer. Quiet until it matters." data-en-content="Lumantic: pages of blocks over your gold layer. Quiet until it matters.">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-8 -8 80 80'%3E%3Crect x='-8' y='-8' width='80' height='80' rx='18' fill='%23fff'/%3E%3Crect x='6' y='6' width='23' height='23' rx='6' fill='%2319203a'/%3E%3Crect x='6' y='35' width='23' height='23' rx='6' fill='%2319203a'/%3E%3Ccircle cx='46.5' cy='46.5' r='11.5' fill='%234a4ec2'/%3E%3C/svg%3E">
   </head>
   <body>
     <div class="app" id="app" lang="de">
-      <div class="stage is-far" id="stage" role="application" aria-label="Kosmos: Seiten aus Bausteinen in einem Raum">
+      <div class="stage is-far" id="stage" role="application" aria-label="Kosmos: Seiten aus Bausteinen in einem Raum" data-en-aria-label="Kosmos: pages of blocks in a room">
         <canvas id="grid" aria-hidden="true"></canvas>
         <div class="layer pages" id="pages"></div>
         <canvas id="threads" aria-hidden="true"></canvas>
         <div class="layer labels" id="labels"></div>
         <div class="layer stars" id="stars"></div>
         <div class="lens" id="lens"></div>
-        <p class="hint" id="hint" hidden>Stern greifen = Block bewegen <span aria-hidden="true">→</span></p>
+        <p class="hint" id="hint" hidden data-en-html='Grab a star = move a block <span aria-hidden="true">→</span>'>Stern greifen = Block bewegen <span aria-hidden="true">→</span></p>
         <div class="carry" id="carry" hidden></div>
       </div>
       <main class="kmenu" id="kmenu" hidden></main>
@@ -27,50 +27,50 @@
         </header>
         <footer class="bottom">
           <div class="corner">
-            <button class="idee-btn" id="btn-idee" type="button" aria-expanded="false" aria-controls="idee">Idee</button>
-            <button class="idee-btn keys-btn" id="btn-keys" type="button" aria-expanded="false" aria-controls="keys" title="Alle Tasten (?)">Tasten</button>
+            <button class="idee-btn" id="btn-idee" type="button" aria-expanded="false" aria-controls="idee" data-en="Idea">Idee</button>
+            <button class="idee-btn keys-btn" id="btn-keys" type="button" aria-expanded="false" aria-controls="keys" title="Alle Tasten (?)" data-en-title="All keys (?)" data-en="Keys">Tasten</button>
           </div>
-          <nav class="places" id="places" aria-label="Orte"></nav>
+          <nav class="places" id="places" aria-label="Orte" data-en-aria-label="Places"></nav>
           <span class="spacer" aria-hidden="true"></span>
         </footer>
       </div>
-      <aside class="idee" id="idee" hidden aria-label="Die Idee hinter Lumantic">
-        <button class="idee-x" id="idee-x" type="button" aria-label="Schliessen">×</button>
-        <h2>Seiten aus Blöcken. Im Raum.</h2>
-        <p>Eine Seite ist ein Sternbild aus der Nähe, ein Sternbild ist eine Seite aus der Ferne, und jeder Stern ist ein Block. Lumina schreibt «Heute» und hält eine Seite pro Thema. Alles andere baust du, indem du Sterne greifst und zusammenlegst.</p>
-        <h3>Probier das</h3>
+      <aside class="idee" id="idee" hidden aria-label="Die Idee hinter Lumantic" data-en-aria-label="The idea behind Lumantic">
+        <button class="idee-x" id="idee-x" type="button" aria-label="Schliessen" data-en-aria-label="Close">×</button>
+        <h2 data-en="Pages of blocks. In a room.">Seiten aus Blöcken. Im Raum.</h2>
+        <p data-en="A page is a constellation seen from close, a constellation is a page seen from afar, and every star is a block. Lumina writes «Today» and keeps one page per topic. Everything else you build by grabbing stars and putting them together.">Eine Seite ist ein Sternbild aus der Nähe, ein Sternbild ist eine Seite aus der Ferne, und jeder Stern ist ein Block. Lumina schreibt «Heute» und hält eine Seite pro Thema. Alles andere baust du, indem du Sterne greifst und zusammenlegst.</p>
+        <h3 data-en="Try this">Probier das</h3>
         <ul>
-          <li>Dreh das Mausrad neben der Seite heraus und wieder hinein: Die Seite faltet sich zum Sternbild und zurück. Über einer langen Seite liest du mit dem Rad weiter. Die Wörter unten fliegen zu den Themen, <kbd>H</kbd> zurück zu heute, <kbd>?</kbd> zeigt alle Tasten.</li>
-          <li>Greif einen Stern und zieh ihn ins Leere: Der Block beginnt dort eine eigene Seite. Zieh einen zweiten dazu. Von Luminas Seiten nimmst du Kopien mit.</li>
-          <li>Tippe am Seitenende <kbd>/</kbd> für einen Baustein, <kbd>[[</kbd> für eine Kennzahl in deiner Notiz oder eine Frage mit Fragezeichen. Ein Doppelklick ins Leere beginnt eine neue Seite.</li>
-          <li>Zieh die Zeitlinse über einen Block: Er zeigt den Monat der Linse. Das Mausrad über der Linse stellt ihn, ein Doppelklick auf den Rand taucht ein, <kbd>Z</kbd> springt zurück. <kbd>,</kbd> öffnet die Einstellungen.</li>
+          <li data-en-html="Turn the wheel beside the page out and back in: the page folds into its constellation and back. Over a long page the wheel reads on. The words at the bottom fly to the topics, <kbd>H</kbd> back to today, <kbd>?</kbd> shows every key.">Dreh das Mausrad neben der Seite heraus und wieder hinein: Die Seite faltet sich zum Sternbild und zurück. Über einer langen Seite liest du mit dem Rad weiter. Die Wörter unten fliegen zu den Themen, <kbd>H</kbd> zurück zu heute, <kbd>?</kbd> zeigt alle Tasten.</li>
+          <li data-en-html="Grab a star and drag it into empty space: the block starts a page of its own there. Drag a second one beside it. From Lumina's pages you take copies.">Greif einen Stern und zieh ihn ins Leere: Der Block beginnt dort eine eigene Seite. Zieh einen zweiten dazu. Von Luminas Seiten nimmst du Kopien mit.</li>
+          <li data-en-html="At the end of a page type <kbd>/</kbd> for a block, <kbd>[[</kbd> for a figure in your note, or a question with a question mark. A double click into empty space starts a new page.">Tippe am Seitenende <kbd>/</kbd> für einen Baustein, <kbd>[[</kbd> für eine Kennzahl in deiner Notiz oder eine Frage mit Fragezeichen. Ein Doppelklick ins Leere beginnt eine neue Seite.</li>
+          <li data-en-html="Drag the time lens over a block: it shows the lens' month. The wheel over the lens sets it, a double click on the rim dives in, <kbd>Z</kbd> jumps back. <kbd>,</kbd> opens the settings.">Zieh die Zeitlinse über einen Block: Er zeigt den Monat der Linse. Das Mausrad über der Linse stellt ihn, ein Doppelklick auf den Rand taucht ein, <kbd>Z</kbd> springt zurück. <kbd>,</kbd> öffnet die Einstellungen.</li>
         </ul>
-        <h3>Worauf es sich stützt</h3>
+        <h3 data-en="What it rests on">Worauf es sich stützt</h3>
         <ul class="src">
-          <li><a href="https://www.cs.umd.edu/projects/hcil/jazz/learn/papers/siggraph-93-origpad.pdf" target="_blank" rel="noopener">Perlin &amp; Fox 1993: Pad, An Alternative Approach to the Computer Interface</a>. Semantisches Zoomen: Ein Dokument zeigt klein seinen Titel und gross seinen Text.</li>
-          <li><a href="https://graphics.pixar.com/people/derose/publications/ToolGlass" target="_blank" rel="noopener">Bier, Stone, Pier, Buxton, DeRose 1993: Toolglass and Magic Lenses</a>. Eine Linse zeigt eine andere Sicht auf dieselben Dinge.</li>
-          <li><a href="https://researchr.org/publication/WijkN03" target="_blank" rel="noopener">van Wijk &amp; Nuij 2003: Smooth and Efficient Zooming and Panning</a>. Flüge zoomen erst heraus und dann hinein.</li>
-          <li><a href="https://worrydream.com/ExplorableExplanations/" target="_blank" rel="noopener">Victor 2011: Explorable Explanations</a>. Texte, die auf ihre Leser antworten.</li>
-          <li><a href="https://hal.archives-ouvertes.fr/hal-01024278" target="_blank" rel="noopener">Goffin, Willett, Fekete, Isenberg 2014: Word-Scale Visualizations</a>. Wortgrosse Grafiken im Satz.</li>
+          <li><a href="https://www.cs.umd.edu/projects/hcil/jazz/learn/papers/siggraph-93-origpad.pdf" target="_blank" rel="noopener">Perlin &amp; Fox 1993: Pad, An Alternative Approach to the Computer Interface</a>. <span data-en="Semantic zooming: small, a document shows its title; large, its text.">Semantisches Zoomen: Ein Dokument zeigt klein seinen Titel und gross seinen Text.</span></li>
+          <li><a href="https://graphics.pixar.com/people/derose/publications/ToolGlass" target="_blank" rel="noopener">Bier, Stone, Pier, Buxton, DeRose 1993: Toolglass and Magic Lenses</a>. <span data-en="A lens shows another view of the same things.">Eine Linse zeigt eine andere Sicht auf dieselben Dinge.</span></li>
+          <li><a href="https://researchr.org/publication/WijkN03" target="_blank" rel="noopener">van Wijk &amp; Nuij 2003: Smooth and Efficient Zooming and Panning</a>. <span data-en="Flights zoom out first, then in.">Flüge zoomen erst heraus und dann hinein.</span></li>
+          <li><a href="https://worrydream.com/ExplorableExplanations/" target="_blank" rel="noopener">Victor 2011: Explorable Explanations</a>. <span data-en="Texts that answer their readers.">Texte, die auf ihre Leser antworten.</span></li>
+          <li><a href="https://hal.archives-ouvertes.fr/hal-01024278" target="_blank" rel="noopener">Goffin, Willett, Fekete, Isenberg 2014: Word-Scale Visualizations</a>. <span data-en="Word-sized charts within a sentence.">Wortgrosse Grafiken im Satz.</span></li>
         </ul>
         <p class="fine" id="idee-fine"></p>
       </aside>
-      <aside class="keys" id="keys" hidden aria-label="Tasten">
+      <aside class="keys" id="keys" hidden aria-label="Tasten" data-en-aria-label="Keys">
         <header class="keys-head">
-          <h2>Tasten</h2>
-          <p class="keys-hint">Drück eine, sie leuchtet hier auf.</p>
+          <h2 data-en="Keys">Tasten</h2>
+          <p class="keys-hint" data-en="Press one, it lights up here.">Drück eine, sie leuchtet hier auf.</p>
         </header>
-        <button class="idee-x" id="keys-x" type="button" aria-label="Schliessen">×</button>
+        <button class="idee-x" id="keys-x" type="button" aria-label="Schliessen" data-en-aria-label="Close">×</button>
         <div class="keys-grid" id="keys-grid"></div>
       </aside>
-      <div class="menu" id="menu" role="listbox" aria-label="Auswahl" hidden></div>
+      <div class="menu" id="menu" role="listbox" aria-label="Auswahl" data-en-aria-label="Choices" hidden></div>
       <div class="tip" id="tip" role="tooltip" hidden></div>
       <p class="toast" id="toast" role="status" hidden></p>
       <div class="empty" id="empty" hidden></div>
       <div class="powered" id="powered" hidden></div>
       <div class="fresh" id="fresh" role="status" hidden></div>
       <aside class="sheet" id="settings" hidden role="dialog" aria-modal="false" aria-labelledby="set-title"></aside>
-      <section class="kt" id="katalog" hidden role="dialog" aria-modal="true" aria-label="Sternkatalog"></section>
+      <section class="kt" id="katalog" hidden role="dialog" aria-modal="true" aria-label="Sternkatalog" data-en-aria-label="Star catalogue"></section>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

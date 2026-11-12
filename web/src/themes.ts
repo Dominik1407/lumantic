@@ -1,32 +1,33 @@
 // Designs: the five built in (tokens in styles/themes.css) and corporate ones from the config.
 // A corporate design is a built-in base plus its own colours and faces, written as inline tokens on <html>.
 import type { CorporateDesign, UiPrefs } from "./api";
+import { tr } from "./i18n";
 import { favicon } from "./logo";
 
 export interface Swatch { bg: string; ink: string; accent: string; alert: string; watch: string; good: string; sheet?: string }
 export interface DesignInfo { id: string; name: string; note: string; dark: boolean; serif: boolean; swatch: Swatch; accents: string[]; corporate?: CorporateDesign }
 
 export const DESIGNS: DesignInfo[] = [
-  { id: "nacht", name: "Nacht", note: "Der Nachthimmel von Kosmos", dark: true, serif: true,
+  { id: "nacht", name: tr("Nacht", "Night"), note: tr("Der Nachthimmel von Kosmos", "The night sky of Kosmos"), dark: true, serif: true,
     swatch: { bg: "#070a16", ink: "#e9edf8", accent: "#b9c3ff", alert: "#ff7059", watch: "#f2b84b", good: "#62d6a2" }, accents: ["#b9c3ff", "#8fd3e6", "#f0c9a0", "#d4b8ff"] },
-  { id: "kreide", name: "Kreide", note: "Hell und neutral", dark: false, serif: false,
+  { id: "kreide", name: tr("Kreide", "Chalk"), note: tr("Hell und neutral", "Light and neutral"), dark: false, serif: false,
     swatch: { bg: "#f5f6f8", ink: "#161b26", accent: "#2446c9", alert: "#b42318", watch: "#b77400", good: "#13804f" }, accents: ["#2446c9", "#0f6670", "#6a3fc4", "#1d5fa8"] },
-  { id: "nebel", name: "Nebel", note: "Blaugrau mit weissen Blättern", dark: false, serif: false,
+  { id: "nebel", name: tr("Nebel", "Mist"), note: tr("Blaugrau mit weissen Blättern", "Blue grey with white sheets"), dark: false, serif: false,
     swatch: { bg: "#e4e9f1", ink: "#19203a", accent: "#4a4ec2", alert: "#b0271c", watch: "#b07000", good: "#12805a", sheet: "#fbfcfe" }, accents: ["#4a4ec2", "#2446c9", "#0f6670", "#7a3fae"] },
-  { id: "stein", name: "Stein", note: "Warmes Grau, Graphit, Pflaume", dark: false, serif: false,
+  { id: "stein", name: tr("Stein", "Stone"), note: tr("Warmes Grau, Graphit, Pflaume", "Warm grey, graphite, plum"), dark: false, serif: false,
     swatch: { bg: "#ebe8e2", ink: "#23211e", accent: "#6b3a78", alert: "#a82a1a", watch: "#ad6f00", good: "#12805a" }, accents: ["#6b3a78", "#2446c9", "#0f6670", "#7a4a1d"] },
-  { id: "daemmerung", name: "Dämmerung", note: "Schieferblau statt Nacht", dark: true, serif: false,
+  { id: "daemmerung", name: tr("Dämmerung", "Dusk"), note: tr("Schieferblau statt Nacht", "Slate blue instead of night"), dark: true, serif: false,
     swatch: { bg: "#313a57", ink: "#f2f4fa", accent: "#b9c1ff", alert: "#e6553f", watch: "#c69a2e", good: "#27a877" }, accents: ["#b9c1ff", "#8fd3e6", "#f0c9a0", "#d4b8ff"] },
 ];
 
 export const ACCENT_NAMES: Record<string, string> = {
-  "#b9c3ff": "Mondlicht", "#b9c1ff": "Mondlicht", "#8fd3e6": "Eisblau", "#f0c9a0": "Sand", "#d4b8ff": "Flieder",
-  "#2446c9": "Tintenblau", "#0f6670": "Petrol", "#6a3fc4": "Violett", "#1d5fa8": "Stahlblau",
-  "#4a4ec2": "Indigo", "#7a3fae": "Lila", "#6b3a78": "Pflaume", "#7a4a1d": "Umbra",
+  "#b9c3ff": tr("Mondlicht", "Moonlight"), "#b9c1ff": tr("Mondlicht", "Moonlight"), "#8fd3e6": tr("Eisblau", "Ice blue"), "#f0c9a0": "Sand", "#d4b8ff": tr("Flieder", "Lilac"),
+  "#2446c9": tr("Tintenblau", "Ink blue"), "#0f6670": "Petrol", "#6a3fc4": tr("Violett", "Violet"), "#1d5fa8": tr("Stahlblau", "Steel blue"),
+  "#4a4ec2": "Indigo", "#7a3fae": tr("Lila", "Purple"), "#6b3a78": tr("Pflaume", "Plum"), "#7a4a1d": tr("Umbra", "Umber"),
 };
 
 export const FONTS = [
-  { id: "", name: "Wie im Design", family: "" },
+  { id: "", name: tr("Wie im Design", "As in the design"), family: "" },
   { id: "plex", name: "IBM Plex Sans", family: "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" },
   { id: "source", name: "Source Sans 3", family: "'Source Sans 3', 'Helvetica Neue', Arial, sans-serif" },
   { id: "geist", name: "Geist", family: "'Geist', 'Helvetica Neue', Arial, sans-serif" },
@@ -52,7 +53,7 @@ export function installCorporate(list: CorporateDesign[] | undefined) {
     if (!c || typeof c.id !== "string" || !/^[a-z0-9][a-z0-9_-]{0,40}$/i.test(c.id) || DESIGNS.some((d) => d.id === c.id)) continue;
     const base = DESIGNS.find((d) => d.id === c.base) || DESIGNS[1];
     const col = (k: string) => (c.colors && COLOR_RE.test(c.colors[k] || "") ? c.colors[k] : "");
-    corporate.push({ id: c.id, name: c.name || c.id, note: `Firmen-Design auf Basis von ${base.name}`, dark: base.dark, serif: false, corporate: c,
+    corporate.push({ id: c.id, name: c.name || c.id, note: tr(`Firmen-Design auf Basis von ${base.name}`, `Corporate design based on ${base.name}`), dark: base.dark, serif: false, corporate: c,
       swatch: { bg: col("bg") || base.swatch.bg, ink: col("ink") || base.swatch.ink, accent: col("accent") || base.swatch.accent, alert: col("alert") || base.swatch.alert, watch: col("watch") || base.swatch.watch, good: col("good") || base.swatch.good, sheet: col("sheet") || base.swatch.sheet },
       accents: [col("accent") || base.swatch.accent] });
     for (const f of c.fontFiles || []) {

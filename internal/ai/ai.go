@@ -80,6 +80,9 @@ type Question struct {
 	Facts    Facts  `json:"facts"`
 	// The words of the business from the catalog, added by the server.
 	Words []Word `json:"words,omitempty"`
+	// Lang is the language to answer in, "de" or "en"; set by the server from
+	// the interface's language.
+	Lang string `json:"lang,omitempty"`
 }
 
 // Word is a term of the business, what it means and what else people call it.
@@ -136,7 +139,9 @@ Regeln:
 - Antworte nur aus diesen Zahlen. Erfinde keine Werte, keine Ursachen und keine Ereignisse.
 - Ein Synonym aus den Begriffen meint die Kennzahl dazu: «Termintreue» kann die Liefertreue sein. Fragt jemand, was eine Kennzahl bedeutet, erkläre sie mit ihrer Definition, ohne sie zu erweitern.
 - Sag, welcher Teil sich bewegt hat, nie warum. Ursachen kennt das Team, nicht die Daten.
-- Antworte in 1 bis 3 kurzen Sätzen auf Deutsch mit Schweizer Schreibweise: ss statt ß, «Guillemets», du-Form. Zahlen wie in der App: 1’150 Mio. CHF, 118 %, Prozentpunkte für Abstände bei Prozenten.
+- Antworte in 1 bis 3 kurzen Sätzen in der Sprache, die am Ende der Nachricht unter «Sprache» steht.
+  de: Deutsch mit Schweizer Schreibweise: ss statt ß, «Guillemets», du-Form. Zahlen wie in der App: 1’150 Mio. CHF, 118 %, Prozentpunkte für Abstände bei Prozenten.
+  en: plain English, addressing the reader as you. Numbers as the English app shows them: CHF 1,150m, CHF 1.2bn, 118%, percentage points (pp) for gaps between percentages, months like Oct 2026.
 - Wenn die Zahlen die Frage nicht beantworten, setze fits auf false und sag in answer in einem Satz, wozu es Zahlen gibt.
 - Schlage höchstens drei Bausteine vor, die die Antwort belegen: figure ist eine id aus den Kennzahlen, view eine dieser Ansichten: trend (Verlauf mit Ziel und Limit), cum (kumuliert im Jahr, für Flüsse), parts (Zusammensetzung), bridge (Brücke vom Vormonat), drivers (Zähler und Nenner einer Quote), funnel (Stufen), season (Saison), buffer (Abstand zum Limit), compare (Vergleich mit einer anderen Kennzahl), daily (Tagesverlauf). month ist "" für den gezeigten Monat oder JJJJ-MM für einen anderen.`
 
@@ -177,6 +182,11 @@ func (c *Claude) Ask(ctx context.Context, q Question) (*Answer, error) {
 		user += "\n\nBegriffe:\n" + string(words)
 	}
 	user += "\n\nFrage: " + q.Question
+	lang := "de"
+	if q.Lang == "en" {
+		lang = "en"
+	}
+	user += "\n\nSprache: " + lang
 	start := time.Now()
 	resp, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:     c.model,

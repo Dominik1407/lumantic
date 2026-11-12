@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/i18n"
 	"github.com/Dominik1407/lumantic/internal/metrics"
 	"github.com/Dominik1407/lumantic/internal/source"
 )
@@ -49,7 +50,12 @@ func (s *Server) getKosmen(w http.ResponseWriter, r *http.Request) {
 	u := userOf(r)
 	for _, rm := range s.rooms() {
 		if s.sees(u, rm) {
-			out = append(out, s.infoOf(rm))
+			info := s.infoOf(rm)
+			// In English a Kosmos named like its definitions reads by their English title.
+			if k := s.get(rm.id); k != nil && k.merged != nil && i18n.Wants(r) && k.merged.Title == info.Name && k.merged.En["title"] != "" {
+				info.Name = k.merged.En["title"]
+			}
+			out = append(out, info)
 		}
 	}
 	writeJSON(w, 200, map[string]any{"kosmen": out})

@@ -13,7 +13,7 @@ Firmendesign liegt in `lumantic.example.json`. Kopieren, umbenennen und anpassen
 | `auth` | Wie man sich anmeldet und wer Administrator ist (siehe «Anmeldung und Rechte»). Nur in dieser Datei, nie aus der App. |
 | `access`, `editors`, `rights` | Wer den ersten Kosmos sieht, wer seine Kennzahlen pflegt, und ob die Datenbank selbst prüft. |
 | `ai` | Lumina mit Claude: an oder aus, Modell, und optional eine Adresse für ein Firmen-Gateway. |
-| `ui` | Die Standard-Darstellung für alle. Jede Person kann sie in der App für sich ändern. |
+| `ui` | Die Standard-Darstellung für alle. Jede Person kann sie in der App für sich ändern. `ui.language` ist die Sprache: `de`, `en` oder leer für die des Browsers. |
 | `brand` | Firmenname, eigenes Logo und eigene Designs (siehe unten). |
 
 ## Tokens
@@ -212,14 +212,15 @@ Spalten ab.
 
 | Tabelle | Spalten |
 |---|---|
-| `lumantic_kennzahlen` | `id`, `name`, `definition`, `thema`, `einheit` (z. B. «Mio. CHF», «%», «Stück», «Tage»), `art` («Bestand» oder «Fluss»), `richtung` («höher ist besser», «tiefer ist besser», «neutral»), `tabelle`, `wert_spalte`, `zeit_spalte`, `teile_spalte`, `eigner`, `berechnung` |
+| `lumantic_kennzahlen` | `id`, `name`, `definition`, `thema`, `einheit` (z. B. «Mio. CHF», «%», «Stück», «Tage»), `art` («Bestand» oder «Fluss»), `richtung` («höher ist besser», «tiefer ist besser», «neutral»), `tabelle`, `wert_spalte`, `zeit_spalte`, `teile_spalte`, `eigner`, `berechnung`; für die englische Oberfläche `name_en`, `definition_en`, `thema_en` |
 | `lumantic_ziele` | `kennzahl_id`, `art` («Ziel» oder «Grenze»), `wert`, `name`, `gueltig_ab`, `gueltig_bis`, `periode` («Jahr» oder «Monat», optional) |
-| `lumantic_begriffe` | `begriff`, `definition`, `synonyme` (mit `;` getrennt), `kennzahl_id` |
+| `lumantic_begriffe` | `begriff`, `definition`, `synonyme` (mit `;` getrennt), `kennzahl_id`; dazu `begriff_en`, `definition_en` |
 
 - Jede Zeile von `lumantic_kennzahlen` ist eine Kennzahl, jedes `thema` eine Seite. Mit dem Fachkatalog allein baut
   sich ein Kosmos, ohne Kennzahlen-Datei.
 - Was der Fachkatalog offen lässt, ergänzt Lumantic in der Kennzahlen-Datei des Kosmos unter `extra`, eine Kennzahl pro
-  `id` (`desc`, `formula`, `owner`, `unit`, `kind`, `dir`, `target`, `limit`, `targetName`, `limitName`). Was der
+  `id` (`desc`, `formula`, `owner`, `unit`, `kind`, `dir`, `target`, `limit`, `targetName`, `limitName`, und unter
+  `en` die englischen Wörter `desc`, `formula`, `targetName`, `limitName`). Was der
   Fachkatalog füllt, gilt; Lumantic weist Änderungen daran ab.
 - Lumantics eigene Begriffe stehen unter `terms`, eigene Kennzahlen wie bisher unter `kpis`.
 - Was weder dort noch hier steht, vermutet Lumantic aus dem Spaltennamen und zeigt es als vermutet.

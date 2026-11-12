@@ -96,18 +96,20 @@ const starEl = (id, type) => h("button", { class: "star", type: "button", "data-
 // Shape and colour of a star, and its small name for the far view.
 function refreshStar(st) {
   let kind = "lead", name = "", value = "", say = "";
-  if (st.type === "lead") say = `Seite ${pageName(st.pg)}` + (st.pg.sys ? "" : ": ziehen verschiebt die Seite");
+  if (st.type === "lead") say = tr(`Seite ${pageName(st.pg)}`, `Page ${pageName(st.pg)}`) + (st.pg.sys ? "" : tr(": ziehen verschiebt die Seite", ": drag to move the page"));
   else if (st.type === "chip") {
     const k = K[st.k], m = st.under ? lens.m : effM(st.b), r = shownOf(k, m);
     kind = r.level === "calm" ? "calm" : r.kind; name = SHORT[k.id]; value = compact(k, r.cur);
-    say = `${k.name}, ${r.label}: ziehen nimmt eine Kopie mit, Klick macht einen eigenen Baustein`;
+    say = tr(`${k.name}, ${r.label}: ziehen nimmt eine Kopie mit, Klick macht einen eigenen Baustein`, `${k.name}, ${r.label}: drag to take a copy, click for a block of its own`);
   } else {
     const b = st.b;
     if (b.kind === "kpi") {
       const k = K[b.k], r = shownOf(k, effM(b));
       kind = r.level !== "calm" ? r.kind : b.form === "diagramm" ? "chart" : "calm"; name = SHORT[k.id]; value = compact(k, r.cur);
-      say = `${k.name}, ${r.label}: ziehen bewegt den Baustein, Klick öffnet sein Menü`;
-    } else { kind = b.kind; name = b.kind === "note" ? "Notiz" : b.kind === "answer" ? "Antwort" : ""; say = b.kind === "note" ? "Notiz: ziehen bewegt sie, Klick öffnet ihr Menü" : b.kind === "answer" ? "Antwort von Lumina: ziehen bewegt sie, Klick öffnet ihr Menü" : b.kind === "ghost" ? "Vorschlag von Lumina: Klick übernimmt ihn" : "Ruhige Kennzahlen"; }
+      say = tr(`${k.name}, ${r.label}: ziehen bewegt den Baustein, Klick öffnet sein Menü`, `${k.name}, ${r.label}: drag to move the block, click for its menu`);
+    } else { kind = b.kind; name = b.kind === "note" ? tr("Notiz", "Note") : b.kind === "answer" ? tr("Antwort", "Answer") : "";
+      say = b.kind === "note" ? tr("Notiz: ziehen bewegt sie, Klick öffnet ihr Menü", "Note: drag to move it, click for its menu") : b.kind === "answer" ? tr("Antwort von Lumina: ziehen bewegt sie, Klick öffnet ihr Menü", "Answer from Lumina: drag to move it, click for its menu")
+        : b.kind === "ghost" ? tr("Vorschlag von Lumina: Klick übernimmt ihn", "Suggestion from Lumina: click to accept it") : tr("Ruhige Kennzahlen", "Calm figures"); }
   }
   const sig = kind + "|" + name + "|" + value + "|" + say;
   if (st.sig === sig) return;

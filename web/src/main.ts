@@ -38,6 +38,7 @@ import { P, flush, initPrefs, saveKosmos, setPref, storedKosmos } from "./prefs"
 import { applyLook, designOf, installCorporate } from "./themes";
 import { createSettings, TYPES } from "./settings";
 import { createCatalog } from "./catalog";
+import { isEn, settleLang, translateStatic, tr } from "./i18n";
 
 const LENS_BACK = { "1M": 1, "1Q": 3, "1J": 12 } as const;
 const systemStill = matchMedia("(prefers-reduced-motion: reduce)");
@@ -102,7 +103,7 @@ const sheet = createSettings({
 function showBrand() {
   const dark = designOf(P.design).dark, b = settings?.brand, own = !!companyLogo(b, dark);
   const many = !!here && kosmen.length > 1;
-  const home = many ? h("button", { type: "button", class: "brand-home", title: "Alle Kosmen (Taste K)", onclick: leave }) : h("span", { class: "brand-home" });
+  const home = many ? h("button", { type: "button", class: "brand-home", title: tr("Alle Kosmen (Taste K)", "All Kosmen (key K)"), onclick: leave }) : h("span", { class: "brand-home" });
   home.append(brandLogo(b, dark));
   if (!own && b?.name) home.append(h("span", { class: "corp", text: b.name }));
   const name = kosmen.find((k) => k.id === here)?.name;
@@ -116,12 +117,12 @@ function showBrand() {
 // for that kind of source; testing, saving and the first key figure follow there.
 function welcome(): HTMLElement {
   return h("div", { class: "empty-in welcome" },
-    h("p", { class: "step", text: "Ersteinrichtung" }),
-    h("h1", { text: "Wo liegt dein Goldlayer?" }),
-    h("p", { text: "Lumantic liest nur. Es fragt die Datenbank nach Summen pro Monat, nie nach einzelnen Zeilen." }),
+    h("p", { class: "step", text: tr("Ersteinrichtung", "First start") }),
+    h("h1", { text: tr("Wo liegt dein Goldlayer?", "Where does your gold layer live?") }),
+    h("p", { text: tr("Lumantic liest nur. Es fragt die Datenbank nach Summen pro Monat, nie nach einzelnen Zeilen.", "Lumantic only reads. It asks the database for sums per month, never for single rows.") }),
     h("div", { class: "kinds", role: "list" }, ...TYPES.map((t, i) => h("button", { type: "button", class: "kind", role: "listitem", style: `--i:${i}`, onclick: () => sheet.setup(t.v) },
       h("span", { class: "kind-n", text: t.name }), h("span", { class: "kind-note", text: t.note })))),
-    h("p", { class: "why", text: "Alles lässt sich später in den Einstellungen ändern, auch weitere Kosmen über andere Datenbanken." }));
+    h("p", { class: "why", text: tr("Alles lässt sich später in den Einstellungen ändern, auch weitere Kosmen über andere Datenbanken.", "Everything can be changed later in the settings, also further Kosmen over other databases.") }));
 }
 
 // New figures: the server reads a Kosmos again on a schedule, on a loading job's word or when its files change, and tells
@@ -129,7 +130,7 @@ function welcome(): HTMLElement {
 interface Fresh { kosmos: string; ok: boolean; changed: boolean; at: string; by: string }
 function listen() {
   if (typeof EventSource === "undefined") return;
-  new EventSource("/api/events").addEventListener("refresh", (msg) => {
+  new EventSource(`/api/events?lang=${isEn() ? "en" : "de"}`).addEventListener("refresh", (msg) => {
     let ev: Fresh;
     try { ev = JSON.parse((msg as MessageEvent).data); } catch { return; }
     // A read by hand comes from the settings, which rebuild the room themselves.
@@ -138,9 +139,9 @@ function listen() {
     const at = new Date(ev.at), time = Number.isNaN(+at) ? "" : `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
     const name = !here ? kosmen.find((k) => k.id === ev.kosmos)?.name : "";
     const bar = $("fresh");
-    bar.replaceChildren(h("span", { text: `Neue Zahlen${name ? ` in «${name}»` : ""}${time ? ` · Stand ${time}` : ""}` }),
-      h("button", { type: "button", class: "fresh-go", onclick: resume }, "Zeigen"),
-      h("button", { type: "button", class: "fresh-x", title: "Später", "aria-label": "Später", onclick: () => { bar.hidden = true; } }, "×"));
+    bar.replaceChildren(h("span", { text: `${tr("Neue Zahlen", "New figures")}${name ? ` in «${name}»` : ""}${time ? ` · ${tr("Stand", "as of")} ${time}` : ""}` }),
+      h("button", { type: "button", class: "fresh-go", onclick: resume }, tr("Zeigen", "Show")),
+      h("button", { type: "button", class: "fresh-x", title: tr("Später", "Later"), "aria-label": tr("Später", "Later"), onclick: () => { bar.hidden = true; } }, "×"));
     bar.hidden = false;
   });
 }
@@ -152,21 +153,22 @@ function resume() {
 
 // Without figures there is no room: one sentence, one way forward, and the settings stay reachable.
 function showEmpty(err: unknown) {
-  const msg = err instanceof ApiError ? err.message : "Der Server antwortet nicht.";
+  const msg = err instanceof ApiError ? err.message : tr("Der Server antwortet nicht.", "The server does not answer.");
   const noData = err instanceof ApiError && err.status === 503, st = settings?.status;
   const noFigures = noData && !!st && st.tables > 0 && st.kpis === 0;
-  const name = kosmen.find((k) => k.id === here)?.name || "Die Datenquelle";
+  const name = kosmen.find((k) => k.id === here)?.name || tr("Die Datenquelle", "The data source");
   const first = noData && !noFigures && settings?.configExists === false && here === MAIN;
   // Signed in, but no Kosmos is open to this person: nothing to set up, someone has to grant it.
   const barred = err instanceof ApiError && err.status === 403;
   $("empty").replaceChildren(barred ? h("div", { class: "empty-in" },
-    h("h1", { text: "Noch kein Kosmos für dich." }),
-    h("p", { text: "Dir ist noch kein Kosmos freigegeben. Frag einen Administrator nach der Gruppe, die ihn sieht." }),
+    h("h1", { text: tr("Noch kein Kosmos für dich.", "No Kosmos for you yet.") }),
+    h("p", { text: tr("Dir ist noch kein Kosmos freigegeben. Frag einen Administrator nach der Gruppe, die ihn sieht.", "No Kosmos is open to you yet. Ask an administrator for the group that sees it.") }),
     h("p", { class: "why", text: msg })) : first ? welcome() : h("div", { class: "empty-in" },
-    h("h1", { text: noFigures ? "Noch keine Kennzahlen." : noData ? "Noch keine Daten verbunden." : "Die Kennzahlen lassen sich gerade nicht laden." }),
-    h("p", { text: noFigures ? `«${name}» ist verbunden. Sag Lumantic, welche Spalten Kennzahlen sind. Danach baut Lumina hier die Seiten.`
-      : noData ? "Verbinde einen Goldlayer oder einen Ordner mit Tabellen. Danach baut Lumina hier die Seiten." : "Prüf die Datenquelle in den Einstellungen oder lade die Seite neu." }),
-    h("button", { class: "btn", type: "button", onclick: () => sheet.open("daten", noFigures ? "kennzahl" : "") }, noFigures ? "Kennzahl hinzufügen" : "Datenquelle einrichten"),
+    h("h1", { text: noFigures ? tr("Noch keine Kennzahlen.", "No key figures yet.") : noData ? tr("Noch keine Daten verbunden.", "No data connected yet.") : tr("Die Kennzahlen lassen sich gerade nicht laden.", "The key figures cannot be loaded right now.") }),
+    h("p", { text: noFigures ? tr(`«${name}» ist verbunden. Sag Lumantic, welche Spalten Kennzahlen sind. Danach baut Lumina hier die Seiten.`, `«${name}» is connected. Tell Lumantic which columns are key figures. Then Lumina builds the pages here.`)
+      : noData ? tr("Verbinde einen Goldlayer oder einen Ordner mit Tabellen. Danach baut Lumina hier die Seiten.", "Connect a gold layer or a folder of tables. Then Lumina builds the pages here.")
+      : tr("Prüf die Datenquelle in den Einstellungen oder lade die Seite neu.", "Check the data source in the settings or load the page again.") }),
+    h("button", { class: "btn", type: "button", onclick: () => sheet.open("daten", noFigures ? "kennzahl" : "") }, noFigures ? tr("Kennzahl hinzufügen", "Add a key figure") : tr("Datenquelle einrichten", "Set up the data source")),
     noFigures ? null : h("p", { class: "why", text: msg })));
   $("empty").hidden = false;
   $("places").replaceChildren(gear(() => sheet.toggle()));
@@ -190,6 +192,7 @@ async function bootRoom(id: string) {
   settings = s.status === "fulfilled" ? s.value : null;
   installCorporate(settings?.brand.designs);
   initPrefs(settings?.ui, shared.status === "fulfilled" ? shared.value : null, id, own.status === "fulfilled" ? own.value : null);
+  if (settleLang(P.language)) return;
   applyLook(P, systemStill.matches);
   showBrand();
   if (m.status === "rejected") { showEmpty(m.reason); sheet.reopenAfterReload(); return; }
@@ -201,7 +204,7 @@ async function bootRoom(id: string) {
     sessionStorage.removeItem("lumantic.arrive");
     sessionStorage.removeItem("lumantic.resume");
   } catch { /* the usual opening */ }
-  room = bootKosmos(data, {
+  room = bootKosmos({ ...data, lang: isEn() ? "en" : "de" }, {
     reduced: still,
     save: saveKosmos,
     stored: storedKosmos,
@@ -230,7 +233,7 @@ async function bootRoom(id: string) {
   // For the real-time tests (scripts/ui-test): a read-only window into the room.
   Object.defineProperty(window, "__kosmos", { value: room.debug });
   const fine = $("idee-fine");
-  if (fine) fine.textContent = [data.source || settings?.data.name, data.months.length ? `${data.months.length} Monate` : ""].filter(Boolean).join(" · ");
+  if (fine) fine.textContent = [data.source || settings?.data.name, data.months.length ? `${data.months.length} ${tr("Monate", "months")}` : ""].filter(Boolean).join(" · ");
   sheet.reopenAfterReload();
 }
 
@@ -241,6 +244,7 @@ async function bootMenu(note: string) {
   settings = s.status === "fulfilled" ? s.value : null;
   installCorporate(settings?.brand.designs);
   initPrefs(settings?.ui, shared.status === "fulfilled" ? shared.value : null, "");
+  if (settleLang(P.language)) return;
   applyLook(P, systemStill.matches);
   showBrand();
   void showMenu(kosmen, { enter: toKosmos, settings: () => sheet.toggle(), add: () => sheet.open("daten", "kosmos"), settingsOpen: () => sheet.isOpen() || catalog.isOpen(),
@@ -250,12 +254,13 @@ async function bootMenu(note: string) {
 }
 
 async function boot() {
+  translateStatic();
   // An older server knows one Kosmos only; the app then shows that one.
   kosmen = await api.kosmen().catch(() => [{ id: MAIN, name: "", type: "duckdb", main: true, status: { ok: true, error: "", tables: 0, kpis: 0, kpisLoaded: 0, months: 0, first: "", last: "", refreshedAt: "" } }] as KosmosInfo[]);
   listen();
   const k = query.get("k");
   if (k && kosmen.some((x) => x.id === k)) return bootRoom(k);
-  if (k) return bootMenu("Diesen Kosmos gibt es nicht mehr. Hier sind die, die es gibt.");
+  if (k) return bootMenu(tr("Diesen Kosmos gibt es nicht mehr. Hier sind die, die es gibt.", "This Kosmos no longer exists. Here are the ones that do."));
   if (query.has("kosmen") || kosmen.length > 1) return bootMenu("");
   return bootRoom(kosmen[0]?.id || MAIN);
 }

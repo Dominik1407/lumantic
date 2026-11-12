@@ -17,7 +17,7 @@ import (
 	"sync"
 )
 
-const Version = "0.10.0"
+const Version = "0.11.0"
 
 type Windmill struct {
 	URL       string `json:"url"`
@@ -75,6 +75,8 @@ type UI struct {
 	Start    string `json:"start"`
 	Lens     string `json:"lens"`
 	Hints    bool   `json:"hints"`
+	// Language of the interface: "de", "en", or "" for the browser's.
+	Language string `json:"language"`
 }
 
 type FontFile struct {
@@ -500,7 +502,7 @@ func NormalizeData(d *Data) {
 func normalize(c *Config) {
 	trim := func(p *string) { *p = strings.TrimSpace(*p) }
 	for _, p := range []*string{&c.Metrics, &c.AI.Provider, &c.AI.Model, &c.AI.BaseURL,
-		&c.UI.Design, &c.UI.Font, &c.UI.Accent, &c.UI.Motion, &c.UI.TextSize, &c.UI.Start, &c.UI.Lens,
+		&c.UI.Design, &c.UI.Font, &c.UI.Accent, &c.UI.Motion, &c.UI.TextSize, &c.UI.Start, &c.UI.Lens, &c.UI.Language,
 		&c.Brand.Name, &c.Brand.Logo, &c.Brand.LogoDark} {
 		trim(p)
 	}
@@ -678,6 +680,9 @@ func Validate(c Config) error {
 		if !slugRe.MatchString(v) {
 			return fmt.Errorf("Ungültiger Wert für ui.%s.", name)
 		}
+	}
+	if u.Language != "" && u.Language != "de" && u.Language != "en" {
+		return errors.New("Die Sprache ist de, en oder leer für die des Browsers.")
 	}
 	if !fontRe.MatchString(u.Font) {
 		return errors.New("Ungültige Schrift.")

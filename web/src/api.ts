@@ -1,6 +1,8 @@
 // The Go server's JSON API (internal/server). Numbers come straight from the gold layer.
 // A Kosmos is one room over one data source. Everything about a Kosmos (figures, pages, source, key figures) is asked
 // with ?k=<id>; setKosmos says once which one this page is in. Designs, Lumina and the brand are shared by all.
+import { LANG, tr } from "./i18n";
+
 
 type Series = (number | null)[];
 
@@ -54,6 +56,7 @@ export interface MetricsData {
 }
 
 export interface UiPrefs {
+  language: "" | "de" | "en"; // "" = the browser's
   design: string;
   font: string;
   accent: string;
@@ -147,9 +150,10 @@ export interface KpiDef {
   origin?: "quelle"; // from the company catalog in the source: changed there, added to in the Sternkatalog
   target: number | null; limit: number | null; targetName?: string; limitName?: string; group: string; groupName?: string;
   monthly: { table: string; value: string }; status?: string;
+  en?: Record<string, string>; // the English words of the definition: name, short, long, desc …
 }
 
-export interface KpiList { file: string; builtIn: boolean; groups: { id: string; name: string }[]; kpis: KpiDef[] }
+export interface KpiList { file: string; builtIn: boolean; groups: { id: string; name: string; en?: Record<string, string> }[]; kpis: KpiDef[] }
 
 export interface Catalog { source: string; dialect: string; tables: { name: string; desc: string; columns: { name: string; type: string; role: string }[] }[] }
 
@@ -158,7 +162,7 @@ export type Origin = "quelle" | "lumantic" | "vermutet";
 export interface KatalogField { value: unknown; from: Origin }
 export interface KatalogBound { kind: "ziel" | "grenze"; value: number; name?: string; from?: string; until?: string; per?: "monat" | "jahr"; origin?: string }
 export interface KatalogEntry { id: string; name: string; topic: string; fields: Record<string, KatalogField>; bounds: KatalogBound[]; status: string; first: string; last: string }
-export interface KatalogTerm { term: string; definition: string; synonyms?: string[]; kpi?: string; origin?: string }
+export interface KatalogTerm { term: string; definition: string; synonyms?: string[]; kpi?: string; origin?: string; en?: { term?: string; definition?: string } }
 export interface Katalog {
   kosmos: string; name: string; company: string; problems: string[]; editable: boolean;
   entries: KatalogEntry[]; topics: { id: string; name: string }[]; terms: KatalogTerm[];
@@ -181,11 +185,12 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   try {
     res = await fetch(path, {
       method,
-      headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+      // The server answers in the language of the interface: its messages, and Lumina.
+      headers: body === undefined ? { "Accept-Language": LANG } : { "Content-Type": "application/json", "Accept-Language": LANG },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
-    throw new ApiError(0, "Der Server antwortet nicht.");
+    throw new ApiError(0, tr("Der Server antwortet nicht.", "The server does not answer."));
   }
   if (!res.ok) {
     let msg = `${res.status} ${res.statusText}`, login = "";

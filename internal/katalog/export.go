@@ -31,9 +31,18 @@ func SQL(c *metrics.Config, schema string, d adapter.Dialect) string {
 		return d.Literal(s)
 	}
 	num := func(v float64) string { return strconv.FormatFloat(v, 'f', -1, 64) }
-	groups := map[string]string{}
+	// English words go out as the contract's _en columns, when there are any.
+	english, termsEn := false, false
+	groups, groupsEn := map[string]string{}, map[string]string{}
 	for _, g := range c.Groups {
-		groups[g.ID] = g.Name
+		groups[g.ID], groupsEn[g.ID] = g.Name, g.En["name"]
+		english = english || g.En["name"] != ""
+	}
+	for _, k := range c.KPIs {
+		english = english || k.En["name"] != "" || k.En["desc"] != ""
+	}
+	for _, t := range c.Terms {
+		termsEn = termsEn || len(t.En) > 0
 	}
 	var b strings.Builder
 	fmt.Fprintf(&b, "-- Fachkatalog für Lumantic, aus Lumantic exportiert.\n-- Lumantic liest ihn danach als Unternehmenskatalog (Vertrag: config/README.md, «Katalog»).\n")
@@ -65,8 +74,12 @@ func SQL(c *metrics.Config, schema string, d adapter.Dialect) string {
 		if k.Parts != nil {
 			split = k.Parts.Split
 		}
-		kpis = append(kpis, []string{lit(k.ID), lit(k.Name), lit(k.Desc), lit(groups[k.Group]), lit(unitWords[k.Unit]), lit(kindWords[k.Kind]),
-			lit(dirWords[k.Dir]), lit(k.Monthly.Table), lit(k.Monthly.Value), lit(k.Monthly.Time), lit(split), lit(k.Owner), lit(k.Formula)})
+		row := []string{lit(k.ID), lit(k.Name), lit(k.Desc), lit(groups[k.Group]), lit(unitWords[k.Unit]), lit(kindWords[k.Kind]),
+			lit(dirWords[k.Dir]), lit(k.Monthly.Table), lit(k.Monthly.Value), lit(k.Monthly.Time), lit(split), lit(k.Owner), lit(k.Formula)}
+		if english {
+			row = append(row, lit(k.En["name"]), lit(k.En["desc"]), lit(groupsEn[k.Group]))
+		}
+		kpis = append(kpis, row)
 		// A flow's target says what time it covers; a single target of Lumantic's holds per month unless it says otherwise.
 		per := func(p string, isTarget bool) string {
 			switch {
@@ -98,12 +111,24 @@ func SQL(c *metrics.Config, schema string, d adapter.Dialect) string {
 			bounds = append(bounds, []string{lit(k.ID), lit(kind), num(bd.Value), lit(bd.Name), lit(bd.From), lit(bd.Until), per(bd.Per, bd.Kind == "ziel")})
 		}
 	}
-	view(TableKPIs, []string{"id", "name", "definition", "thema", "einheit", "art", "richtung", "tabelle", "wert_spalte", "zeit_spalte", "teile_spalte", "eigner", "berechnung"}, kpis)
+	cols := []string{"id", "name", "definition", "thema", "einheit", "art", "richtung", "tabelle", "wert_spalte", "zeit_spalte", "teile_spalte", "eigner", "berechnung"}
+	if english {
+		cols = append(cols, "name_en", "definition_en", "thema_en")
+	}
+	view(TableKPIs, cols, kpis)
 	view(TableBounds, []string{"kennzahl_id", "art", "wert", "name", "gueltig_ab", "gueltig_bis", "periode"}, bounds)
 	var terms [][]string
 	for _, t := range c.Terms {
-		terms = append(terms, []string{lit(t.Term), lit(t.Definition), lit(strings.Join(t.Synonyms, "; ")), lit(t.KPI)})
+		row := []string{lit(t.Term), lit(t.Definition), lit(strings.Join(t.Synonyms, "; ")), lit(t.KPI)}
+		if termsEn {
+			row = append(row, lit(t.En["term"]), lit(t.En["definition"]))
+		}
+		terms = append(terms, row)
 	}
-	view(TableTerms, []string{"begriff", "definition", "synonyme", "kennzahl_id"}, terms)
+	cols = []string{"begriff", "definition", "synonyme", "kennzahl_id"}
+	if termsEn {
+		cols = append(cols, "begriff_en", "definition_en")
+	}
+	view(TableTerms, cols, terms)
 	return b.String()
 }

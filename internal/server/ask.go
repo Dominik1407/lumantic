@@ -10,6 +10,8 @@ import (
 
 	"github.com/Dominik1407/lumantic/internal/ai"
 	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/i18n"
+	"github.com/Dominik1407/lumantic/internal/metrics"
 )
 
 // askLumina answers a question about the month the page shows. The app sends
@@ -35,6 +37,10 @@ func (s *Server) askLumina(w http.ResponseWriter, r *http.Request) {
 	case len(q.Facts.Figures) > 300:
 		fail(w, 400, "Zu viele Kennzahlen auf einmal (höchstens 300).")
 		return
+	}
+	q.Lang = "de"
+	if i18n.Wants(r) {
+		q.Lang = "en"
 	}
 	s.withMeaning(r, &q)
 	s.mu.RLock()
@@ -78,9 +84,16 @@ func (s *Server) withMeaning(r *http.Request, q *ai.Question) {
 	if !ok || k == nil || k.merged == nil || !s.sees(userOf(r), rm) {
 		return
 	}
+	// In English the words a team wrote in English, where it did.
+	en := func(w metrics.Words, key, de string) string {
+		if q.Lang == "en" && w[key] != "" {
+			return w[key]
+		}
+		return de
+	}
 	desc := map[string]string{}
 	for _, d := range k.merged.KPIs {
-		desc[d.ID] = d.Desc
+		desc[d.ID] = en(d.En, "desc", d.Desc)
 	}
 	sent := map[string]bool{}
 	for i := range q.Facts.Figures {
@@ -98,6 +111,10 @@ func (s *Server) withMeaning(r *http.Request, q *ai.Question) {
 		if len(q.Words) == 100 {
 			break
 		}
-		q.Words = append(q.Words, ai.Word{Term: t.Term, Definition: t.Definition, Synonyms: t.Synonyms, Figure: t.KPI})
+		syn := t.Synonyms
+		if term := en(t.En, "term", ""); term != "" {
+			syn = append([]string{t.Term}, syn...) // the German word still finds it
+		}
+		q.Words = append(q.Words, ai.Word{Term: en(t.En, "term", t.Term), Definition: en(t.En, "definition", t.Definition), Synonyms: syn, Figure: t.KPI})
 	}
 }

@@ -94,18 +94,24 @@ func industrieTables() []table {
 	katalog := table{name: "lumantic_kennzahlen", desc: "Fachkatalog: was die Kennzahlen bedeuten",
 		cols: []column{{"id", "VARCHAR", ""}, {"name", "VARCHAR", ""}, {"definition", "VARCHAR", ""}, {"thema", "VARCHAR", ""},
 			{"einheit", "VARCHAR", ""}, {"art", "VARCHAR", ""}, {"richtung", "VARCHAR", ""}, {"tabelle", "VARCHAR", ""},
-			{"wert_spalte", "VARCHAR", ""}, {"teile_spalte", "VARCHAR", ""}, {"eigner", "VARCHAR", ""}, {"berechnung", "VARCHAR", ""}},
+			{"wert_spalte", "VARCHAR", ""}, {"teile_spalte", "VARCHAR", ""}, {"eigner", "VARCHAR", ""}, {"berechnung", "VARCHAR", ""},
+			{"name_en", "VARCHAR", ""}, {"definition_en", "VARCHAR", ""}, {"thema_en", "VARCHAR", ""}},
 		rows: [][]string{
 			{"umsatz", "Umsatz", "Fakturierter Nettoumsatz ohne MWST, nach Sparte.", "Finanzen", "Mio. CHF", "Fluss", "höher ist besser",
-				"gold.finanzen_monat", "umsatz_mio", "sparte", "Finanzen · M. Keller", "Rechnungen im Monat abzüglich Gutschriften"},
+				"gold.finanzen_monat", "umsatz_mio", "sparte", "Finanzen · M. Keller", "Rechnungen im Monat abzüglich Gutschriften",
+				"Revenue", "Invoiced net revenue without VAT, by division.", "Finance"},
 			// The controlling team has not described order intake yet: Lumantic adds the words and guesses the unit.
-			{"auftragseingang", "Auftragseingang", "", "Vertrieb", "", "", "", "gold.finanzen_monat", "auftragseingang_mio", "sparte", "", ""},
+			{"auftragseingang", "Auftragseingang", "", "Vertrieb", "", "", "", "gold.finanzen_monat", "auftragseingang_mio", "sparte", "", "",
+				"Order intake", "", "Sales"},
 			{"ebit_marge", "EBIT-Marge", "Betriebsergebnis vor Zinsen und Steuern in Prozent des Umsatzes.", "Finanzen", "%", "Bestand", "höher ist besser",
-				"gold.kpi_monat", "ebit_marge_pct", "", "Finanzen · M. Keller", "EBIT ÷ Umsatz der letzten zwölf Monate"},
+				"gold.kpi_monat", "ebit_marge_pct", "", "Finanzen · M. Keller", "EBIT ÷ Umsatz der letzten zwölf Monate",
+				"EBIT margin", "Operating result before interest and taxes as a percentage of revenue.", "Finance"},
 			{"oee", "OEE", "Gesamtanlageneffektivität über alle Werke: Verfügbarkeit × Leistung × Qualität.", "Produktion", "%", "Durchschnitt", "höher ist besser",
-				"gold.kpi_monat", "oee_pct", "", "Produktion · Werkleitung", "Gutteile × Soll-Taktzeit ÷ geplante Produktionszeit"},
+				"gold.kpi_monat", "oee_pct", "", "Produktion · Werkleitung", "Gutteile × Soll-Taktzeit ÷ geplante Produktionszeit",
+				"OEE", "Overall equipment effectiveness across all plants: availability × performance × quality.", "Production"},
 			{"liefertreue", "Liefertreue", "Anteil der Aufträge, die vollständig und zum zugesagten Termin beim Kunden waren.", "Logistik", "%", "", "höher ist besser",
-				"gold.kpi_monat", "liefertreue_pct", "", "Logistik", ""},
+				"gold.kpi_monat", "liefertreue_pct", "", "Logistik", "",
+				"Delivery reliability", "Share of orders that reached the customer complete and on the promised date.", "Logistics"},
 		}}
 	// Sales have an annual budget, as controlling sets it; Lumantic spreads it over the months and days.
 	ziele := table{name: "lumantic_ziele", desc: "Fachkatalog: Ziele und Grenzen mit Gültigkeit",
@@ -122,12 +128,15 @@ func industrieTables() []table {
 			{"liefertreue", "Grenze", "90", "Mindestwert", "", "", ""},
 		}}
 	begriffe := table{name: "lumantic_begriffe", desc: "Fachkatalog: die Wörter des Hauses",
-		cols: []column{{"begriff", "VARCHAR", ""}, {"definition", "VARCHAR", ""}, {"synonyme", "VARCHAR", ""}, {"kennzahl_id", "VARCHAR", ""}},
+		cols: []column{{"begriff", "VARCHAR", ""}, {"definition", "VARCHAR", ""}, {"synonyme", "VARCHAR", ""}, {"kennzahl_id", "VARCHAR", ""},
+			{"begriff_en", "VARCHAR", ""}, {"definition_en", "VARCHAR", ""}},
 		rows: [][]string{
-			{"OEE", "Gesamtanlageneffektivität: wie viel von der geplanten Zeit eine Anlage gute Teile im Soll-Takt fertigt.", "Anlageneffektivität; GAE; Overall Equipment Effectiveness", "oee"},
-			{"OTIF", "On Time In Full: pünktlich und vollständig geliefert.", "Liefertreue; Termintreue", "liefertreue"},
-			{"EBIT", "Ergebnis vor Zinsen und Steuern.", "Betriebsergebnis", "ebit_marge"},
-			{"Book-to-Bill", "Auftragseingang geteilt durch Umsatz. Über 1 wächst der Auftragsbestand, unter 1 schmilzt er.", "Auftragsdeckung", ""},
+			{"OEE", "Gesamtanlageneffektivität: wie viel von der geplanten Zeit eine Anlage gute Teile im Soll-Takt fertigt.", "Anlageneffektivität; GAE; Overall Equipment Effectiveness", "oee",
+				"OEE", "Overall equipment effectiveness: how much of the planned time a machine makes good parts at the target cycle."},
+			{"OTIF", "On Time In Full: pünktlich und vollständig geliefert.", "Liefertreue; Termintreue", "liefertreue", "OTIF", "On time in full: delivered on time and complete."},
+			{"EBIT", "Ergebnis vor Zinsen und Steuern.", "Betriebsergebnis", "ebit_marge", "EBIT", "Earnings before interest and taxes."},
+			{"Book-to-Bill", "Auftragseingang geteilt durch Umsatz. Über 1 wächst der Auftragsbestand, unter 1 schmilzt er.", "Auftragsdeckung", "",
+				"Book-to-bill", "Order intake divided by revenue. Above 1 the order backlog grows, below 1 it shrinks."},
 		}}
 	return append([]table{finanzen, kpi, produktion, lager, katalog, ziele, begriffe}, industrieDaily(&mulberry{s: 4417}, gut, gesamt, ausM)...)
 }

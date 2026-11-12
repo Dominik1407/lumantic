@@ -150,6 +150,28 @@ Offen:
 - Die Studien zur Gestaltung des Sternkatalogs, die die Spezifikation vorsah, sind hier ein erster Entwurf in der echten App.
 - Kataloge aus Werkzeugen (Unity-Catalog-Tags, Snowflake Semantic Views) und `filter` im Vertrag.
 
+## Englisch
+
+Wunsch vom 12. November 2026, gebaut als Version 0.11: die englische Sprache, alles auf einmal.
+
+- **Die Wahl der Person, sonst die des Teams, sonst die des Browsers.** Unter Darstellung › Sprache, ganz oben. Ein
+  Wechsel lädt die Seite einmal neu, denn manche Texte entstehen, wenn die Module laden. Der Browser merkt sich die
+  Sprache und startet in ihr; ein Cookie sagt sie auch Seiten, die der Server selbst schreibt, wie der Anmeldung.
+- **Texte stehen zweisprachig dort, wo sie gebraucht werden:** `tr("Heute", "Today")`. Kein Wörterbuch mit Schlüsseln,
+  denn ein Satz liest sich am Ort besser, und eine vergessene Übersetzung fällt im Code auf. Die Sätze im Raum haben
+  eine eigene Grammatik pro Sprache, nicht eine übersetzte.
+- **International in Englisch, schweizerisch in Deutsch.** `CHF 92m`, `CHF 1.2bn`, `1,150.5`, `12.5%`, `Oct 2026`
+  gegen `92 Mio. CHF`, `1’150.5`, `12.5 %`, `Okt 2026`. Eingaben lesen beides.
+- **Der Server bleibt deutsch geschrieben und antwortet englisch.** Seine Meldungen stehen als deutsche Formate im Code;
+  eine Tabelle (`internal/i18n`) hält jede auf Englisch mit denselben Platzhaltern. Am Rand der API geht jede
+  JSON-Antwort durch sie hindurch, auch Meldungen, die aus mehreren zusammengesetzt sind. Ein Test liest den Code und
+  schlägt fehl, wenn eine neue Meldung keine englische Zeile hat. Die erste Oberfläche (Karten, Engine) bleibt deutsch.
+- **Lumantic übersetzt nur seine eigenen Texte.** Namen, Definitionen und Ereignisse eines Teams bleiben, wie das Team
+  sie schreibt. Englische Wörter stehen daneben unter `en`, im Fachkatalog in Spalten mit `_en`; fehlt eines, steht das
+  deutsche. Teile aus den Daten (Segmente, Werke) bleiben, wie die Daten sie nennen.
+- **Lumina antwortet in der Sprache der Oberfläche,** mit den Zahlen, wie die App sie zeigt, und den Begriffen des
+  Teams in dieser Sprache. Das deutsche Wort bleibt ein Synonym, damit «Termintreue» auch in Englisch trifft.
+
 ## Lesen mit dem Rad, Tasten auf einen Blick
 
 Wunsch vom 12. November 2026: eine lange Seite scrollen statt ziehen, und eine kleine Legende der Tasten, die den

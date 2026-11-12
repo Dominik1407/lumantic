@@ -12,7 +12,9 @@
 //	lumantic_ziele       kennzahl_id, art (Ziel or Grenze), wert, name, gueltig_ab, gueltig_bis
 //	lumantic_begriffe    begriff, definition, synonyme, kennzahl_id
 //
-// Only lumantic_kennzahlen is required; missing columns are left open.
+// Only lumantic_kennzahlen is required; missing columns are left open. Words in
+// English may stand beside the German ones: name_en, definition_en, thema_en,
+// begriff_en; the English interface reads them.
 package katalog
 
 import (
@@ -122,6 +124,7 @@ func Read(ctx context.Context, ad adapter.Adapter, cat *catalog.Catalog) (*Compa
 		}
 		fill("name", str(r, "name"), &k.Name)
 		fill("desc", str(r, "definition"), &k.Desc)
+		k.En = english(map[string]string{"name": str(r, "name_en"), "desc": str(r, "definition_en")})
 		fill("formula", str(r, "berechnung"), &k.Formula)
 		fill("owner", str(r, "eigner"), &k.Owner)
 		if u := unitFrom(str(r, "einheit")); u != "" {
@@ -137,7 +140,7 @@ func Read(ctx context.Context, ad adapter.Adapter, cat *catalog.Catalog) (*Compa
 			k.Group, set["group"] = slug(topic), true
 			if !topics[k.Group] {
 				topics[k.Group] = true
-				c.Topics = append(c.Topics, metrics.Group{ID: k.Group, Name: topic})
+				c.Topics = append(c.Topics, metrics.Group{ID: k.Group, Name: topic, En: english(map[string]string{"name": str(r, "thema_en")})})
 			}
 		}
 		k.Monthly = metrics.Source{Table: str(r, "tabelle"), Value: str(r, "wert_spalte"), Time: str(r, "zeit_spalte")}
@@ -179,7 +182,8 @@ func Read(ctx context.Context, ad adapter.Adapter, cat *catalog.Catalog) (*Compa
 			c.Problems = append(c.Problems, fmt.Sprintf("Die Begriffe (%s) lassen sich nicht lesen: %v", tt, err))
 		}
 		for _, r := range trows {
-			t := metrics.Term{Term: str(r, "begriff"), Definition: str(r, "definition"), KPI: slug(str(r, "kennzahl_id")), Origin: FromSource}
+			t := metrics.Term{Term: str(r, "begriff"), Definition: str(r, "definition"), KPI: slug(str(r, "kennzahl_id")), Origin: FromSource,
+				En: english(map[string]string{"term": str(r, "begriff_en"), "definition": str(r, "definition_en")})}
 			for _, syn := range listSep.Split(str(r, "synonyme"), -1) {
 				if syn = strings.TrimSpace(syn); syn != "" {
 					t.Synonyms = append(t.Synonyms, syn)
@@ -264,7 +268,7 @@ func Merge(company *Company, own *metrics.Config, cat *catalog.Catalog) (*metric
 		}
 		if !groups[k.Group] {
 			groups[k.Group] = true
-			out.Groups = append(out.Groups, metrics.Group{ID: k.Group, Name: "Allgemein"})
+			out.Groups = append(out.Groups, metrics.Group{ID: k.Group, Name: "Allgemein", En: metrics.Words{"name": "General"}})
 		}
 		// Bounds of the catalog first; Lumantic's single target and limit hold where the catalog has none of that kind.
 		k.Bounds = append([]metrics.Bound{}, company.Bounds[ck.ID]...)
@@ -310,6 +314,20 @@ func Merge(company *Company, own *metrics.Config, cat *catalog.Catalog) (*metric
 }
 
 // fillFrom takes the fields a full Lumantic definition has and the catalog not.
+// english keeps the words that are there; nil when none are.
+func english(w map[string]string) metrics.Words {
+	out := metrics.Words{}
+	for f, v := range w {
+		if v = strings.TrimSpace(v); v != "" {
+			out[f] = v
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
 func fillFrom(k *metrics.Def, d metrics.Def, o map[string]string) {
 	str := func(field string, to *string, v string) {
 		if *to == "" && v != "" {
@@ -338,6 +356,14 @@ func fillFrom(k *metrics.Def, d metrics.Def, o map[string]string) {
 		k.Limit, o["limit"] = d.Limit, FromLumantic
 	}
 	k.Long, k.Short, k.Dec, k.TargetName, k.LimitName = d.Long, d.Short, d.Dec, d.TargetName, d.LimitName
+	for f, v := range d.En {
+		if k.En[f] == "" && v != "" {
+			if k.En == nil {
+				k.En = metrics.Words{}
+			}
+			k.En[f] = v
+		}
+	}
 	k.Hidden, k.Season, k.Daily, k.Access = d.Hidden, d.Season, d.Daily, d.Access
 	k.TargetPer, k.Phasing, k.Profile = d.TargetPer, d.Phasing, d.Profile
 	if d.Phasing != "" || len(d.Profile) > 0 {
@@ -355,6 +381,14 @@ func addExtra(k *metrics.Def, ex metrics.Extra, o map[string]string) {
 	str("desc", &k.Desc, ex.Desc)
 	str("formula", &k.Formula, ex.Formula)
 	str("owner", &k.Owner, ex.Owner)
+	for f, v := range ex.En {
+		if v != "" && o[f] != FromSource {
+			if k.En == nil {
+				k.En = metrics.Words{}
+			}
+			k.En[f] = v
+		}
+	}
 	str("unit", &k.Unit, ex.Unit)
 	str("kind", &k.Kind, ex.Kind)
 	if ex.Dir != nil && o["dir"] != FromSource {

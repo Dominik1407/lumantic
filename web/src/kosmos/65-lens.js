@@ -66,12 +66,12 @@ function buildLens() {
     rimHit, lens.arc, lens.bead, lens.beadHit, coinHit);
   lens.month = h("b");
   lens.rel = h("span", { class: "l-rel" });
-  const grip = h("div", { class: "l-date", title: "Ziehen bewegt die Linse" },
-    h("button", { class: "l-step", type: "button", "data-lens": "prev", "aria-label": "Linse einen Monat zurück" }, "◂"), h("span", { class: "l-pre", text: "Zeitlinse ·" }), lens.month, lens.rel,
-    h("button", { class: "l-step", type: "button", "data-lens": "next", "aria-label": "Linse einen Monat vor" }, "▸"));
+  const grip = h("div", { class: "l-date", title: tr("Ziehen bewegt die Linse", "Drag to move the lens") },
+    h("button", { class: "l-step", type: "button", "data-lens": "prev", "aria-label": tr("Linse einen Monat zurück", "Lens one period back") }, "◂"), h("span", { class: "l-pre", text: tr("Zeitlinse ·", "Time lens ·") }), lens.month, lens.rel,
+    h("button", { class: "l-step", type: "button", "data-lens": "next", "aria-label": tr("Linse einen Monat vor", "Lens one period on") }, "▸"));
   const more = h("div", { class: "l-more" },
-    h("button", { type: "button", "data-lens": "p1", title: "Einen Monat vor dem Stand des Raums" }, "1 M"), h("button", { type: "button", "data-lens": "p3", title: "Ein Quartal davor" }, "1 Q"),
-    h("button", { type: "button", "data-lens": "p12", title: "Ein Jahr davor" }, "1 J"), h("button", { class: "l-dive", type: "button", "data-lens": "dive", title: "Der ganze Raum reist in diesen Monat (Doppelklick auf den Rand)" }, "Eintauchen"));
+    h("button", { type: "button", "data-lens": "p1", title: tr("Einen Monat vor dem Stand des Raums", "One month before the room") }, tr("1 M", "1 M")), h("button", { type: "button", "data-lens": "p3", title: tr("Ein Quartal davor", "One quarter before") }, "1 Q"),
+    h("button", { type: "button", "data-lens": "p12", title: tr("Ein Jahr davor", "One year before") }, tr("1 J", "1 Y")), h("button", { class: "l-dive", type: "button", "data-lens": "dive", title: tr("Der ganze Raum reist in diesen Monat (Doppelklick auf den Rand)", "The whole room travels to this month (double-click the rim)") }, tr("Eintauchen", "Dive in")));
   lens.el.replaceChildren(lens.svg, h("div", { class: "l-tab" }, grip, more));
 
   // Coin, rim and date tab pick the lens up and move it. The inside of the open glass lets every click through.
@@ -163,13 +163,19 @@ function updateLens() {
   const d = T.base - lens.m, deg = clamp(-d * MDEG, -356, 356), rad = lens.r + 3.5, [bx, by] = polar(rad, deg);
   lens.month.textContent = periodOf(lens.m).label;
   const a = atOf(T.base), b = atOf(lens.m), far = a >= 0 && b >= 0 ? lensRel(a - b, G) : lensRel(d, "monat");
-  lens.rel.textContent = lens.m === N - 1 && d !== 0 ? "· heute" : "· " + far;
+  lens.rel.textContent = lens.m === N - 1 && d !== 0 ? tr("· heute", "· today") : "· " + far;
   lens.bead.setAttribute("cx", bx.toFixed(1)); lens.bead.setAttribute("cy", by.toFixed(1));
   lens.beadHit.setAttribute("cx", bx.toFixed(1)); lens.beadHit.setAttribute("cy", by.toFixed(1));
   lens.arc.setAttribute("d", Math.abs(deg) < 0.5 ? "" : `M0,${-rad} A${rad},${rad} 0 ${Math.abs(deg) > 180 ? 1 : 0} ${deg > 0 ? 1 : 0} ${bx.toFixed(1)},${by.toFixed(1)}`);
 }
 // How far the glass looks, in the room's raster: «vor einem Quartal», «zwei Jahre später».
 function lensRel(d, g) {
+  if (EN) {
+    if (d === 0) return `the same ${GRAIN_NAME[g].toLowerCase()}`;
+    if (g === "monat" && d === 12) return "a year ago";
+    const n = Math.abs(d), word = n === 1 ? `a ${GRAIN_NAME[g].toLowerCase()}` : `${n} ${PLURAL[g]}`;
+    return d > 0 ? `${word} ago` : `${word} later`;
+  }
   const one = { tag: ["einem Tag", "ein Tag"], woche: ["einer Woche", "eine Woche"], monat: ["einem Monat", "ein Monat"], quartal: ["einem Quartal", "ein Quartal"], jahr: ["einem Jahr", "ein Jahr"] }[g], many = RUN_NOUN[g];
   if (d === 0) return { tag: "derselbe Tag", woche: "dieselbe Woche", monat: "derselbe Monat", quartal: "dasselbe Quartal", jahr: "dasselbe Jahr" }[g];
   if (g === "monat" && d === 12) return "vor einem Jahr";

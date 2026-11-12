@@ -70,7 +70,14 @@ type Def struct {
 	Monthly   Source    `json:"monthly"`
 	Daily     *Source   `json:"daily,omitempty"`
 	Parts     *Parts    `json:"parts,omitempty"`
+	// En holds the English words of the figure: name, long, short, desc,
+	// targetName and limitName. What is missing reads in the language given.
+	En Words `json:"en,omitempty"`
 }
+
+// Words are the English texts of a definition, by field. Lumantic translates
+// its own texts; what a team defines it writes here in English, if it wants.
+type Words map[string]string
 
 // Units a figure can have. Money is kept in Mio. CHF ("Mrd" only changes how it
 // reads, "Tsd" is thousands of CHF); the others are pieces, days, hours and
@@ -86,17 +93,20 @@ var Kinds = map[string]bool{"stock": true, "flow": true, "avg": true, "ratio": t
 type Group struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+	En   Words  `json:"en,omitempty"` // name
 }
 
 type Event struct {
 	Month string `json:"month"` // YYYY-MM
 	Title string `json:"title"`
 	Text  string `json:"text"`
+	En    Words  `json:"en,omitempty"` // title, text
 }
 
 type Config struct {
 	Title  string  `json:"title"`
 	Source string  `json:"source"`
+	En     Words   `json:"en,omitempty"` // title, source
 	Groups []Group `json:"groups"`
 	KPIs   []Def   `json:"kpis"`
 	Events []Event `json:"events"`
@@ -134,6 +144,7 @@ type Term struct {
 	Synonyms   []string `json:"synonyms,omitempty"`
 	KPI        string   `json:"kpi,omitempty"`    // the figure it names, if any
 	Origin     string   `json:"origin,omitempty"` // "quelle" or "lumantic", set by the merge
+	En         Words    `json:"en,omitempty"`     // term, definition
 }
 
 // Extra is what Lumantic adds to a figure of the company catalog: only what the
@@ -155,6 +166,7 @@ type Extra struct {
 	Hidden     bool     `json:"hidden,omitempty"`
 	TargetPer  string   `json:"targetPer,omitempty"`
 	Phasing    string   `json:"phasing,omitempty"`
+	En         Words    `json:"en,omitempty"` // desc, formula, targetName, limitName
 }
 
 // Default returns the built-in ALCO definitions.
@@ -360,17 +372,20 @@ type KPI struct {
 	// Target and Limit then hold the values of the last month.
 	Targets []*float64 `json:"targets,omitempty"`
 	Limits  []*float64 `json:"limits,omitempty"`
+	En      Words      `json:"en,omitempty"`
 }
 
 type EventAt struct {
 	Month int    `json:"month"` // index into Months
 	Title string `json:"title"`
 	Text  string `json:"text"`
+	En    Words  `json:"en,omitempty"`
 }
 
 type Data struct {
 	Title  string    `json:"title"`
 	Source string    `json:"source"`
+	En     Words     `json:"en,omitempty"`
 	Months []string  `json:"months"` // YYYY-MM, contiguous
 	Days   []string  `json:"days"`   // YYYY-MM-DD, days with daily data, the last DaysShown days
 	Weeks  []Week    `json:"weeks"`  // ISO weeks of the daily data, the last WeeksShown
@@ -479,7 +494,7 @@ func Load(ctx context.Context, ad adapter.Adapter, cat *catalog.Catalog, c *Conf
 		}
 	}
 
-	d := &Data{Title: c.Title, Source: c.Source, Groups: c.Groups, Months: monthAxis(months), Days: sorted(days)}
+	d := &Data{Title: c.Title, Source: c.Source, En: c.En, Groups: c.Groups, Months: monthAxis(months), Days: sorted(days)}
 	weeks := weeksOf(d.Days, WeeksShown)
 	d.Weeks = weeks
 	series := func(f *fetch, axis []string, split, col string) []*float64 {
@@ -516,7 +531,7 @@ func Load(ctx context.Context, ad adapter.Adapter, cat *catalog.Catalog, c *Conf
 	for _, k := range c.KPIs {
 		mf := get(k.Monthly.Table, "", false)
 		kpi := KPI{ID: k.ID, Group: k.Group, Name: k.Name, Long: k.Long, Short: k.Short, Unit: k.Unit, Dec: k.Dec, Kind: k.Kind, Dir: k.Dir,
-			Limit: k.Limit, Target: k.Target, LimitName: k.LimitName, TargetName: k.TargetName, Desc: k.Desc, Table: k.Monthly.Table,
+			Limit: k.Limit, Target: k.Target, LimitName: k.LimitName, TargetName: k.TargetName, Desc: k.Desc, En: k.En, Table: k.Monthly.Table,
 			Hidden: k.Hidden, Season: k.Season, Series: series(mf, d.Months, "", k.Monthly.Value)}
 		phasing := phasingOf(k, c)
 		if phasing == "kalendertage" {
@@ -591,7 +606,7 @@ func Load(ctx context.Context, ad adapter.Adapter, cat *catalog.Catalog, c *Conf
 	}
 	for _, e := range c.Events {
 		if i, ok := index[e.Month]; ok {
-			d.Events = append(d.Events, EventAt{Month: i, Title: e.Title, Text: e.Text})
+			d.Events = append(d.Events, EventAt{Month: i, Title: e.Title, Text: e.Text, En: e.En})
 		}
 	}
 	return d, nil

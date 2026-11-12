@@ -70,8 +70,8 @@ func (f *fakeLumina) Ask(_ context.Context, q ai.Question) (*ai.Answer, error) {
 }
 func (f *fakeLumina) Test(context.Context) error { f.tested++; return nil }
 
-const testMetrics = `{"title":"Test","source":"Test","groups":[{"id":"a","name":"A"}],
- "kpis":[{"id":"x","group":"a","name":"Wert","unit":"%","kind":"stock","dir":1,"target":11,"monthly":{"table":"g.monat","value":"wert"}}]}`
+const testMetrics = `{"title":"Test","source":"Test","en":{"title":"Test EN"},"groups":[{"id":"a","name":"A","en":{"name":"A EN"}}],
+ "kpis":[{"id":"x","group":"a","name":"Wert","unit":"%","kind":"stock","dir":1,"target":11,"monthly":{"table":"g.monat","value":"wert"},"en":{"name":"Value"}}]}`
 
 type env struct {
 	t       *testing.T
