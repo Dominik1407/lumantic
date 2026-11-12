@@ -18,6 +18,8 @@ var table = [][2]string{
 	{"Ungültiger Arbeitsbereich.", "Invalid workspace."},
 	{"Der Arbeitsbereich muss ein JSON-Objekt sein", "The workspace must be a JSON object"},
 	{"Dieser Server kann keine Meldungen senden.", "This server cannot send updates."},
+	{"Ohne Anmeldung zeigt Lumantic hier nur die Beispiele. Für eigene Daten richte eine Anmeldung ein oder setz LUMANTIC_OPEN=1 (siehe config/README.md).", "Without a login, Lumantic shows only the examples here. For your own data, set up a login or set LUMANTIC_OPEN=1 (see config/README.md)."},
+	{"Die Beispiele lassen sich nicht schreiben: %v", "The examples cannot be written: %v"},
 
 	// Kosmen and their figures
 	{"Ungültiger Kosmos.", "Invalid Kosmos."},

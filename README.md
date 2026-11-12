@@ -16,18 +16,48 @@ Gold      →  fertige Kennzahlen pro Team
 Lumantic  →  die Bedeutung, für alle verständlich
 ```
 
-## Schnellstart (Windows)
+## Schnellstart
 
-Voraussetzungen: Go 1.25+, Node 20+, DuckDB CLI (`winget install DuckDB.cli`).
+**Herunterladen.** Die Datei für dein System von den
+[Releases](https://github.com/Dominik1407/lumantic/releases) laden (Windows, macOS, Linux),
+entpacken und `lumantic` starten, unter Windows mit Doppelklick auf `lumantic.exe`. Der Browser
+öffnet sich mit zwei Beispiel-Kosmen, Industrie und ALCO, deren Zahlen bis zum letzten Monat
+reichen. Installieren muss man nichts, DuckDB ist eingebaut. Den eigenen Goldlayer, etwa einen
+Ordner mit Parquet- oder CSV-Dateien, verbindest du danach unter **Einstellungen › Daten** (er
+ersetzt das Beispiel) oder mit «Kosmos hinzufügen» im Hauptmenü.
+
+Die Dateien sind noch nicht signiert. Windows SmartScreen warnt beim ersten Start: «Weitere
+Informationen», dann «Trotzdem ausführen». macOS sperrt die Datei: im Finder mit Rechtsklick ›
+Öffnen starten, oder im Terminal `xattr -d com.apple.quarantine lumantic`.
+
+**Mit Docker.**
+
+```sh
+docker run -p 127.0.0.1:8080:8080 -v lumantic-data:/data ghcr.io/dominik1407/lumantic
+```
+
+Ohne Anmeldung zeigt das Image nur die Beispiele. **Neben dem Lakehouse** nimmt
+[docker-compose.yml](docker-compose.yml) den Goldlayer als Ordner, nur lesend, die Daten von
+Lumantic in ein Volume, und hat die Anmeldung als Vorlage: `docker compose up -d`.
+
+Wo Lumantic Einstellungen, Tokens und Arbeitsstände ablegt, steht in
+[config/README.md](config/README.md) unter «Datenort». Datenquelle, Kennzahlen, KI und Design
+stellt man in der App unter **Einstellungen** ein (Zahnrad am Ende der Leiste unten, oder
+Taste `,`).
+
+### Aus dem Quellcode
+
+Voraussetzungen: Go 1.25+ und Node 20+. Mit einem C-Compiler (gcc oder clang, unter Windows
+der UCRT-gcc von MSYS2) baut Go DuckDB ein; ohne fragt Lumantic die DuckDB-CLI
+(`winget install DuckDB.cli`).
 
 ```powershell
 .\scripts\run.ps1          # baut alles und startet auf http://127.0.0.1:8080
 .\scripts\run.ps1 -Seed    # Beispiel-Goldlayer neu erzeugen
 ```
 
-Danach im Browser `http://127.0.0.1:8080` öffnen. Datenquelle, Kennzahlen, KI und Design
-stellt man in der App unter **Einstellungen** ein (Zahnrad am Ende der Leiste unten, oder
-Taste `,`). Wer lieber eine Datei pflegt: [config/README.md](config/README.md).
+In einem Ordner mit `config/lumantic.json` (oder mit `LUMANTIC_CONFIG`) bleiben alle Pfade
+relativ zum Arbeitsordner, wie es zum Entwickeln passt.
 
 Zum Entwickeln der Oberfläche mit Live-Reload:
 
@@ -399,13 +429,14 @@ Adresse ein. Die Regeln, Sätze und Empfehlungen auf den Seiten laufen ohne KI.
 | Ordner | Inhalt |
 |---|---|
 | `cmd/lumantic` | Server |
-| `cmd/seed` | erzeugt die Beispiel-Goldlayer «ALCO» und «Retail Banking» als DuckDB-Datei, «Firmenkunden» und «Privatkunden» als CSV-Ordner (alle Zahlen erfunden) |
+| `cmd/seed` | erzeugt zum Entwickeln die Beispiel-Goldlayer «ALCO» und «Retail Banking» als DuckDB-Datei, «Firmenkunden», «Privatkunden» und «Industrie» als CSV-Ordner (alle Zahlen erfunden) |
+| `internal/beispiele` | die Beispiele selbst: Geschichten in Zahlen, die immer im letzten Monat enden; der erste Start schreibt Industrie und ALCO |
 | `config/beispiele/` | Kennzahlen-Definitionen der Beispiel-Kosmen «Firmenkunden» und «Privatkunden» |
 | `config/` | Vorlage und Beschreibung der Einstellungen, Firmen-Designs in `brand/` |
 | `internal/config` | Einstellungen laden, prüfen, speichern; Tokens |
 | `internal/auth` | Anmeldung: keine, über einen Proxy oder mit OpenID Connect |
 | `internal/katalog` | Fachkatalog lesen, mit Lumantics Definitionen und Vermutungen zusammenführen, als SQL ausgeben |
-| `internal/source`, `internal/adapter` | Datenquelle aus den Einstellungen; DuckDB-, Ordner- und Windmill-Adapter, die SQL-Dialekte |
+| `internal/source`, `internal/adapter` | Datenquelle aus den Einstellungen; DuckDB-, Ordner- und Windmill-Adapter, die SQL-Dialekte; DuckDB eingebaut (`duckdb_builtin.go`, mit cgo) oder als CLI |
 | `internal/adapter/snowflake`, `internal/adapter/databricks` | Snowflake über die SQL API, Databricks über die SQL Statement Execution API |
 | `internal/metrics` | Kennzahlen-Definitionen, Prüfung gegen den Katalog, Laden der Zeitreihen, Bearbeiten |
 | `internal/ai`, `internal/lumina` | Claude für Lumina; Fragen-Karten der ersten Oberfläche |
@@ -457,6 +488,10 @@ go test ./...
 cd web; npm run build; cd ..
 node scripts/ui-test/run.mjs     # Oberfläche in Echtzeit: ein Kosmos (Desktop, Handy, reduzierte Bewegung), Hauptmenü mit dreien, kurzes Fenster, Raster, Englisch
 ```
+
+Die CI prüft beide Wege von DuckDB, eingebaut und als CLI, auf Linux und Windows. Ein Tag `v*` baut
+die Dateien für fünf Systeme und das Image, probiert jedes einmal aus und veröffentlicht sie
+(`.github/workflows/release.yml`).
 
 `run.mjs` startet einen Testserver mit festen Kennzahlen (`scripts/ui-test/mock-api.mjs`),
 spielt die App in Edge ohne Fenster mit echten Tasten und Klicks durch und legt

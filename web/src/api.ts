@@ -77,6 +77,7 @@ export type SecretKey = "anthropicToken" | "windmillToken" | "snowflakeToken" | 
 export type SourceSecrets = Partial<Record<"snowflakeToken" | "databricksToken" | "databricksSecret", string>>;
 
 export interface DataSource {
+  example?: boolean; // the examples Lumantic writes itself
   type: "duckdb" | "files" | "snowflake" | "databricks" | "windmill";
   name: string;
   path: string;
@@ -126,6 +127,8 @@ export interface Settings {
   version: string;
   configPath: string;
   configExists: boolean;
+  duckdbBuiltIn?: boolean; // DuckDB is in the program; a path to the CLI is optional
+  examplesOnly?: boolean; // open to others without a login, so only the examples
   locked: string[];
   ui: Partial<UiPrefs>;
   kosmos: { id: string; main: boolean; count: number }; // the Kosmos data, metrics and status are about

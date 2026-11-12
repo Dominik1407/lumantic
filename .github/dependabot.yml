@@ -1,5 +1,5 @@
 # Dependabot keeps the dependencies current: once a month one pull request per kind
-# (Go modules, the npm packages of the interface, the actions of the CI), with all
+# (Go modules, the npm packages of the interface, the actions of the CI, the base images of the Dockerfile), with all
 # updates of that kind together. Security fixes come as soon as there is one.
 version: 2
 updates:
@@ -25,4 +25,12 @@ updates:
       interval: monthly
     groups:
       actions:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      images:
         patterns: ["*"]

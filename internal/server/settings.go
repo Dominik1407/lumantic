@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Dominik1407/lumantic/internal/adapter"
 	"github.com/Dominik1407/lumantic/internal/config"
 	"github.com/Dominik1407/lumantic/internal/metrics"
 	"github.com/Dominik1407/lumantic/internal/source"
@@ -110,6 +111,7 @@ type databricksView struct {
 }
 
 type dataView struct {
+	Example    bool           `json:"example"` // the examples Lumantic writes itself
 	Type       string         `json:"type"`
 	Name       string         `json:"name"`
 	Path       string         `json:"path"`
@@ -144,20 +146,22 @@ type refreshView struct {
 }
 
 type settingsView struct {
-	Version      string       `json:"version"`
-	ConfigPath   string       `json:"configPath"`
-	ConfigExists bool         `json:"configExists"`
-	Locked       []string     `json:"locked"`
-	UI           config.UI    `json:"ui"`
-	Kosmos       kosmosRef    `json:"kosmos"`
-	Data         dataView     `json:"data"`
-	Metrics      string       `json:"metrics"`
-	Status       Status       `json:"status"`
-	Refresh      refreshView  `json:"refresh"`
-	Grain        string       `json:"grain"` // the standard raster of the Kosmos
-	Me           me           `json:"me"`    // who asks, and what they may change
-	AI           aiView       `json:"ai"`
-	Brand        config.Brand `json:"brand"`
+	Version       string       `json:"version"`
+	ConfigPath    string       `json:"configPath"`
+	ConfigExists  bool         `json:"configExists"`
+	DuckDBBuiltIn bool         `json:"duckdbBuiltIn"` // DuckDB is in the program; a path to the CLI is optional
+	ExamplesOnly  bool         `json:"examplesOnly"`  // open without a login, so only the examples
+	Locked        []string     `json:"locked"`
+	UI            config.UI    `json:"ui"`
+	Kosmos        kosmosRef    `json:"kosmos"`
+	Data          dataView     `json:"data"`
+	Metrics       string       `json:"metrics"`
+	Status        Status       `json:"status"`
+	Refresh       refreshView  `json:"refresh"`
+	Grain         string       `json:"grain"` // the standard raster of the Kosmos
+	Me            me           `json:"me"`    // who asks, and what they may change
+	AI            aiView       `json:"ai"`
+	Brand         config.Brand `json:"brand"`
 }
 
 // settingsFor answers the settings as one Kosmos sees them: data, key figure
@@ -200,13 +204,14 @@ func (s *Server) settingsFor(r *http.Request, id string) settingsView {
 		db.Auth = "oauth"
 	}
 	v := settingsView{
-		Version:      config.Version,
-		ConfigPath:   s.Config.Path(),
-		ConfigExists: s.Config.Exists(),
-		Locked:       locked,
-		UI:           eff.UI,
-		Kosmos:       kosmosRef{ID: rm.id, Main: rm.id == config.MainID, Count: len(rooms)},
-		Data: dataView{Type: d.Type, Name: d.Name, Path: d.Path, Schema: d.Schema, DuckDB: d.DuckDB,
+		Version:       config.Version,
+		ConfigPath:    s.Config.Path(),
+		ConfigExists:  s.Config.Exists(),
+		Locked:        locked,
+		UI:            eff.UI,
+		Kosmos:        kosmosRef{ID: rm.id, Main: rm.id == config.MainID, Count: len(rooms)},
+		DuckDBBuiltIn: adapter.BuiltIn(), ExamplesOnly: s.ExamplesOnly,
+		Data: dataView{Example: d.Example, Type: d.Type, Name: d.Name, Path: d.Path, Schema: d.Schema, DuckDB: d.DuckDB,
 			Snowflake:  snowflakeView{Snowflake: sf, Token: secret(config.SnowflakeToken)},
 			Databricks: databricksView{Databricks: db, Token: secret(config.DatabricksToken), Secret: secret(config.DatabricksSecret)},
 			Windmill:   windmillView{Windmill: d.Windmill, Token: wmTok}},
@@ -297,6 +302,7 @@ func (s *Server) putSettings(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	before := s.Config.Effective()
+	file := s.Config.File()
 	cand, err := s.Config.Merge(req)
 	var locked *config.LockedError
 	switch {
@@ -313,11 +319,24 @@ func (s *Server) putSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	// An example that gets another source is the person's own from then on: no
+	// example any more, and the example's definitions go with it.
+	if file.Data.Example && config.Moved(file.Data, cand.Data) {
+		cand.Data.Example, cand.Metrics = false, ""
+	}
 	if err := config.Validate(cand); err != nil {
 		fail(w, 422, err.Error())
 		return
 	}
 	after := s.Config.EffectiveOf(cand)
+	if s.ExamplesOnly {
+		b := before
+		b.UI, b.Grain = after.UI, after.Grain
+		if !reflect.DeepEqual(b, after) {
+			fail(w, 403, msgExamplesOnly)
+			return
+		}
+	}
 	dataChanged := !reflect.DeepEqual(before.Data, after.Data)
 	metricsChanged := before.Metrics != after.Metrics
 
@@ -388,8 +407,17 @@ func (s *Server) putRoomData(r *http.Request, id string, raw json.RawMessage) er
 	if reflect.DeepEqual(before, d) {
 		return nil
 	}
-	c.Kosmen[i].Data = d
+	if s.ExamplesOnly {
+		return &httpError{403, msgExamplesOnly}
+	}
 	cur := s.get(id)
+	// An example that gets another source is the person's own from then on.
+	if before.Example && config.Moved(before, d) {
+		d.Example, c.Kosmen[i].Metrics = false, ""
+		defs, _ := defsFor(room{id: id, data: d})
+		cur = &kosmos{defs: defs, perPerson: cur.perPerson}
+	}
+	c.Kosmen[i].Data = d
 	ad, err := s.build(id, d, nil)
 	if err != nil {
 		return &httpError{422, err.Error()}

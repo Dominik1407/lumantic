@@ -1,22 +1,19 @@
 package adapter
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/Dominik1407/lumantic/internal/catalog"
 )
 
-// DuckDB runs queries through the DuckDB CLI in read-only mode. Each query is
-// its own process, so no CGO toolchain is needed and nothing can be written.
+// DuckDB reads a database file, opened read-only for each query and closed
+// after it, so a loading job can write the file in between (engine.go).
 type DuckDB struct {
-	Bin    string // path to the duckdb executable
+	Bin    string // path to the DuckDB CLI; "" = the DuckDB built into the program
 	DB     string // path to the database file
 	Source string // human name of the gold layer
 	Schema string // schema prefix to expose, e.g. "gold"
@@ -30,43 +27,11 @@ func NewDuckDB(bin, db, source, schema string) *DuckDB {
 func (d *DuckDB) Name() string    { return "duckdb" }
 func (d *DuckDB) Dialect() string { return "duckdb" }
 
-// runCLI feeds sql to one DuckDB CLI process and parses its JSON output.
-// slots limits how many processes run at once.
-func runCLI(ctx context.Context, slots chan struct{}, bin string, args []string, sql string) ([]Row, error) {
-	select {
-	case slots <- struct{}{}:
-		defer func() { <-slots }()
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
-	cmd := exec.CommandContext(ctx, bin, args...)
-	cmd.Stdin = strings.NewReader(sql)
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	out, err := cmd.Output()
-	if err != nil {
-		msg := strings.TrimSpace(stderr.String())
-		if msg == "" {
-			msg = strings.TrimSpace(string(out))
-		}
-		return nil, fmt.Errorf("duckdb: %v: %s", err, msg)
-	}
-	out = bytes.TrimSpace(out)
-	if len(out) == 0 {
-		return []Row{}, nil
-	}
-	var rows []Row
-	if err := json.Unmarshal(out, &rows); err != nil {
-		return nil, fmt.Errorf("duckdb: unreadable result: %w", err)
-	}
-	return rows, nil
-}
-
 func (d *DuckDB) Query(ctx context.Context, sql string) ([]Row, error) {
 	if _, err := os.Stat(d.DB); errors.Is(err, os.ErrNotExist) {
 		return nil, fmt.Errorf("Die Datenbank %s gibt es nicht.", d.DB)
 	}
-	return runCLI(ctx, d.slots, d.Bin, []string{"-readonly", "-json", d.DB}, sql)
+	return runDuckDB(ctx, d.slots, d.Bin, d.DB, sql)
 }
 
 // Mark is the size and time of the database file and of its write-ahead log.

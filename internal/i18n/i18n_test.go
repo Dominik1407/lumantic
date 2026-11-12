@@ -81,7 +81,7 @@ func TestEveryMessageHasItsEnglish(t *testing.T) {
 	german := regexp.MustCompile(`[äöüÄÖÜ]|\b(der|die|das|den|dem|und|ist|nicht|ein|eine|kein|keine|mit|von|zu|im|bis|nach|noch|sind|für|oder|Bitte|Ungültig\w*|Unbekannt\w*)\b`)
 	skip := map[string]bool{"legacy.go": true}
 	var files []string
-	for _, dir := range []string{"server", "config", "metrics", "katalog", "auth", "adapter", "adapter/databricks", "adapter/snowflake", "source", "ai", "store"} {
+	for _, dir := range []string{"server", "config", "metrics", "katalog", "auth", "adapter", "adapter/databricks", "adapter/snowflake", "source", "ai", "store", "beispiele"} {
 		fs, _ := filepath.Glob(filepath.Join("..", dir, "*.go"))
 		files = append(files, fs...)
 	}

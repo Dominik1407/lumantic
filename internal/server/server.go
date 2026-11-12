@@ -41,6 +41,9 @@ type Server struct {
 	Auth auth.Authenticator
 	// AccessLog is the file that notes who signed in and opened which Kosmos; "" = none.
 	AccessLog string
+	// ExamplesOnly is set when Lumantic runs open to others without a login: it
+	// then shows the examples and refuses own data, tokens and further Kosmen.
+	ExamplesOnly bool
 
 	mu  sync.RWMutex
 	ks  map[string]*kosmos // every Kosmos by id; never changed in place, only replaced
@@ -394,10 +397,11 @@ func (s *Server) catalog() (*catalog.Catalog, []string) {
 func (s *Server) Routes() http.Handler {
 	mux := http.NewServeMux()
 	// Kosmos. Everything about one Kosmos takes ?k=<id>; without it the first is meant.
+	mux.HandleFunc("GET /healthz", s.health)
 	mux.HandleFunc("GET /api/me", s.getMe)
 	mux.HandleFunc("GET /api/kosmen", s.getKosmen)
-	mux.HandleFunc("POST /api/kosmen", s.adminOnly(s.addKosmos))
-	mux.HandleFunc("DELETE /api/kosmen/{id}", s.adminOnly(s.deleteKosmos))
+	mux.HandleFunc("POST /api/kosmen", s.adminOnly(s.notOpen(s.addKosmos)))
+	mux.HandleFunc("DELETE /api/kosmen/{id}", s.adminOnly(s.notOpen(s.deleteKosmos)))
 	mux.HandleFunc("GET /api/metrics", s.getMetrics)
 	mux.HandleFunc("GET /api/workspace", s.getWorkspace)
 	mux.HandleFunc("PUT /api/workspace", s.putWorkspace)
@@ -408,13 +412,13 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("PUT /api/katalog/begriffe", s.editorsOnly(s.putTerms))
 	mux.HandleFunc("POST /api/refresh", s.postRefresh)
 	mux.HandleFunc("GET /api/refresh", s.getRefresh)
-	mux.HandleFunc("POST /api/refresh/token", s.adminOnly(s.postRefreshToken))
-	mux.HandleFunc("DELETE /api/refresh/token", s.adminOnly(s.deleteRefreshToken))
+	mux.HandleFunc("POST /api/refresh/token", s.adminOnly(s.notOpen(s.postRefreshToken)))
+	mux.HandleFunc("DELETE /api/refresh/token", s.adminOnly(s.notOpen(s.deleteRefreshToken)))
 	mux.HandleFunc("GET /api/events", s.events)
 	mux.HandleFunc("GET /api/settings", s.getSettings)
 	mux.HandleFunc("PUT /api/settings", s.adminOnly(s.putSettings))
-	mux.HandleFunc("POST /api/settings/data/test", s.adminOnly(s.testData))
-	mux.HandleFunc("PUT /api/settings/secret", s.adminOnly(s.putSecret))
+	mux.HandleFunc("POST /api/settings/data/test", s.adminOnly(s.notOpen(s.testData)))
+	mux.HandleFunc("PUT /api/settings/secret", s.adminOnly(s.notOpen(s.putSecret)))
 	mux.HandleFunc("POST /api/settings/ai/test", s.adminOnly(s.testAI))
 	mux.HandleFunc("GET /api/kpis", s.getKPIs)
 	mux.HandleFunc("POST /api/kpis", s.editorsOnly(s.addKPI))

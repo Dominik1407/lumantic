@@ -19,8 +19,12 @@ import (
 	"github.com/Dominik1407/lumantic/internal/config"
 )
 
-// DuckDBBin resolves the DuckDB CLI: the configured path, else PATH.
+// DuckDBBin resolves which DuckDB runs the queries: the CLI at the configured
+// path, else the DuckDB built into the program (""), else the CLI on PATH.
 func DuckDBBin(configured string) (string, error) {
+	if configured == "" && adapter.BuiltIn() {
+		return "", nil
+	}
 	bin := configured
 	if bin == "" {
 		bin = "duckdb"

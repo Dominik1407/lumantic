@@ -1,4 +1,4 @@
-package main
+package beispiele
 
 import "math"
 
@@ -9,10 +9,10 @@ import "math"
 // Lumantic adds (config/beispiele/industrie.json), and guesses from column
 // names. All figures are invented.
 //
-// The months tell a story: deliveries on time have dropped below their
-// minimum since August 2026, stock reaches further and further, the EBIT
-// margin misses the higher budget of 2026, and the plants' OEE keeps getting
-// better.
+// The months tell a story (in story time, see story.go): deliveries on time
+// have dropped below their minimum since August 2026, stock reaches further and
+// further, the EBIT margin misses the higher budget of 2026, and the plants'
+// OEE keeps getting better.
 
 func industrieTables() []table {
 	r := &mulberry{s: 7331}
@@ -114,16 +114,18 @@ func industrieTables() []table {
 				"Delivery reliability", "Share of orders that reached the customer complete and on the promised date.", "Logistics"},
 		}}
 	// Sales have an annual budget, as controlling sets it; Lumantic spreads it over the months and days.
+	// Budgets hold for calendar years: the year the story ends in, and the one before.
+	y25, y26 := cal.year(2025), cal.year(2026)
 	ziele := table{name: "lumantic_ziele", desc: "Fachkatalog: Ziele und Grenzen mit Gültigkeit",
 		cols: []column{{"kennzahl_id", "VARCHAR", ""}, {"art", "VARCHAR", ""}, {"wert", "DOUBLE", ""}, {"name", "VARCHAR", ""},
 			{"gueltig_ab", "VARCHAR", ""}, {"gueltig_bis", "VARCHAR", ""}, {"periode", "VARCHAR", ""}},
 		rows: [][]string{
-			{"umsatz", "Ziel", "480", "Budget 2025", "2025-01-01", "2025-12-31", "Jahr"},
-			{"umsatz", "Ziel", "500", "Budget 2026", "2026-01-01", "2026-12-31", "Jahr"},
-			{"ebit_marge", "Ziel", "8.0", "Budget 2025", "2025-01-01", "2025-12-31", ""},
-			{"ebit_marge", "Ziel", "9.0", "Budget 2026", "2026-01-01", "", ""},
-			{"oee", "Ziel", "75", "Ziel 2025", "2025-01-01", "2025-12-31", ""},
-			{"oee", "Ziel", "78", "Ziel 2026", "2026-01-01", "", ""},
+			{"umsatz", "Ziel", "480", "Budget " + y25, y25 + "-01-01", y25 + "-12-31", "Jahr"},
+			{"umsatz", "Ziel", "500", "Budget " + y26, y26 + "-01-01", y26 + "-12-31", "Jahr"},
+			{"ebit_marge", "Ziel", "8.0", "Budget " + y25, y25 + "-01-01", y25 + "-12-31", ""},
+			{"ebit_marge", "Ziel", "9.0", "Budget " + y26, y26 + "-01-01", "", ""},
+			{"oee", "Ziel", "75", "Ziel " + y25, y25 + "-01-01", y25 + "-12-31", ""},
+			{"oee", "Ziel", "78", "Ziel " + y26, y26 + "-01-01", "", ""},
 			{"liefertreue", "Ziel", "95", "Ziel", "", "", ""},
 			{"liefertreue", "Grenze", "90", "Mindestwert", "", "", ""},
 		}}

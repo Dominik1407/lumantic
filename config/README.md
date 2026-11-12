@@ -25,13 +25,32 @@ Die Tokens von Snowflake und Databricks gehören zu einem Kosmos. Für den erste
 `databricksToken` und `databricksSecret`, für jeden weiteren `snowflakeToken@<id>` und so fort. Wird ein Kosmos
 entfernt, gehen seine Tokens mit. Den Claude-Token und den Windmill-Token teilen sich alle Kosmen.
 
+## Datenort
+
+Wo Lumantic seine Einstellungen (`lumantic.json`), Tokens (`secrets.json`), Arbeitsstände
+(`board.json`), das Zugriffsprotokoll und die Beispiele ablegt:
+
+1. Mit `LUMANTIC_CONFIG`, oder in einem Ordner mit `config/lumantic.json` (ein Quellcode-Ordner):
+   alles relativ zum Arbeitsordner wie bisher, `config/` und `data/`.
+2. Sonst in `LUMANTIC_HOME` (im Docker-Image `/data`),
+3. sonst im Ordner für Einstellungen des Benutzers: `%AppData%\Lumantic` unter Windows,
+   `~/Library/Application Support/Lumantic` unter macOS, `~/.config/lumantic` unter Linux.
+
+Im eigenen Ordner liegt alles nebeneinander, und Pfade in den Einstellungen gelten von dort aus.
+Gibt es noch keine Einstellungen und nennt keine Umgebungsvariable eine Datenquelle, startet
+Lumantic mit den Beispielen Industrie und ALCO im Unterordner `beispiele/`. Lumantic schreibt sie
+jeden Tag neu, damit sie im letzten Monat enden; Änderungen an ihnen gehen dabei verloren. Bekommt
+ein Beispiel-Kosmos eine eigene Datenquelle, ist er kein Beispiel mehr; die übrigen entfernt man
+unter Einstellungen › Kosmen.
+
 ## Umgebungsvariablen
 
 Eine Umgebungsvariable gewinnt immer gegen die Datei. Die App zeigt solche Felder als «durch Umgebungsvariable gesetzt» an.
 
 | Variable | Feld |
 |---|---|
-| `LUMANTIC_CONFIG` | Pfad dieser Datei (Standard `config/lumantic.json`) |
+| `LUMANTIC_HOME` | Ordner für Einstellungen und Daten (siehe «Datenort») |
+| `LUMANTIC_CONFIG` | Pfad dieser Datei (Standard `config/lumantic.json` oder `lumantic.json` im Datenort) |
 | `LUMANTIC_SECRETS` | Pfad der Token-Datei (Standard `data/secrets.json`) |
 | `LUMANTIC_ADAPTER`, `LUMANTIC_GOLD`, `LUMANTIC_SCHEMA`, `LUMANTIC_SOURCE`, `LUMANTIC_DUCKDB` | `data.type`, `data.path`, `data.schema`, `data.name`, `data.duckdb` |
 | `SNOWFLAKE_ACCOUNT`, `SNOWFLAKE_USER`, `SNOWFLAKE_ROLE`, `SNOWFLAKE_WAREHOUSE`, `SNOWFLAKE_DATABASE`, `SNOWFLAKE_PRIVATE_KEY_FILE`, `SNOWFLAKE_TOKEN` | `data.snowflake.*` und der Snowflake-Token |
@@ -42,10 +61,12 @@ Eine Umgebungsvariable gewinnt immer gegen die Datei. Die App zeigt solche Felde
 | `LUMANTIC_AUTH`, `LUMANTIC_ADMINS` | `auth.kind` und `auth.admins` (Gruppen mit Komma getrennt) |
 | `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `LUMANTIC_URL` | `auth.oidc.issuer`, `auth.oidc.clientId`, das Client-Secret und `auth.oidc.url` |
 | `LUMANTIC_ACCESS_LOG` | Datei des Zugriffsprotokolls (Standard `data/zugriff.log`) |
-| `LUMANTIC_OPEN` | Lumantic ohne Anmeldung trotzdem von aussen erreichbar machen, nur hinter einer eigenen Absicherung |
+| `LUMANTIC_OPEN` | Lumantic ohne Anmeldung mit eigenen Daten von aussen erreichbar machen, nur hinter einer eigenen Absicherung. Ohne zeigt es von aussen nur die Beispiele |
+| `LUMANTIC_BROWSER` | `0`: beim Start den Browser nicht öffnen (er öffnet sich nur im eigenen Datenort und auf diesem Rechner) |
+| `LUMANTIC_DUCKDB_MEMORY` | wie viel Speicher eine Abfrage in DuckDB brauchen darf (Standard `2GB`, höchstens vier laufen gleichzeitig) |
 | `LUMANTIC_LUMINA` (`claude` oder `beispiel`), `LUMANTIC_MODEL`, `ANTHROPIC_BASE_URL` | `ai.enabled`, `ai.model`, `ai.baseURL` |
 | `ANTHROPIC_API_KEY` oder `ANTHROPIC_AUTH_TOKEN` | der Claude-Token |
-| `LUMANTIC_ADDR`, `LUMANTIC_DATA` | Adresse des Servers, Datei mit dem Arbeitsbereich |
+| `LUMANTIC_ADDR`, `LUMANTIC_DATA` | Adresse des Servers (Standard `127.0.0.1:8080`; ist der Port belegt, nimmt Lumantic einen freien), Datei mit dem Arbeitsbereich |
 
 ## Snowflake und Databricks
 
@@ -136,7 +157,9 @@ Goldlayer?» und führt durch dieselben Felder.
 ## Anmeldung und Rechte
 
 Ohne `auth` meldet sich niemand an: Alle sind «Lokal» und dürfen alles, und Lumantic hört dann nur auf diesem Rechner.
-Ist `LUMANTIC_ADDR` von aussen erreichbar, startet Lumantic ohne Anmeldung nicht.
+Ist `LUMANTIC_ADDR` von aussen erreichbar, startet Lumantic ohne Anmeldung nur mit den Beispielen
+(so im Docker-Image ohne Einstellungen) und lehnt dann eigene Datenquellen, Tokens und weitere
+Kosmen ab.
 
 **Über einen Proxy** (zum Beispiel einen Authentik-Outpost vor Lumantic), der anmeldet und weitergibt, wer jemand ist:
 

@@ -4,6 +4,8 @@
 param([switch]$Seed)
 $ErrorActionPreference = "Stop"
 Set-Location (Join-Path $PSScriptRoot "..")
+# Entwickeln: alle Pfade bleiben im Projektordner, auch ohne config\lumantic.json.
+if (-not $env:LUMANTIC_CONFIG) { $env:LUMANTIC_CONFIG = "config\lumantic.json" }
 
 if (-not $env:LUMANTIC_DUCKDB) {
     $cmd = Get-Command duckdb -ErrorAction SilentlyContinue

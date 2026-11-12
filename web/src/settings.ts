@@ -418,7 +418,8 @@ export function createSettings(host: SettingsHost) {
       txt("windmill.describe", tr("Skript für die Struktur", "Script for the structure"), () => dr.windmill.describe, (v) => (dr.windmill.describe = v), { placeholder: "f/lumantic/describe" }),
       txt("windmill.query", tr("Skript für Abfragen", "Script for queries"), () => dr.windmill.query, (v) => (dr.windmill.query = v), { placeholder: "f/lumantic/query" }));
     else if (dr.type === "duckdb" || dr.type === "files") nodes.push(h("details", { class: "s-more", open: locked("duckdb") || !!dr.duckdb }, h("summary", { text: tr("DuckDB-Programm", "DuckDB program") }),
-      txt("duckdb", tr("Pfad zum DuckDB-Programm", "Path to the DuckDB program"), () => dr.duckdb, (v) => (dr.duckdb = v), { placeholder: "duckdb" }, tr("Leer lassen, wenn DuckDB im Systempfad liegt.", "Leave empty when DuckDB is on the system path."))));
+      txt("duckdb", tr("Pfad zum DuckDB-Programm", "Path to the DuckDB program"), () => dr.duckdb, (v) => (dr.duckdb = v), { placeholder: "duckdb" }, host.settings()?.duckdbBuiltIn ? tr("Leer lassen: DuckDB ist in Lumantic eingebaut. Mit einem Pfad nimmt Lumantic stattdessen dieses Programm.", "Leave empty: DuckDB is built into Lumantic. With a path Lumantic takes that program instead.")
+      : tr("Leer lassen, wenn DuckDB im Systempfad liegt.", "Leave empty when DuckDB is on the system path."))));
     return { nodes, msg, found, clear, err, showTest };
   }
   const NO_TOKEN: SecretState = { set: false, hint: "", source: "" };
@@ -477,6 +478,8 @@ export function createSettings(host: SettingsHost) {
     if (tests.has("src")) queueMicrotask(f.showTest);
     return [
       h("p", { class: "s-status", "data-tone": s.status.ok ? "ok" : s.configExists ? "bad" : "off" }, h("i", { class: "s-led", "aria-hidden": "true" }), statusText(s)),
+      // The examples of a first start: whoever connects a gold layer here replaces them.
+      ...(s.data.example ? [note(tr("Beispieldaten, die Lumantic jeden Tag neu schreibt. Verbindest du hier deinen Goldlayer, ersetzt er das Beispiel.", "Example data that Lumantic writes anew each day. Connect your gold layer here and it replaces the example."))] : []),
       group(tr("Datenquelle", "Data source"), ...f.nodes, actions(tryTest(f, "src", dr), save, refresh), f.msg.el, f.found),
       ...(s.refresh ? [refreshGroup(s)] : []),
       rasterGroup(s),

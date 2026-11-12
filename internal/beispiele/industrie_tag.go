@@ -1,4 +1,4 @@
-package main
+package beispiele
 
 import (
 	"math"
@@ -6,16 +6,20 @@ import (
 )
 
 // The Musterwerk's days: good parts per plant and the scrap of the whole group,
-// every working day from November 2024 to Tuesday, 10 November 2026. Each
-// month's days add up to its monthly figures exactly; November is still running
-// and follows October. On the Monday and Tuesday of week 46 a press in Brno
+// every working day from November 2024 (story time) to the last weekday before
+// today. Each month's days add up to its monthly figures exactly; the running
+// month follows the last one. On the last two working days a press in Brno
 // stands still, so the running week falls behind its plan.
 func industrieDaily(r *mulberry, gut [3][]float64, gesamt, aus []float64) []table {
 	f0 := func(v float64) string { return ftoa(math.Round(v), 0) }
 	f2 := func(v float64) string { return ftoa(v, 2) }
 	werke := []string{"Aarau", "Brno", "Suzhou"}
 	weekday := map[time.Weekday]float64{time.Monday: 0.96, time.Tuesday: 1.02, time.Wednesday: 1.03, time.Thursday: 1.02, time.Friday: 0.97}
-	last := time.Date(2026, 11, 10, 0, 0, 0, 0, time.UTC)
+	last := cal.last
+	stop := last.AddDate(0, 0, -1) // the press stands still from the working day before the last
+	for stop.Weekday() == time.Saturday || stop.Weekday() == time.Sunday {
+		stop = stop.AddDate(0, 0, -1)
+	}
 
 	// The working days of each month, and a weight for each: the weekday's rhythm and some noise.
 	type month struct {
@@ -23,11 +27,11 @@ func industrieDaily(r *mulberry, gut [3][]float64, gesamt, aus []float64) []tabl
 		days []time.Time
 	}
 	var months []month
-	for d := time.Date(2024, 11, 1, 0, 0, 0, 0, time.UTC); !d.After(last); d = d.AddDate(0, 0, 1) {
+	for d := cal.month(ym(2024, 11)); !d.After(last); d = d.AddDate(0, 0, 1) {
 		if d.Weekday() == time.Saturday || d.Weekday() == time.Sunday {
 			continue
 		}
-		t := ym(d.Year(), int(d.Month()))
+		t := cal.index(d)
 		if len(months) == 0 || months[len(months)-1].t != t {
 			months = append(months, month{t: t})
 		}
@@ -68,7 +72,7 @@ func industrieDaily(r *mulberry, gut [3][]float64, gesamt, aus []float64) []tabl
 			day := d.Format("2006-01-02")
 			for j, w := range werke {
 				v := byWerk[j][i]
-				if w == "Brno" && d.Year() == 2026 && d.Month() == time.November && d.Day() >= 9 {
+				if w == "Brno" && !d.Before(stop) {
 					v *= 0.38 // the press stands still
 				}
 				prod.rows = append(prod.rows, []string{day, w, f0(v)})
@@ -81,7 +85,7 @@ func industrieDaily(r *mulberry, gut [3][]float64, gesamt, aus []float64) []tabl
 
 // workdaysOf counts Monday to Friday in month t.
 func workdaysOf(t int) int {
-	first := time.Date(2019, time.Month(1+t), 1, 0, 0, 0, 0, time.UTC)
+	first := cal.month(t)
 	n := 0
 	for d := first; d.Month() == first.Month(); d = d.AddDate(0, 0, 1) {
 		if d.Weekday() != time.Saturday && d.Weekday() != time.Sunday {

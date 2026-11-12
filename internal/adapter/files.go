@@ -17,10 +17,10 @@ import (
 
 // Files reads a gold layer kept as files: every .parquet or .csv file in a
 // folder (and every subfolder of Parquet files, as written by most lakehouse
-// jobs) becomes the view <schema>.<name>. Each query is one in-memory DuckDB
-// process that may read only inside that folder.
+// jobs) becomes the view <schema>.<name>. Each query runs in a fresh DuckDB
+// database in memory that may read only inside that folder.
 type Files struct {
-	Bin    string // path to the duckdb executable
+	Bin    string // path to the DuckDB CLI; "" = the DuckDB built into the program
 	Dir    string // the folder
 	Schema string // schema of the views, e.g. "gold"
 	Source string // human name of the gold layer
@@ -147,7 +147,7 @@ func (f *Files) Query(ctx context.Context, sql string) ([]Row, error) {
 	if err != nil {
 		return nil, err
 	}
-	return runCLI(ctx, f.slots, f.Bin, []string{"-json"}, pre+sql)
+	return runDuckDB(ctx, f.slots, f.Bin, "", pre+sql)
 }
 
 func (f *Files) Describe(ctx context.Context) (*catalog.Catalog, error) {

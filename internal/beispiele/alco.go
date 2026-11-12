@@ -1,4 +1,4 @@
-package main
+package beispiele
 
 import (
 	"math"
@@ -6,9 +6,10 @@ import (
 )
 
 // The demo ALCO gold layer: regulatory ratios, balance sheet, net new money and
-// the mortgage pipeline, monthly from January 2019 to October 2026, plus daily
-// values since September 2026. The monthly series reproduce the design study
-// (design/03-uhrwerk.html) number for number: same seed, same generator.
+// the mortgage pipeline, monthly from January 2019 to October 2026 in story
+// time, plus daily values since September 2026 (story.go places them in real
+// time). The monthly series reproduce the design study (design/03-uhrwerk.html)
+// number for number: same seed, same generator.
 
 const alcoMonths = 94
 
@@ -21,9 +22,6 @@ func (m *mulberry) next() float64 {
 	t = (t + (t^(t>>7))*(61|t)) ^ t
 	return float64(t^(t>>14)) / 4294967296
 }
-
-func ym(y, m int) int { return (y-2019)*12 + (m - 1) }
-func mOf(t int) int   { return ((t % 12) + 12) % 12 }
 
 type key struct {
 	t int
@@ -121,10 +119,6 @@ func generateALCO() alcoSeries {
 	return s
 }
 
-func monthDate(t int) string {
-	return time.Date(2019, time.Month(1+t), 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02")
-}
-
 const monthCol = "Monat, angegeben als erster Tag des Monats; Bestände per Monatsende"
 
 func alcoTables() []table {
@@ -193,11 +187,10 @@ func alcoTables() []table {
 	return append([]table{liq, cap, irr, inc, bal, nnm, pipe}, alcoDaily(s)...)
 }
 
-// Business days from September 2026 to Monday, 9 November 2026: the last day
-// with data on Tuesday, 10 November.
+// Business days from September 2026 (story time) to the last weekday before today.
 func businessDays() []time.Time {
 	var out []time.Time
-	for d := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC); !d.After(time.Date(2026, 11, 9, 0, 0, 0, 0, time.UTC)); d = d.AddDate(0, 0, 1) {
+	for d := cal.month(ym(2026, 9)); !d.After(cal.last); d = d.AddDate(0, 0, 1) {
 		if d.Weekday() != time.Saturday && d.Weekday() != time.Sunday {
 			out = append(out, d)
 		}
@@ -208,6 +201,9 @@ func businessDays() []time.Time {
 // bridge walks from one month-end value to the next: a smooth path plus noise
 // that vanishes at both ends, so daily values meet the monthly ones exactly.
 func bridge(r *mulberry, from, to float64, n int, noise float64) []float64 {
+	if n == 0 {
+		return nil
+	}
 	out := make([]float64, n)
 	for i := range out {
 		f := float64(i+1) / float64(n)
@@ -220,11 +216,11 @@ func bridge(r *mulberry, from, to float64, n int, noise float64) []float64 {
 func alcoDaily(s alcoSeries) []table {
 	r := &mulberry{s: 2611}
 	days := businessDays()
-	byMonth := map[time.Month][]int{}
+	byMonth := map[int][]int{}
 	for i, d := range days {
-		byMonth[d.Month()] = append(byMonth[d.Month()], i)
+		byMonth[cal.index(d)] = append(byMonth[cal.index(d)], i)
 	}
-	aug, sep, oct := ym(2026, 8), ym(2026, 9), ym(2026, 10)
+	aug, sep, oct, nov := ym(2026, 8), ym(2026, 9), ym(2026, 10), ym(2026, 11)
 	// November is still running: LCR keeps easing, deposits drift lower.
 	type anchors struct{ start, sep, oct, nov float64 }
 	lcrA := anchors{s.lcr[aug], s.lcr[sep], s.lcr[oct], 116.8}
@@ -232,23 +228,23 @@ func alcoDaily(s alcoSeries) []table {
 	depA := anchors{s.dep[aug], s.dep[sep], s.dep[oct], s.dep[oct] * 0.9962}
 	path := func(a anchors, noise float64) []float64 {
 		var out []float64
-		out = append(out, bridge(r, a.start, a.sep, len(byMonth[time.September]), noise)...)
-		out = append(out, bridge(r, a.sep, a.oct, len(byMonth[time.October]), noise)...)
-		return append(out, bridge(r, a.oct, a.nov, len(byMonth[time.November]), noise)...)
+		out = append(out, bridge(r, a.start, a.sep, len(byMonth[sep]), noise)...)
+		out = append(out, bridge(r, a.sep, a.oct, len(byMonth[oct]), noise)...)
+		return append(out, bridge(r, a.oct, a.nov, len(byMonth[nov]), noise)...)
 	}
 	lcr, outflow, dep := path(lcrA, 1.1), path(outA, 14), path(depA, 38)
 
 	// Net new money: the month totals spread over the business days.
 	novTotals := [3]float64{6.4, -17.2, 1.8}
 	nnm := make([][3]float64, len(days))
-	for _, mon := range []time.Month{time.September, time.October, time.November} {
+	for _, mon := range []int{sep, oct, nov} {
 		idx := byMonth[mon]
 		for seg := 0; seg < 3; seg++ {
 			total := novTotals[seg]
 			switch mon {
-			case time.September:
+			case sep:
 				total = s.nnm[seg][sep]
-			case time.October:
+			case oct:
 				total = s.nnm[seg][oct]
 			}
 			w := make([]float64, len(idx))

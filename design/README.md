@@ -150,6 +150,58 @@ Offen:
 - Die Studien zur Gestaltung des Sternkatalogs, die die Spezifikation vorsah, sind hier ein erster Entwurf in der echten App.
 - Kataloge aus Werkzeugen (Unity-Catalog-Tags, Snowflake Semantic Views) und `filter` im Vertrag.
 
+## Plug and Play
+
+Wunsch vom 12. November 2026: eine Datei herunterladen oder ein Image starten und sofort Zahlen
+sehen, ohne Go, Node oder DuckDB. Für drei Gruppen: Neugierige, die es in einer Minute ausprobieren;
+Data-Teams, die es mit Docker neben das Lakehouse stellen; Einzelne, die es ohne Adminrechte auf
+dem eigenen PC starten. Zur Laufzeit braucht Lumantic kein Internet.
+
+- **DuckDB ist eingebaut,** über den offiziellen Treiber `duckdb-go` (DuckDB 1.5.6, dieselbe Version
+  wie die CLI; 2.0 folgt, wenn es gereift ist). Seine Bibliotheken enthalten Parquet, JSON und ICU
+  fest, so lädt Lumantic nie eine Extension aus dem Internet (`autoinstall` und `autoload` aus).
+  Jede Abfrage öffnet eine frische Datenbank und schliesst sie danach: eine Datei nur lesend, damit
+  ein Ladejob sie zwischendurch schreiben kann, einen Ordner in einem leeren Speicher mit der
+  bisherigen Sandbox. Höchstens vier Abfragen laufen gleichzeitig, jede mit einer Speichergrenze
+  (`LUMANTIC_DUCKDB_MEMORY`, Standard 2 GB).
+- **Die CLI bleibt als Rückfall.** Wer ohne C-Compiler baut (`go run`, `go test` bei Mitwirkenden),
+  bekommt den bisherigen Weg über die DuckDB-CLI; ein Pfad zur CLI in den Einstellungen gilt auch im
+  eingebauten Fall. Die CI testet beide. Die Releases und das Image sind immer mit cgo gebaut.
+- **Was ein Absturz jetzt bedeutet.** Vorher traf ein Fehler in DuckDB nur einen Kindprozess, jetzt
+  den Server. Dagegen stehen: nur lesen, die Speichergrenze, der Abbruch langer Abfragen über den
+  Kontext, und im Container der Neustart durch Docker. Für Lumantic, das wenige, eigene
+  Summen-Abfragen schickt, wiegt das leichter als eine CLI, die jemand erst installieren muss.
+- **Die Beispiele altern nicht.** Ihre Geschichte (bis Oktober 2026 erzählt) rückt als Ganzes so,
+  dass ihr letzter Monat immer der Vormonat ist; die Tage reichen bis zum letzten Werktag vor heute,
+  Budgets gehören zum Jahr, in dem die Geschichte endet, und die Jahreszeiten folgen dem echten
+  Kalender. Lumantic schreibt sie jeden Tag neu (`internal/beispiele`); `cmd/seed` bleibt das
+  Werkzeug zum Entwickeln.
+- **Der erste Start zeigt Industrie und ALCO,** Industrie zuerst, weil Lumantic zu jeder Branche
+  passt. Die Willkommensfrage «Wo liegt dein Goldlayer?» steht nicht mehr davor. Den eigenen
+  Goldlayer verbindet man in den Einstellungen; ein Beispiel, das eine eigene Quelle bekommt, ist
+  keines mehr und verliert seine Beispiel-Kennzahlen. Die Auswahl der Beispiele wird noch
+  überarbeitet.
+- **Ein fester Datenort.** Bisher galt alles relativ zum Arbeitsordner, beim Doppelklick auf macOS
+  wäre das der Benutzerordner. Jetzt: ein Quellcode-Ordner mit `config/lumantic.json` oder
+  `LUMANTIC_CONFIG` wie bisher, sonst `LUMANTIC_HOME` (im Image `/data`), sonst der Ordner für
+  Einstellungen des Systems.
+- **Doppelklick.** Der Browser öffnet sich (nicht im Container, abschaltbar mit `LUMANTIC_BROWSER=0`),
+  ein belegter Port 8080 weicht einem freien, und das Fenster sagt in einem Satz, wo Lumantic läuft
+  und wie man es beendet.
+- **Docker ohne Login zeigt nur Beispiele.** Im Container hört Lumantic auf allen Adressen. Ohne
+  Anmeldung startet es dort nur, solange es ausschliesslich die Beispiele zeigt, und lehnt eigene
+  Datenquellen, Tokens und weitere Kosmen ab. Eigene Daten verlangen eine Anmeldung oder bewusst
+  `LUMANTIC_OPEN=1`. Die Anleitung bindet den Port an `127.0.0.1`.
+- **Release über native Runner.** Ein Tag `v*` baut jede Datei auf einem Runner ihres Systems
+  (Windows mit dem UCRT-gcc von MSYS2, Linux auf Ubuntu 22.04 mit libstdc++ im Programm, beide Macs
+  auf einem Apple-Runner), startet jede einmal mit den Beispielen und legt das Release mit
+  Prüfsummen an. Das Image entsteht pro Architektur auf einem eigenen Runner und wird zu einem
+  zusammengeführt. Das war einfacher und robuster als Cross-Kompilieren mit cgo; GoReleaser kann das
+  Zusammenführen nur in der bezahlten Ausgabe. Die Lizenztexte der Go-Module und von DuckDB samt
+  seinem Fremdcode schreibt `scripts/third-party.sh` in der CI.
+- **Später:** winget, Scoop, Homebrew und signierte Dateien. Bis dahin erklärt das README, wie man an
+  SmartScreen und Gatekeeper vorbeikommt.
+
 ## Englisch
 
 Wunsch vom 12. November 2026, gebaut als Version 0.11: die englische Sprache, alles auf einmal.
