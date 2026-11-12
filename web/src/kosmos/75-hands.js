@@ -24,6 +24,7 @@ stage.addEventListener("pointerdown", (e) => {
     return;
   }
   closeIdee();
+  closeKeys();
   if (document.activeElement && document.activeElement.isContentEditable) document.activeElement.blur();
   drag = { pid: e.pointerId, x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false, vx: 0, vy: 0, vt: performance.now(),
     onPage: !!e.target.closest(".page, .plabel"), inter: !!e.target.closest("button, a, [role='button']") };
@@ -86,11 +87,21 @@ function startPage(sx, sy) {
   const focus = () => setTimeout(() => { if (pages.has(pg.id)) pg.ins.focus({ preventScroll: true }); }, 90);
   if (close) { makeRoom(pg, pages.get(activeId) || null); focus(); } else flyTo(framePage(pg), 0, focus);
 }
-// The wheel zooms at the cursor. Over the lens it turns the lens' month instead.
+// The open page under a point of the screen, with the margin where its stars stand.
+function pageUnder(sx, sy) {
+  if (cam.z < Z_NEAR) return null;
+  const z = cam.z;
+  for (const pg of pages.values()) if (pg.open && sx >= pg.ox - (GUT + 12) * z && sx <= pg.ox + (PAGE_W + 12) * z && sy >= pg.oy && sy <= pg.oy + pg.h * z) return pg;
+  return null;
+}
+// The wheel zooms at the cursor. Over an open page that is longer than the screen it scrolls the page; beside the
+// page it zooms again. A gesture that began as a zoom or a scroll stays one until the hand rests. Over the lens it
+// turns the lens' month instead.
+let wheelWas = { kind: "", t: 0 };
 stage.addEventListener("wheel", (e) => {
   e.preventDefault();
   userInput();
-  const sx = e.clientX - off.left, sy = e.clientY - off.top, d = e.deltaY || e.deltaX;
+  const sx = e.clientX - off.left, sy = e.clientY - off.top, d = e.deltaY || e.deltaX, now = performance.now();
   if (lens.k > 0.5 && !diving && Math.hypot(sx - lens.x, sy - lens.y) <= lens.vr + 18) {
     wheelAcc += d;
     const steps = Math.trunc(wheelAcc / 100);
@@ -98,6 +109,11 @@ stage.addEventListener("wheel", (e) => {
     return;
   }
   closeMenu();
+  flashKey({ key: "wheel" });
+  const going = now - wheelWas.t < 220 ? wheelWas.kind : "", pg = !e.ctrlKey && going !== "zoom" ? pageUnder(sx, sy) || (going === "scroll" ? pages.get(activeId) : null) : null;
+  const px = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H : 1;
+  if (pg && scrollPage(pg, e.deltaY * px)) { wheelWas = { kind: "scroll", t: now }; return; }
+  wheelWas = { kind: "zoom", t: now };
   zoomAt(sx, sy, Math.exp(-d * (e.ctrlKey ? 0.012 : 0.0016)));
 }, { passive: false });
 
@@ -467,6 +483,7 @@ function escapeKey() {
   if (HOST.closeSettings()) return true;
   if (starDrag && starDrag.moved) { const d = starDrag; starDrag = null; cancelStarDrag(d); return true; }
   if (closeMenu()) return true;
+  if (closeKeys()) return true;
   if (closeIdee()) return true;
   const a = document.activeElement;
   if (a && a.isContentEditable) { a.blur(); return true; }
@@ -483,6 +500,7 @@ document.addEventListener("keydown", (e) => {
   // While the settings or the Sternkatalog are open, the room does not move under them.
   if (HOST.settingsOpen() || HOST.catalogOpen()) return;
   if (MENU.open && menuKey(e)) return;
+  flashKey(e);
   userInput();
   const onButton = t.tagName === "BUTTON" || (t.getAttribute && t.getAttribute("role") === "button"), pg = pages.get(activeId);
   if (k === "ArrowLeft" || k === "ArrowRight") { e.preventDefault(); step(k === "ArrowRight" ? 1 : -1, e.shiftKey); }
@@ -491,7 +509,8 @@ document.addEventListener("keydown", (e) => {
   else if (k === "z" || k === "Z") toggleZ();
   else if (k === "g" || k === "G") setGrain(AVAILABLE[(AVAILABLE.indexOf(G) + 1) % AVAILABLE.length]);
   else if (k === " " && !onButton) { e.preventDefault(); if (T.playing) stopPlay(); else play(); }
-  else if (k === "?") toggleIdee();
+  else if (k === "?") toggleKeys();
+  else if (k === "i" || k === "I") toggleIdee();
   else if (k === "/" && pg) { e.preventDefault(); focusInsert(pg, "/"); }
   else if (k === "h" || k === "H") flyPlace("heute");
   else if (k === "0") flyPlace("all");

@@ -50,6 +50,10 @@ und jeder Stern ist ein Block.**
   sie Kennzahl und Ansicht nach Stichwörtern.
 - **Zeit:** Der Raum hat einen Monat. Die Zeitlinse unten rechts zeigt Block für Block einen
   anderen Monat; ein Block kann einen Monat festhalten.
+- **Lesen und zoomen:** Das Mausrad über einer langen Seite scrollt sie wie Text; neben der
+  Seite zoomt es hinein und heraus. Ziehen verschiebt den Raum.
+- **Tasten:** Unten links neben «Idee» zeigt «Tasten» (oder `?`) alle Tastenkürzel. Eine
+  gedrückte Taste leuchtet dort auf.
 
 ### Mehrere Kosmen: das Hauptmenü
 
@@ -87,9 +91,12 @@ Wer welchen Kosmos sieht, regelt die Anmeldung (siehe «Anmeldung und Rechte»).
 | `Z` | zwischen jetzt und dem letzten Monat in der Vergangenheit wechseln |
 | `Leertaste` | Geschichte abspielen oder anhalten |
 | `/` | Baustein einfügen |
+| `↑` `↓` | weiterlesen |
 | `Tab` | Luminas Vorschlag übernehmen |
+| `Entf` | gewählten Baustein entfernen |
 | `,` | Einstellungen |
-| `?` | die Idee und ihre Quellen |
+| `?` | alle Tasten auf einen Blick |
+| `I` | die Idee und ihre Quellen |
 | `Esc` | schliessen, was offen ist |
 
 ### Einstellungen

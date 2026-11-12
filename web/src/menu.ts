@@ -121,6 +121,7 @@ export async function showMenu(list: KosmosInfo[], host: MenuHost, note = "") {
     katalogButton(() => host.catalog()), gear(() => host.settings()));
   places();
   $("btn-idee").style.visibility = "hidden";
+  $("btn-keys").style.visibility = "hidden";
 
   document.addEventListener("keydown", (e) => {
     const t = e.target as HTMLElement;

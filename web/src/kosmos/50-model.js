@@ -159,7 +159,7 @@ function placeWorld() {
 // place on the screen, so nothing jumps while someone reads.
 function keepRingClear() {
   // A flight or a pan sets the camera frame by frame; the ring waits until it has landed.
-  if (flyStop || zoomAnim || ringNeed() <= ringMinY + 1) return;
+  if (flyStop || zoomAnim || scrollAnim || ringNeed() <= ringMinY + 1) return;
   const pg = pages.get(activeId), y0 = pg ? pg.y : 0;
   placeWorld();
   if (pg && pg.y !== y0 && M.p >= 0.9) cam.y += pg.y - y0;

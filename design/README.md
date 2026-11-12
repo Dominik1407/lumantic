@@ -150,6 +150,21 @@ Offen:
 - Die Studien zur Gestaltung des Sternkatalogs, die die Spezifikation vorsah, sind hier ein erster Entwurf in der echten App.
 - Kataloge aus Werkzeugen (Unity-Catalog-Tags, Snowflake Semantic Views) und `filter` im Vertrag.
 
+## Lesen mit dem Rad, Tasten auf einen Blick
+
+Wunsch vom 12. November 2026: eine lange Seite scrollen statt ziehen, und eine kleine Legende der Tasten, die den
+hochwertigen Auftritt hält.
+
+- **Über der Seite liest das Rad, daneben zoomt es.** Ist eine Seite offen und länger als der Bildschirm, scrollt das
+  Mausrad sie weich wie Text und hält an ihrem Anfang und Ende. Neben der Seite zoomt es wie bisher hinaus zum Sternbild.
+  Eine Bewegung bleibt, was sie begann, bis die Hand ruht; so springt ein Zoom nicht mitten im Drehen ins Scrollen. Mit
+  `Ctrl` (und beim Zusammenziehen auf dem Trackpad) zoomt es immer. Eine Seite, die ganz Platz hat, zoomt wie bisher.
+- **«Tasten» neben «Idee».** Die Legende ist eine ruhige Karte mit Tastenkappen, die ein wenig Tiefe haben, in vier
+  Gruppen: Orte, Zeit, Lesen und bauen, Überall. Drückt man eine Taste, gibt ihre Kappe nach und leuchtet in der
+  Akzentfarbe auf, und die Taste tut, was sie tut. `K` steht nur dort, wo es mehrere Kosmen gibt. Auf Geräten ohne
+  Tastatur fehlt die Schaltfläche.
+- **`?` zeigt die Tasten,** wie in den meisten Anwendungen; die Idee hat jetzt `I`.
+
 ## Zeitraster: Quartal und Jahr
 
 Etappe 5a der Spezifikation, gebaut am 11. November 2026 als Version 0.9. Woche und Tag (5b) brauchen Tagesdaten und ein

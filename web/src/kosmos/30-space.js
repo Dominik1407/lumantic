@@ -41,18 +41,19 @@ function tween(ms, fn, ease = easeInOut, done) {
 // ───────────── Camera ─────────────
 const toScreen = (wx, wy) => [(wx - cam.x) * cam.z + W / 2, (wy - cam.y) * cam.z + H / 2];
 const toWorld = (sx, sy) => [(sx - W / 2) / cam.z + cam.x, (sy - H / 2) / cam.z + cam.y];
-let flyStop = null, zoomAnim = null, glideAnim = null, detentTimer = 0, lastZoom = null, panGoal = null;
+let flyStop = null, zoomAnim = null, glideAnim = null, scrollAnim = null, scrollGoal = null, detentTimer = 0, lastZoom = null, panGoal = null;
 function stopCamera() {
   if (flyStop) flyStop();
-  for (const a of [zoomAnim, glideAnim]) if (a) anims.delete(a);
-  flyStop = zoomAnim = glideAnim = null;
+  for (const a of [zoomAnim, glideAnim, scrollAnim]) if (a) anims.delete(a);
+  flyStop = zoomAnim = glideAnim = scrollAnim = scrollGoal = null;
   clearTimeout(detentTimer);
 }
 const halfWay = (z) => z > Z_FAR + 1e-4 && z < Z_NEAR - 1e-4;
 // Wheel zoom: eased, and the point under the cursor stays under the cursor.
 function zoomAt(sx, sy, factor, carried) {
   if (flyStop) { flyStop(); flyStop = null; }
-  if (glideAnim) { anims.delete(glideAnim); glideAnim = null; }
+  for (const a of [glideAnim, scrollAnim]) if (a) anims.delete(a);
+  glideAnim = scrollAnim = scrollGoal = null;
   let target = clamp((zoomAnim ? zoomAnim.zt : cam.z) * factor, ZMIN, ZMAX);
   const [wx, wy] = toWorld(sx, sy), dir = factor >= 1 ? 1 : -1;
   const hold = () => { cam.x = wx - (sx - W / 2) / cam.z; cam.y = wy - (sy - H / 2) / cam.z; };
@@ -78,6 +79,27 @@ function detent() {
   if (!lastZoom || flyStop) return;
   const zt = zoomAnim ? zoomAnim.zt : cam.z;
   if (halfWay(zt)) zoomAt(lastZoom.sx, lastZoom.sy, (lastZoom.dir > 0 ? Z_OPEN : Z_FAR) / zt, true);
+}
+// Reading a page that is longer than the screen: the wheel scrolls it like text, eased, and stops where the page
+// begins and ends. A page that fits has nothing to scroll; then the wheel zooms as everywhere else.
+function scrollPage(pg, dy) {
+  const p = PAD(), z = cam.z, hz = pg.h * z;
+  if (hz <= H - p.t - p.b + 4) return false;
+  const y = scrollGoal === null ? cam.y : scrollGoal, top = (pg.y - y) * z + H / 2;
+  scrollGoal = y + clamp(dy, Math.min(0, top - p.t), Math.max(0, top + hz - (H - p.b))) / z;
+  if (flyStop) { flyStop(); flyStop = null; }
+  if (glideAnim) { anims.delete(glideAnim); glideAnim = null; }
+  if (reduced) { cam.y = scrollGoal; scrollGoal = null; invalidate(); return true; }
+  if (!scrollAnim) {
+    scrollAnim = () => {
+      if (scrollGoal === null) { scrollAnim = null; return false; }
+      cam.y += (scrollGoal - cam.y) * 0.26;
+      if (Math.abs(scrollGoal - cam.y) * cam.z < 0.4) { cam.y = scrollGoal; scrollGoal = scrollAnim = null; return false; }
+    };
+    anims.add(scrollAnim);
+  }
+  invalidate();
+  return true;
 }
 // After a pan the canvas glides on a little.
 function glide(vx, vy) {
