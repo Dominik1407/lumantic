@@ -3,6 +3,7 @@ package metrics
 import (
 	"context"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/Dominik1407/lumantic/internal/adapter"
@@ -43,14 +44,20 @@ func TestValidateNamesMissingColumns(t *testing.T) {
 	}
 }
 
-// fake answers each query with rows for the table it names.
-type fake struct{ queries []string }
+// fake answers each query with rows for the table it names. Queries come side
+// by side, so it notes them under a lock.
+type fake struct {
+	mu      sync.Mutex
+	queries []string
+}
 
 func (f *fake) Name() string                                       { return "fake" }
 func (f *fake) Dialect() string                                    { return "duckdb" }
 func (f *fake) Describe(context.Context) (*catalog.Catalog, error) { return testCatalog(), nil }
 func (f *fake) Query(_ context.Context, sql string) ([]adapter.Row, error) {
+	f.mu.Lock()
 	f.queries = append(f.queries, sql)
+	f.mu.Unlock()
 	if strings.Contains(sql, `"g"."fluss"`) && !strings.Contains(sql, "AS s") {
 		return []adapter.Row{{"p": "2026-01", "c0": 3.0}, {"p": "2026-03", "c0": 4.0}}, nil
 	}
