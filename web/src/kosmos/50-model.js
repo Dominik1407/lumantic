@@ -18,7 +18,7 @@ const blocksOf = (pg) => pg.blocks.map((id) => blocks.get(id)).filter(Boolean);
 const effM = (b) => (b.t !== null ? b.t : b.under ? lens.m : T.base);
 
 function addPage(p) {
-  const pg = { title: "", sys: null, blocks: [], forms: {}, stars: [], dirty: true, h: 0, lead: [0, 14], out: [0, 1], labAt: [0, 30], ghostQuiet: false, user: false, vis: null, open: null, ...p };
+  const pg = { title: "", sys: null, blocks: [], forms: {}, stars: [], dirty: true, h: 0, lead: [0, 14], out: [0, 1], labAt: [0, 30, 0], ghostQuiet: false, user: false, vis: null, open: null, ...p };
   pages.set(pg.id, pg);
   buildPage(pg);
   return pg;

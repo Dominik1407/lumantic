@@ -293,6 +293,7 @@ function updateLabel(pg) {
     sub = h("small", { "data-kind": kind, text: c.alert ? (c.alert === 1 ? tr("eine Sache braucht dich", "one thing needs you") : tr(`${c.alert} Dinge brauchen dich`, `${c.alert} things need you`)) : c.watch ? tr("im Auge behalten", "keep an eye on it") : c.good ? tr("gute Nachricht", "good news") : tr("alles ruhig", "all calm") });
   } else sub = h("small", { text: pg.blocks.length === 1 ? tr("ein Baustein", "one block") : pg.blocks.length + tr(" Bausteine", " blocks") });
   pg.lab.replaceChildren(pg.sys === "heute" && !atToday() ? tr("Rückblick", "Looking back") : pageName(pg), sub);
+  pg.labSize = null;
   pg.lab.setAttribute("aria-label", tr(`Zur Seite ${pageName(pg)} fliegen`, `Fly to the page ${pageName(pg)}`));
 }
 // A block that is new on its page fades in under its star.

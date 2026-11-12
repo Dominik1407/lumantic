@@ -5,6 +5,8 @@
 // Where the blocks of a page lie, in the page's own px. Read once after a change, never during a frame's writes.
 function measure(pg) {
   pg.dirty = false;
+  pg.labSize = null; // the names far away are read again too: the fonts or their size may have changed
+  for (const st of pg.stars) st.labSize = null;
   const dl = pg.head.firstElementChild, headTop = pg.head.offsetTop;
   pg.lead = [-GUT, headTop + dl.offsetTop + Math.min(15, dl.offsetHeight / 2)];
   pg.head.style.transformOrigin = `${-GUT}px ${(pg.lead[1] - headTop).toFixed(1)}px`;
@@ -18,7 +20,8 @@ function measure(pg) {
 }
 
 // ───────────── Seats: where the stars of a page stand when it is a constellation ─────────────
-// Seats are in screen px around the page's centre and keep that size at every far zoom, like the labels.
+// Seats are in screen px around the page's centre and keep that size at every far zoom, like the labels. The name of a
+// page stands at labAt: x and y go with the seats, the third part keeps its px like the names beside the stars.
 function seats(pg) {
   const s = narrow() ? 0.7 : 1, set = (st, x, y) => { st.seat = [x * s, y * s]; };
   seatsOf(pg, s, set);
@@ -27,6 +30,7 @@ function seats(pg) {
   for (const st of pg.stars) {
     // On a narrow screen there is no room beside a star: every name stands below its star, and the stars hang below their lead.
     const d = Math.hypot(st.seat[0], st.seat[1]), wide = d > 6 && !narrow(), lx = wide ? st.seat[0] / d : 0, ly = wide ? st.seat[1] / d : 1, side = lx.toFixed(2) + " " + ly.toFixed(2);
+    st.dir = [lx, ly];
     if (st.side !== side) { st.side = side; st.el.style.setProperty("--lx", lx.toFixed(2)); st.el.style.setProperty("--ly", ly.toFixed(2)); }
   }
 }
@@ -38,7 +42,7 @@ function seatsOf(pg, s, set) {
   let extra = 0;
   if (pg.sys === "heute") {
     // Signals stand towards their home topic, so their tethers radiate without crossing.
-    pg.out = [0, 1]; pg.labAt = [0, 128 * s];
+    pg.out = [0, 1]; pg.labAt = [0, 128 * s, 0];
     const byTopic = new Map();
     for (const st of bs) {
       const b = st.b;
@@ -59,8 +63,12 @@ function seatsOf(pg, s, set) {
       const x = sig[i], y = sig[(i + 1) % sig.length], gap = i + 1 < sig.length ? y.a - x.a : y.a + 2 * Math.PI - x.a;
       if (gap < minA) { x.a -= (minA - gap) / 2; y.a += (minA - gap) / 2; }
     }
-    for (const { st, a } of sig) set(st, 106 * Math.cos(a), 106 * Math.sin(a));
+    // One that points almost straight down stands beyond the calm figures of the quiet line.
+    for (const { st, a } of sig) { const r = Math.sin(a) > 0.9 ? 126 : 106; set(st, r * Math.cos(a), r * Math.sin(a)); }
     chips.forEach((st, i) => { const a = ((chips.length > 1 ? 18 + (144 * i) / (chips.length - 1) : 90) * Math.PI) / 180, r = i % 2 ? 27 : 20; set(st, r * Math.cos(a), 78 + r * Math.sin(a)); });
+    // The name of the page stands below a star that points straight down, and below that star's name.
+    const down = Math.max(0, ...bs.filter((st) => st.seat[1] > 0 && Math.abs(st.seat[0]) < 120 * s).map((st) => st.seat[1]));
+    if (down + 46 * s > 128 * s) pg.labAt = [0, down, 46 * s];
   } else if (pg.sys) {
     // A topic: its figures keep fixed seats across the direction away from the middle, whatever their state.
     // On a narrow screen there is no room for that: there the figures hang below the lead star, side by side.
@@ -73,7 +81,7 @@ function seatsOf(pg, s, set) {
     const seatOf = (kid) => { const [t, r] = offs[members.indexOf(kid)] || [0, 0]; return slim ? [t, r] : [tv[0] * t + rv[0] * r, tv[1] * t + rv[1] * r]; };
     const top = members.reduce((best, kid) => (seatOf(kid)[1] < seatOf(best)[1] ? kid : best), members[0]), lit = !slim && seatOf(top)[1] < -6 && stateOf(K[top], T.base).level !== "calm";
     pg.out = [0, -1];
-    pg.labAt = [0, (-Math.max(0, -seatOf(top)[1]) - 24) * s - (lit ? 36 : 0)];
+    pg.labAt = [0, -Math.max(0, -seatOf(top)[1]) * s, -24 * s - (lit ? 36 : 0)];
     const back = Math.atan2(-rv[1], -rv[0]);
     for (const st of bs) {
       const b = st.b;
@@ -86,7 +94,7 @@ function seatsOf(pg, s, set) {
   } else {
     // An own page: its blocks fan out above the lead star, in reading order from left to right.
     const n = bs.length, step = Math.min(40, 150 / Math.max(1, n));
-    pg.out = [0, -1]; pg.labAt = [0, (n > 1 ? -72 : n ? -60 : -20) * s];
+    pg.out = [0, -1]; pg.labAt = [0, (n > 1 ? -72 : n ? -60 : -20) * s, 0];
     bs.forEach((st, i) => { const a = ((-90 + (i - (n - 1) / 2) * step) * Math.PI) / 180, r = 38 + (i % 2 ? 14 : 0); set(st, r * Math.cos(a), r * Math.sin(a)); });
   }
 }
@@ -113,7 +121,7 @@ function refreshStar(st) {
   }
   const sig = kind + "|" + name + "|" + value + "|" + say;
   if (st.sig === sig) return;
-  st.sig = sig;
+  st.sig = sig; st.labSize = null;
   st.el.dataset.kind = kind;
   st.el.setAttribute("aria-label", say);
   st.el.lastChild.replaceChildren(...(name ? [name, h("b", { text: value })] : []));
@@ -130,7 +138,7 @@ function syncStars(pg) {
   pg.stars = want.map((w) => {
     let st = STARS.get(w.id);
     if (st && st.pg !== pg) { st.el.remove(); st = null; } // a block that moved to this page gets a fresh star here
-    if (!st) { st = { ...w, pg, el: starEl(w.id, w.type), seat: [0, 0], x: -99, y: -99, lx: 0, ly: 0, sx: 0, sy: 0, bx: 0, by: 0, under: false, sig: "", tf: "" }; STARS.set(w.id, st); $("stars").append(st.el); }
+    if (!st) { st = { ...w, pg, el: starEl(w.id, w.type), seat: [0, 0], dir: [0, 1], x: -99, y: -99, lx: 0, ly: 0, sx: 0, sy: 0, bx: 0, by: 0, under: false, sig: "", tf: "" }; STARS.set(w.id, st); $("stars").append(st.el); }
     st.b = w.b; st.k = w.k;
     st.el.dataset.sys = pg.sys || "";
     refreshStar(st);
@@ -139,22 +147,50 @@ function syncStars(pg) {
   seats(pg);
 }
 
-// Far away constellations keep their size on screen, so an own page that lies close to another one would cover it.
-// It steps aside there. The step is part of its stars' seats, so it fades out as the page unfolds.
+// Far away the seats keep their size on screen; below 0.16 they shrink with the sky.
+const kzOf = (z) => 1 / clamp(z, 0.16, Z_FAR);
+const SEEN = /^(alert|watch|good|info)$/; // the stars whose names show far away (kosmos.css shows the others' on hover)
+// The size of a name: read once it shows and kept until its text changes. Before it ever showed, a guess.
+function labSize(o, el, shown, guess) {
+  if (!o.labSize && shown) o.labSize = [el.offsetWidth, el.offsetHeight];
+  return o.labSize || guess;
+}
+// What a constellation takes on screen around its lead star, at the scale c of its seats: its stars, the names
+// beside them and its own name.
+function boxOf(pg, c) {
+  const b = [Infinity, Infinity, -Infinity, -Infinity];
+  const add = (x, y, w, h) => { b[0] = Math.min(b[0], x - w / 2); b[1] = Math.min(b[1], y - h / 2); b[2] = Math.max(b[2], x + w / 2); b[3] = Math.max(b[3], y + h / 2); };
+  for (const st of pg.stars) {
+    const x = c * st.seat[0], y = c * st.seat[1];
+    add(x, y, 18, 18);
+    if (!pg.sys || !SEEN.test(st.el.dataset.kind)) continue;
+    const [w, h] = labSize(st, st.el.lastChild, !st.el.hidden, [96, 26]);
+    add(x + st.dir[0] * (w / 2 + 16), y + st.dir[1] * (h / 2 + 14), w, h);
+  }
+  const [w, h] = labSize(pg, pg.lab, !pg.lab.hidden, [150, 36]);
+  add(c * pg.labAt[0] + (pg.out[0] * w) / 2, c * pg.labAt[1] + pg.labAt[2] + (pg.out[1] * h) / 2, w, h);
+  return b;
+}
+// Constellations keep their size, so where pages lie close one would cover another. There a topic steps aside from
+// «Heute», an own page from both, and two of a kind go half the way each. The step is part of their stars' seats,
+// so it fades out as a page unfolds.
+const rank = (pg) => (pg.sys === "heute" ? 0 : pg.sys ? 1 : 2);
 function spread(z) {
-  const all = [...pages.values()], own = all.filter((pg) => !pg.sys);
+  const all = [...pages.values()], GAP = 14;
   for (const pg of all) { pg.fx = 0; pg.fy = 0; }
-  if (!own.length || M.e >= 1) return;
-  const s = narrow() ? 0.7 : 1, R = (pg) => (pg.sys === "heute" ? 196 : pg.sys ? 132 : 74) * s; // their stars, and the names that stand outside them
-  const cx = (pg) => pg.ox + (z * PAGE_W) / 2 + pg.fx, cy = (pg) => pg.oy + z * CY + pg.fy;
-  for (let n = 0; n < 3; n++) for (const a of own) for (const b of all) {
-    if (a === b) continue;
-    let dx = cx(a) - cx(b), dy = cy(a) - cy(b), d = Math.hypot(dx, dy);
-    const min = R(a) + R(b);
-    if (d >= min) continue;
+  if (z >= Z_NEAR) return;
+  const c = z * kzOf(z), cx = (pg) => pg.x * z + pg.fx, cy = (pg) => (pg.y + CY) * z + pg.fy;
+  for (const pg of all) pg.box = boxOf(pg, c);
+  // How far a page moves along u until it clears the other one on one axis.
+  const clear = (u, a0, a1, b0, b1) => (Math.abs(u) < 1e-3 ? Infinity : (u > 0 ? b1 + GAP - a0 : a1 + GAP - b0) / Math.abs(u));
+  for (let n = 0; n < 3; n++) for (const a of all) for (const b of all) {
+    if (a === b || !rank(a) || rank(b) > rank(a)) continue;
+    const A = a.box, B = b.box, ax = cx(a), ay = cy(a), bx = cx(b), by = cy(b);
+    if (ax + A[0] >= bx + B[2] + GAP || bx + B[0] >= ax + A[2] + GAP || ay + A[1] >= by + B[3] + GAP || by + B[1] >= ay + A[3] + GAP) continue;
+    let dx = ax - bx, dy = ay - by, d = Math.hypot(dx, dy);
     if (d < 1) { dx = 1; dy = 0; d = 1; }
-    const push = (min - d) * (b.sys ? 1 : 0.5);
-    a.fx += (dx / d) * push; a.fy += (dy / d) * push;
+    const ux = dx / d, uy = dy / d, t = Math.min(clear(ux, ax + A[0], ax + A[2], bx + B[0], bx + B[2]), clear(uy, ay + A[1], ay + A[3], by + B[1], by + B[3])) * (rank(b) < rank(a) ? 1 : 0.5);
+    a.fx += ux * t; a.fy += uy * t;
   }
 }
 
@@ -163,13 +199,23 @@ function framePage(pg) {
   const p = PAD(), hh = pg.h || 460, ah = H - p.t - p.b, z = clamp(ah / hh, narrow() ? 1 : 0.82, 1), top = hh * z <= ah ? p.t + (ah - hh * z) * 0.36 : p.t;
   return { z, x: pg.x - GUT / 2 - (p.l - p.r) / 2 / z, y: pg.y + (H / 2 - top) / z };
 }
-// The whole sky: every constellation with room around it.
+// The whole sky: every constellation with room around it. They step aside from each other, so the frame holds what
+// they take then; where the screen is too small for that, it goes further out, where they shrink. Not on a phone: there
+// the names stand below their stars and would run into each other.
 function frameAll() {
   const b = { x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity };
   for (const pg of pages.values()) { b.x0 = Math.min(b.x0, pg.x); b.x1 = Math.max(b.x1, pg.x); b.y0 = Math.min(b.y0, pg.y + CY); b.y1 = Math.max(b.y1, pg.y + CY); }
   const p = PAD(), mx = narrow() ? 84 : 170, my = narrow() ? 84 : 130, aw = Math.max(60, W - p.l - p.r - 2 * mx), ah = Math.max(60, H - p.t - p.b - 2 * my);
-  const z = clamp(Math.min(aw / Math.max(1, b.x1 - b.x0), ah / Math.max(1, b.y1 - b.y0)), ZMIN, 0.46);
-  return { z, x: (b.x0 + b.x1) / 2 - (p.l - p.r) / 2 / z, y: (b.y0 + b.y1) / 2 - (p.t - p.b) / 2 / z };
+  const z0 = clamp(Math.min(aw / Math.max(1, b.x1 - b.x0), ah / Math.max(1, b.y1 - b.y0)), ZMIN, 0.46), low = narrow() ? z0 : ZMIN;
+  for (let z = z0; ; z = Math.max(low, z * 0.9)) {
+    spread(z);
+    const s = [Infinity, Infinity, -Infinity, -Infinity];
+    for (const pg of pages.values()) {
+      const x = pg.x * z + pg.fx, y = (pg.y + CY) * z + pg.fy;
+      s[0] = Math.min(s[0], x + pg.box[0]); s[1] = Math.min(s[1], y + pg.box[1]); s[2] = Math.max(s[2], x + pg.box[2]); s[3] = Math.max(s[3], y + pg.box[3]);
+    }
+    if (z <= low || (s[2] - s[0] <= W - p.l - p.r - 32 && s[3] - s[1] <= H - p.t - p.b - 16)) return { z, x: ((s[0] + s[2]) / 2 - (p.l - p.r) / 2) / z, y: ((s[1] + s[3]) / 2 - (p.t - p.b) / 2) / z };
+  }
 }
 
 // ───────────── The lens rule: what the glass touches shows the lens' month, block by block ─────────────
@@ -286,7 +332,7 @@ function setActive(id) {
 }
 function draw() {
   const z = cam.z, p = clamp((z - Z_FAR) / (Z_NEAR - Z_FAR), 0, 1), e = p * p * (3 - 2 * p);
-  M.p = p; M.e = e; M.kz = 1 / clamp(z, 0.16, Z_FAR);
+  M.p = p; M.e = e; M.kz = kzOf(z);
   const far = clamp(1 - p / 0.5, 0, 1); // the far names are gone before any text shows
   if (far !== M.far) { M.far = far; stage.style.setProperty("--far", far.toFixed(3)); stage.classList.toggle("is-far", far > 0.5); }
   // 1 · read the layout where it changed, and keep the pages clear of each other
@@ -343,7 +389,7 @@ function draw() {
   }
   const labels = far > 0.02;
   for (const pg of pages.values()) {
-    const x = pg.ox + z * (PAGE_W / 2 + pg.labAt[0] * M.kz) + pg.fx * (1 - e), y = pg.oy + z * (CY + pg.labAt[1] * M.kz) + pg.fy * (1 - e), vis = labels && x > -120 && x < W + 120 && y > -40 && y < H + 40;
+    const x = pg.ox + z * (PAGE_W / 2 + pg.labAt[0] * M.kz) + pg.fx * (1 - e), y = pg.oy + z * (CY + pg.labAt[1] * M.kz) + pg.labAt[2] + pg.fy * (1 - e), vis = labels && x > -120 && x < W + 120 && y > -40 && y < H + 40;
     if (pg.lab.hidden === vis) pg.lab.hidden = !vis;
     if (vis) pg.lab.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`;
   }
