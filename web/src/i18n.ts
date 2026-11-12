@@ -8,20 +8,31 @@ export type Lang = "de" | "en";
 const KEY = "lumantic.lang";
 const fromBrowser = (): Lang => ((navigator.language || "de").toLowerCase().startsWith("de") ? "de" : "en");
 const kept = (): Lang | "" => { try { const v = localStorage.getItem(KEY); return v === "de" || v === "en" ? v : ""; } catch { return ""; } };
-export let LANG: Lang = kept() || fromBrowser();
-document.documentElement.lang = LANG === "de" ? "de-CH" : "en";
-
-// The browser keeps the language, and tells the server in a cookie, so pages it opens itself (the login) speak it too.
+// The browser keeps the language, and tells the server in a cookie: its messages, Lumina and the pages it writes
+// itself (the login) speak it too.
 function keep(want: Lang) {
   try { localStorage.setItem(KEY, want); } catch { /* fine */ }
   document.cookie = `lumantic_lang=${want}; path=/; max-age=31536000; SameSite=Lax`;
 }
 
-export const tr = (de: string, en: string) => (LANG === "en" ? en : de);
-export const isEn = () => LANG === "en";
+export const LANG: Lang = kept() || fromBrowser();
+export const EN = LANG === "en";
+document.documentElement.lang = EN ? "en" : "de-CH";
+keep(LANG);
+
+export const tr = (de: string, en: string) => (EN ? en : de);
+export const isEn = () => EN;
+
+export const MON = EN ? ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] : ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+export const NUM = EN ? ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"]
+  : ["Kein", "Ein", "Zwei", "Drei", "Vier", "Fünf", "Sechs", "Sieben", "Acht", "Neun", "Zehn", "Elf", "Zwölf"];
+// A month written YYYY-MM as «Okt 2026» or «Oct 2026».
+export const monthLabel = (ym: string) => { const [y, m] = (ym || "").split("-").map(Number); return y && m ? `${MON[m - 1]} ${y}` : ym; };
+// What a team defined, in the language of the interface: its English word where it wrote one.
+export const pick = (o: { en?: { [key: string]: string | undefined } }, key: string, de: string) => (EN && o.en?.[key]) || de;
 
 // The language a choice stands for: "de", "en", or "" for the browser's.
-export const resolveLang = (pref: string | undefined): Lang => (pref === "de" || pref === "en" ? pref : fromBrowser());
+const resolveLang = (pref: string | undefined): Lang => (pref === "de" || pref === "en" ? pref : fromBrowser());
 
 // Once the settings are known: keep the language they ask for, and load the page again when it differs from the one
 // it started in. Returns true when it reloads. Without browser storage it never reloads, it just stays.

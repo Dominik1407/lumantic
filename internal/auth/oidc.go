@@ -576,10 +576,6 @@ func page(w http.ResponseWriter, r *http.Request, status int, msg, detail, again
 	noStore(w)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(status)
-	lang := "de"
-	if i18n.Wants(r) {
-		lang = "en"
-	}
 	if detail != "" {
 		detail = `<p style="opacity:.6;font-size:.875rem">` + html.EscapeString(i18n.Text(r, detail)) + `</p>`
 	}
@@ -589,5 +585,5 @@ func page(w http.ResponseWriter, r *http.Request, status int, msg, detail, again
 <body style="font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 1rem;line-height:1.5">
 <p>%s</p>%s<p><a href="%s">%s</a></p>
 </body></html>
-`, lang, i18n.Text(r, "Anmeldung – Lumantic"), html.EscapeString(i18n.Text(r, msg)), detail, html.EscapeString(again), i18n.Text(r, "Nochmals anmelden"))
+`, i18n.Lang(r), i18n.Text(r, "Anmeldung – Lumantic"), html.EscapeString(i18n.Text(r, msg)), detail, html.EscapeString(again), i18n.Text(r, "Nochmals anmelden"))
 }

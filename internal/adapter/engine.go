@@ -24,9 +24,14 @@ var builtIn func(ctx context.Context, db, sql string) ([]Row, error)
 // BuiltIn says whether this program has DuckDB built in.
 func BuiltIn() bool { return builtIn != nil }
 
-// MemoryLimit is how much memory one query may use, as DuckDB writes it.
+// NoDuckDB says that the DuckDB CLI bin is not there.
+func NoDuckDB(bin string) error {
+	return fmt.Errorf("Das DuckDB-Programm wurde nicht gefunden (%s). Installieren mit «winget install DuckDB.cli» oder den Pfad unter Daten eintragen.", bin)
+}
+
+// memoryLimit is how much memory one query may use, as DuckDB writes it.
 // LUMANTIC_DUCKDB_MEMORY changes it.
-func MemoryLimit() string {
+func memoryLimit() string {
 	if v := strings.TrimSpace(os.Getenv("LUMANTIC_DUCKDB_MEMORY")); v != "" {
 		return v
 	}
@@ -36,7 +41,7 @@ func MemoryLimit() string {
 // settings come first in every session: the memory limit, and no extension
 // that is not already in the program.
 func settings() string {
-	return fmt.Sprintf("SET memory_limit = %s;\nSET autoinstall_known_extensions = false;\nSET autoload_known_extensions = false;\n", QuoteLiteral(MemoryLimit()))
+	return fmt.Sprintf("SET memory_limit = %s;\nSET autoinstall_known_extensions = false;\nSET autoload_known_extensions = false;\n", QuoteLiteral(memoryLimit()))
 }
 
 // runDuckDB runs sql in DuckDB, in a database file opened read-only or, with
@@ -51,7 +56,7 @@ func runDuckDB(ctx context.Context, slots chan struct{}, bin, db, sql string) ([
 	}
 	if bin == "" {
 		if builtIn == nil {
-			return nil, fmt.Errorf("Das DuckDB-Programm wurde nicht gefunden (%s). Installieren mit «winget install DuckDB.cli» oder den Pfad unter Daten eintragen.", "duckdb")
+			return nil, NoDuckDB("duckdb")
 		}
 		return builtIn(ctx, db, settings()+sql)
 	}

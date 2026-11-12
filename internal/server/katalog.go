@@ -78,15 +78,9 @@ func (s *Server) getKatalog(w http.ResponseWriter, r *http.Request) {
 	// In English the words a team wrote in English. Lumantic's own words stay
 	// as they are, so that what someone edits is what is stored.
 	english := i18n.Wants(r)
-	say := func(w metrics.Words, key, de string) string {
-		if english && w[key] != "" {
-			return w[key]
-		}
-		return de
-	}
 	topics := map[string]string{}
 	for _, g := range m.Groups {
-		g.Name = say(g.En, "name", g.Name)
+		g.Name = g.En.Or(english, "name", g.Name)
 		topics[g.ID] = g.Name
 		out.Topics = append(out.Topics, g)
 	}
@@ -171,9 +165,9 @@ func (s *Server) getKatalog(w http.ResponseWriter, r *http.Request) {
 		if d.Limit != nil {
 			f["limit"] = field{*d.Limit, from("limit")}
 		}
-		f["desc"] = field{say(d.En, "desc", d.Desc), from("desc")}
-		f["formula"] = field{say(d.En, "formula", d.Formula), from("formula")}
-		e := entry{ID: d.ID, Name: say(d.En, "name", d.Name), Topic: topics[d.Group], Fields: f, Bounds: d.Bounds}
+		f["desc"] = field{d.En.Or(english, "desc", d.Desc), from("desc")}
+		f["formula"] = field{d.En.Or(english, "formula", d.Formula), from("formula")}
+		e := entry{ID: d.ID, Name: d.En.Or(english, "name", d.Name), Topic: topics[d.Group], Fields: f, Bounds: d.Bounds}
 		if missing := d.Missing(k.cat); len(missing) > 0 {
 			e.Status = strings.Join(missing, ", ")
 		}
@@ -251,34 +245,24 @@ func (s *Server) putKatalogEntry(w http.ResponseWriter, r *http.Request) {
 	s.getKatalog(w, r)
 }
 
-// englishWords takes the texts of a patch that have an English side (desc,
-// formula, targetName, limitName) out of it when the person works in English,
-// and gives back how to put them into a definition's English words.
+// englishWords takes the texts the catalogue shows in English (definition and
+// calculation) out of a patch when the person works in English, and gives back
+// how to put them into a definition's English words.
 func englishWords(patch map[string]json.RawMessage, english bool) func(metrics.Words) metrics.Words {
-	taken := map[string]json.RawMessage{}
+	taken := map[string]string{}
 	if english {
-		for _, key := range []string{"desc", "formula", "targetName", "limitName"} {
+		for _, key := range []string{"desc", "formula"} {
 			if raw, ok := patch[key]; ok {
-				taken[key] = raw
+				if v, err := text(raw); err == nil {
+					taken[key] = v
+				}
 				delete(patch, key)
 			}
 		}
 	}
 	return func(w metrics.Words) metrics.Words {
-		for key, raw := range taken {
-			v, err := text(raw)
-			if err != nil {
-				continue
-			}
-			if w == nil {
-				w = metrics.Words{}
-			}
-			if w[key] = v; v == "" {
-				delete(w, key)
-			}
-		}
-		if len(w) == 0 {
-			return nil
+		for key, v := range taken {
+			w = w.With(key, v)
 		}
 		return w
 	}

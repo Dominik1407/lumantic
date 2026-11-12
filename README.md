@@ -2,215 +2,216 @@
 
 **Quiet until it matters.**
 
-Lumantic ist eine ruhige Oberfläche über dem Goldlayer eines Teams. Seiten aus Bausteinen
-liegen in einem Raum: Aus der Nähe liest man sie wie einen Brief, aus der Ferne falten sie
-sich zu Sternbildern. Lumina, die Assistentin, schreibt «Heute» und eine Seite pro Thema und
-begründet jede Wahl. Alles andere baut man selbst, und es bleibt gespeichert.
+Lumantic is a calm surface over a team's gold layer. Pages made of blocks lie in a room: up
+close you read them like a letter, from afar they fold into constellations. Lumina, the
+assistant, writes «Today» and one page per topic and gives a reason for every choice.
+Everything else you build yourself, and it stays saved.
 
-Der Name: **Lum**en (Licht) + Se**mantic** (Bedeutung). Bedeutung ans Licht bringen.
+The name: **Lum**en (light) + Se**mantic** (meaning). Bringing meaning to light.
 
 ```
-Bronze    →  Rohdaten
-Silver    →  bereinigt
-Gold      →  fertige Kennzahlen pro Team
-Lumantic  →  die Bedeutung, für alle verständlich
+Bronze    →  raw data
+Silver    →  cleaned
+Gold      →  finished key figures per team
+Lumantic  →  the meaning, for everyone
 ```
 
-## Schnellstart
+[Deutsch](README.de.md)
 
-**Herunterladen.** Die Datei für dein System von den
-[Releases](https://github.com/Dominik1407/lumantic/releases) laden (Windows, macOS, Linux),
-entpacken und `lumantic` starten, unter Windows mit Doppelklick auf `lumantic.exe`. Der Browser
-öffnet sich mit zwei Beispiel-Kosmen, Industrie und ALCO, deren Zahlen bis zum letzten Monat
-reichen. Installieren muss man nichts, DuckDB ist eingebaut. Den eigenen Goldlayer, etwa einen
-Ordner mit Parquet- oder CSV-Dateien, verbindest du danach unter **Einstellungen › Daten** (er
-ersetzt das Beispiel) oder mit «Kosmos hinzufügen» im Hauptmenü.
+## Quick start
 
-Die Dateien sind noch nicht signiert. Windows SmartScreen warnt beim ersten Start: «Weitere
-Informationen», dann «Trotzdem ausführen». macOS sperrt die Datei: im Finder mit Rechtsklick ›
-Öffnen starten, oder im Terminal `xattr -d com.apple.quarantine lumantic`.
+**Download.** Get the file for your system from the
+[releases](https://github.com/Dominik1407/lumantic/releases) (Windows, macOS, Linux), unpack
+it and start `lumantic`; on Windows, double-click `lumantic.exe`. Your browser opens with two
+example Kosmen, Industry and ALCO, whose figures run up to last month. Nothing to install:
+DuckDB is built in. Connect your own gold layer, such as a folder of Parquet or CSV files,
+under **Settings › Data** (it replaces the example) or with «Add a Kosmos» in the main menu.
 
-**Mit Docker.**
+The files are not signed yet. Windows SmartScreen warns on the first start: «More info», then
+«Run anyway». macOS blocks the file: right-click › Open in the Finder, or run
+`xattr -d com.apple.quarantine lumantic` in the Terminal.
+
+**With Docker.**
 
 ```sh
 docker run -p 127.0.0.1:8080:8080 -v lumantic-data:/data ghcr.io/dominik1407/lumantic
 ```
 
-Ohne Anmeldung zeigt das Image nur die Beispiele. **Neben dem Lakehouse** nimmt
-[docker-compose.yml](docker-compose.yml) den Goldlayer als Ordner, nur lesend, die Daten von
-Lumantic in ein Volume, und hat die Anmeldung als Vorlage: `docker compose up -d`.
+Without a login the image shows only the examples. **Next to the lakehouse**,
+[docker-compose.yml](docker-compose.yml) mounts the gold layer as a folder, read-only, keeps
+Lumantic's data in a volume and has the login as a template: `docker compose up -d`.
 
-Wo Lumantic Einstellungen, Tokens und Arbeitsstände ablegt, steht in
-[config/README.md](config/README.md) unter «Datenort». Datenquelle, Kennzahlen, KI und Design
-stellt man in der App unter **Einstellungen** ein (Zahnrad am Ende der Leiste unten, oder
-Taste `,`).
+Where Lumantic keeps settings, tokens and work is described in
+[config/README.md](config/README.md) under «Datenort». Data source, key figures, AI and design
+are set in the app under **Settings** (the gear at the end of the bar at the bottom, or the
+key `,`).
 
-### Aus dem Quellcode
+### From source
 
-Voraussetzungen: Go 1.25+ und Node 20+. Mit einem C-Compiler (gcc oder clang; unter Windows
-MinGW-w64 mit gcc 15, das gcc 16 von MSYS2 passt nicht zu DuckDBs Bibliothek) baut Go DuckDB
-ein; ohne fragt Lumantic die DuckDB-CLI (`winget install DuckDB.cli`).
-
-```powershell
-.\scripts\run.ps1          # baut alles und startet auf http://127.0.0.1:8080
-.\scripts\run.ps1 -Seed    # Beispiel-Goldlayer neu erzeugen
-```
-
-In einem Ordner mit `config/lumantic.json` (oder mit `LUMANTIC_CONFIG`) bleiben alle Pfade
-relativ zum Arbeitsordner, wie es zum Entwickeln passt.
-
-Zum Entwickeln der Oberfläche mit Live-Reload:
+You need Go 1.25+ and Node 20+. With a C compiler (gcc or clang; on Windows MinGW-w64 with
+gcc 15, the gcc 16 of MSYS2 does not fit DuckDB's library) Go builds DuckDB in; without one,
+Lumantic asks the DuckDB CLI (`winget install DuckDB.cli`).
 
 ```powershell
-go run ./cmd/lumantic        # API auf :8080
-cd web; npm run dev          # Oberfläche auf :5173, leitet /api und /brand an :8080 weiter
+.\scripts\run.ps1          # builds everything and starts on http://127.0.0.1:8080
+.\scripts\run.ps1 -Seed    # writes the example gold layers anew
 ```
 
-## Die App
+In a folder with `config/lumantic.json` (or with `LUMANTIC_CONFIG`) all paths stay relative to
+the working folder, as suits development.
 
-**Eine Seite ist ein Sternbild aus der Nähe, ein Sternbild ist eine Seite aus der Ferne,
-und jeder Stern ist ein Block.**
+To work on the interface with live reload:
 
-- **Heute** in der Mitte: was dich diesen Monat braucht, in Sätzen, mit Beleg zum Aufklappen.
-- **Eine Seite pro Thema** (Liquidität, Kapital, …), aus den Kennzahlen-Definitionen gebaut.
-- **Bauen:** Den Stern eines Blocks greifen und auf eine andere Seite oder ins Leere ziehen.
-  Am Seitenende holt `/` einen Baustein, `[[` eine lebende Kennzahl in eine Notiz.
-- **Fragen:** In die Zeile am Seitenende eine Frage mit Fragezeichen tippen. Mit KI
-  antwortet Lumina in einem Antwort-Block und legt passende Diagramme dazu. Ohne KI sucht
-  sie Kennzahl und Ansicht nach Stichwörtern.
-- **Zeit:** Der Raum hat einen Monat. Die Zeitlinse unten rechts zeigt Block für Block einen
-  anderen Monat; ein Block kann einen Monat festhalten.
-- **Lesen und zoomen:** Das Mausrad über einer langen Seite scrollt sie wie Text; neben der
-  Seite zoomt es hinein und heraus. Ziehen verschiebt den Raum.
-- **Tasten:** Unten links neben «Idee» zeigt «Tasten» (oder `?`) alle Tastenkürzel. Eine
-  gedrückte Taste leuchtet dort auf.
+```powershell
+go run ./cmd/lumantic        # API on :8080
+cd web; npm run dev          # interface on :5173, passes /api and /brand on to :8080
+```
 
-### Mehrere Kosmen: das Hauptmenü
+## The app
 
-Ein **Kosmos** ist ein Raum über einer Datenquelle, mit eigenen Kennzahlen und eigenen Seiten.
-Wer mehr als einen Goldlayer sieht, bekommt für jeden einen Kosmos, und Lumantic öffnet im
-**Hauptmenü**: jeder Kosmos als kleiner Himmel, ein Stern pro Kennzahl, darunter der Satz, den
-Lumina in diesem Kosmos über «Heute» schreibt («Zwei Dinge brauchen dich.»). Ein Klick oder
-die Tasten `1` bis `9` fliegen hinein. Zurück führt das Logo oben links oder die Taste `K`.
+**A page is a constellation seen up close, a constellation is a page seen from afar, and every
+star is a block.**
 
-Einen weiteren Kosmos legt man im Hauptmenü an («Kosmos hinzufügen»): Name, Datenquelle,
-«Verbindung prüfen», «Kosmos anlegen». Seine Kennzahlen bestimmt man danach in seinen
-Einstellungen unter «Daten». Mit nur einem Kosmos gibt es kein Hauptmenü, die App öffnet
-direkt in ihm. Adressen: `/?k=<id>` ist ein Kosmos, `/?kosmen` das Hauptmenü.
+- **Today** in the middle: what needs you this month, in sentences, with the evidence to unfold.
+- **One page per topic** (liquidity, capital, …), built from the key figure definitions.
+- **Build:** grab a block's star and drag it onto another page or into empty space. At the end
+  of a page, `/` brings a block, `[[` a live key figure into a note.
+- **Ask:** type a question with a question mark into the line at the end of a page. With AI,
+  Lumina answers in an answer block and adds fitting charts. Without AI she finds key figure
+  and view by keywords.
+- **Time:** the room has a month. The time lens at the bottom right shows another month block
+  by block; a block can hold on to a month.
+- **Read and zoom:** over a long page the mouse wheel scrolls it like text; beside the page it
+  zooms in and out. Dragging moves the room.
+- **Keys:** at the bottom left, next to «Idea», «Keys» (or `?`) shows every shortcut. A key you
+  press lights up there.
 
-`.\scripts\run.ps1 -Seed` erzeugt neben «ALCO» drei weitere Beispiel-Goldlayer als Ordner mit
-CSV-Dateien: «Firmenkunden», «Privatkunden» und «Industrie», das Controlling eines erfundenen
-Herstellers von Antrieben und Steuerungen (Umsatz, Auftragseingang, EBIT-Marge, OEE,
-Liefertreue, Gutteile, Ausschuss, Lagerreichweite). Ohne die DuckDB-Datei neu zu bauen, schreibt
-`go run ./cmd/seed -folders` nur die Ordner. Ihre Kennzahlen liegen in `config/beispiele/`,
-[config/lumantic.example.json](config/lumantic.example.json) verbindet alle vier.
+### Several Kosmen: the main menu
 
-Wer welchen Kosmos sieht, regelt die Anmeldung (siehe «Anmeldung und Rechte»).
+A **Kosmos** is a room over one data source, with its own key figures and its own pages.
+Whoever sees more than one gold layer gets a Kosmos for each, and Lumantic opens in the
+**main menu**: every Kosmos as a small sky, one star per key figure, below it the sentence
+Lumina writes about «Today» in that Kosmos («Two things need you.»). A click or the keys `1` to
+`9` fly in. The logo at the top left or the key `K` lead back.
 
-### Tasten
+Add a Kosmos in the main menu («Add a Kosmos»): name, data source, «Test the connection»,
+«Create the Kosmos». Its key figures are set afterwards in its settings under «Data». With only
+one Kosmos there is no main menu; the app opens straight into it. Addresses: `/?k=<id>` is a
+Kosmos, `/?kosmen` the main menu.
 
-| Taste | |
+For development, `.\scripts\run.ps1 -Seed` writes «ALCO» and three more example gold layers as
+folders of CSV files: «Firmenkunden», «Privatkunden» and «Industrie», the controlling of an
+invented maker of drives and controls (revenue, order intake, EBIT margin, OEE, delivery
+reliability, good parts, scrap, days of inventory). `go run ./cmd/seed -folders` writes only the
+folders, without rebuilding the DuckDB file. Their key figures are in `config/beispiele/`;
+[config/lumantic.example.json](config/lumantic.example.json) connects all four.
+
+Who sees which Kosmos is a matter of the login (see «Login and rights»).
+
+### Keys
+
+| Key | |
 |---|---|
-| `H` | Heute |
-| `K` | zurück ins Hauptmenü (bei mehreren Kosmen) |
-| `C` | Sternkatalog: im Raum der Katalog dieses Kosmos, im Hauptmenü der aller Kosmen |
-| `1` bis `9` | Themen-Seite öffnen, im Hauptmenü einen Kosmos |
-| `0` | Überblick über alle Seiten |
-| `←` `→` | eine Periode zurück oder vor (Monat, Quartal oder Jahr), mit `Shift` ein Jahr |
-| `G` | Raster wechseln: Tag, Woche, Monat, Quartal, Jahr |
-| `Z` | zwischen jetzt und dem letzten Monat in der Vergangenheit wechseln |
-| `Leertaste` | Geschichte abspielen oder anhalten |
-| `/` | Baustein einfügen |
-| `↑` `↓` | weiterlesen |
-| `Tab` | Luminas Vorschlag übernehmen |
-| `Entf` | gewählten Baustein entfernen |
-| `,` | Einstellungen |
-| `?` | alle Tasten auf einen Blick |
-| `I` | die Idee und ihre Quellen |
-| `Esc` | schliessen, was offen ist |
+| `H` | Today |
+| `K` | back to the main menu (with several Kosmen) |
+| `C` | star catalogue: in the room this Kosmos's, in the main menu that of all Kosmen |
+| `1` to `9` | open a topic page; in the main menu a Kosmos |
+| `0` | overview of all pages |
+| `←` `→` | one period back or forward (month, quarter or year), with `Shift` a year |
+| `G` | change the raster: day, week, month, quarter, year |
+| `Z` | switch between now and the last month looked at in the past |
+| `Space` | play or pause the story |
+| `/` | insert a block |
+| `↑` `↓` | read on |
+| `Tab` | take Lumina's suggestion |
+| `Del` | remove the chosen block |
+| `,` | settings |
+| `?` | all keys at a glance |
+| `I` | the idea and its sources |
+| `Esc` | close what is open |
 
-### Einstellungen
+### Settings
 
-| Bereich | Was man dort einstellt | Gilt für |
+| Tab | What you set there | For |
 |---|---|---|
-| **Darstellung** | Design, Schrift, Akzent, Bewegung, Textgrösse; «Für alle speichern» macht die Wahl zum Standard | dich (oder alle) |
-| **Start** | Ansicht beim Öffnen, wohin die Zeitlinse schaut, Hinweise zu Gesten | dich |
-| **Daten** | Für den Kosmos, in dem man ist: Datenquelle verbinden und prüfen, neu laden; Kennzahlen hinzufügen, Ziel, Limit und Richtung ändern; den Kosmos entfernen | alle |
-| **Kosmen** | Im Hauptmenü an der Stelle von «Daten»: alle Kosmen, einen weiteren anlegen, einen entfernen | alle |
-| **Lumina** | KI an oder aus, Modell, API-Token, optional die Adresse eines Firmen-Gateways, Verbindung testen | alle |
-| **Über** | Version, Kosmos, Pfad der Konfiguration, eigene Seiten zurücksetzen | |
+| **Look** | language, design, font, accent, motion, text size; «Save for everyone» makes the choice the default | you (or everyone) |
+| **Start** | the view on opening, where the time lens looks, hints for gestures | you |
+| **Data** | for the Kosmos you are in: connect and test the data source, reload; add key figures, change target, limit and direction; remove the Kosmos | everyone |
+| **Kosmen** | in the main menu in place of «Data»: all Kosmen, add one, remove one | everyone |
+| **Lumina** | AI on or off, model, API token, optionally the address of a company gateway, test the connection | everyone |
+| **About** | version, Kosmos, path of the configuration, reset your own pages | |
 
-Persönliches liegt im Arbeitsbereich auf dem Server, alles für alle in `config/lumantic.json`.
-Änderungen an Daten oder Kennzahlen baut der Raum beim Schliessen der Einstellungen neu auf.
+What is personal lies in the workspace on the server, what holds for everyone in the
+configuration (`lumantic.json`). The room rebuilds itself after changes to data or key figures
+when the settings close.
 
-### Sprache
+### Language
 
-Lumantic spricht Deutsch und Englisch. Unter Darstellung › Sprache wählt jede Person «Wie der
-Browser», Deutsch oder English; «Für alle speichern» macht die Wahl zum Standard des Teams
-(`ui.language`: `de`, `en` oder leer). Englisch liest Zahlen international (`CHF 92m`,
-`CHF 1.2bn`, `1,150.5`, `12.5%`, `Oct 2026`), Deutsch bleibt schweizerisch (`92 Mio. CHF`, `1’150.5`).
+Lumantic speaks German and English. Under Look › Language everyone chooses «As the browser»,
+Deutsch or English; «Save for everyone» makes it the team's default (`ui.language`: `de`, `en`
+or empty). English reads numbers the international way (`CHF 92m`, `CHF 1.2bn`, `1,150.5`,
+`12.5%`, `Oct 2026`), German stays Swiss (`92 Mio. CHF`, `1’150.5`).
 
-Lumantic übersetzt nur seine eigenen Texte: den Raum, Luminas Sätze, das Hauptmenü, die
-Einstellungen, den Sternkatalog und die Meldungen des Servers. Lumina antwortet in der Sprache
-der Oberfläche. Was ein Team definiert, bleibt, wie es ist; englische Wörter stehen daneben unter
-`en` (siehe «Kennzahlen definieren»), im Fachkatalog in Spalten mit `_en`. Fehlt ein englisches
-Wort, steht das deutsche. Wer in Englisch eine Definition im Sternkatalog ändert, ändert ihre
-englischen Wörter; die deutschen bleiben.
+Lumantic translates only its own texts: the room, Lumina's sentences, the main menu, the
+settings, the star catalogue and the server's messages. Lumina answers in the language of the
+interface. What a team defines stays as it is; English words stand beside it under `en` (see
+«Defining key figures»), in the company catalogue in columns ending in `_en`. Where an English
+word is missing, the German one shows. Whoever changes a definition in the star catalogue in
+English changes its English words; the German ones stay.
 
 ### Designs
 
-Fünf Designs sind eingebaut: **Nacht** (der ursprüngliche Nachthimmel), **Kreide**, **Nebel**
-(Standard), **Stein** und **Dämmerung**. Jede Farbe der Oberfläche, auch in Diagrammen und auf
-der Leinwand, ist ein Token des Designs ([web/src/styles/themes.css](web/src/styles/themes.css)).
+Five designs are built in: **Night** (the original night sky), **Chalk**, **Mist** (the
+default), **Stone** and **Dusk**. Every colour of the interface, in charts and on the canvas as
+well, is a token of the design ([web/src/styles/themes.css](web/src/styles/themes.css)).
 
-Ein **Firmen-Design** trägt man in `config/lumantic.json` unter `brand` ein: ein eingebautes
-Design als Basis, dazu nur die Farben und Schriften, die abweichen. Logo und Hausschrift kommen
-nach `config/brand/`. Die Vorlage «Musterbank» steht in
-[config/lumantic.example.json](config/lumantic.example.json), die Felder in
-[config/README.md](config/README.md). Das Firmen-Design erscheint danach in der Design-Auswahl.
+A **corporate design** goes into the configuration under `brand`: a built-in design as its
+base, plus only the colours and fonts that differ. Logo and house font go into
+`config/brand/`. The template «Musterbank» is in
+[config/lumantic.example.json](config/lumantic.example.json), the fields in
+[config/README.md](config/README.md). The corporate design then appears in the design choice.
 
-Die Schriften werden mit der App ausgeliefert. Sie braucht keinen Zugang zu Google Fonts.
+The fonts ship with the app. It needs no access to Google Fonts.
 
 ### Logo
 
-Das Logo «Baustein» (zwei Blöcke und ein leuchtender Stern) und die Wortmarke stehen an einer
-einzigen Stelle im Code, [web/src/logo.ts](web/src/logo.ts). Auch das Symbol im Browser-Tab kommt
-von dort.
+The logo «Baustein» (two blocks and a lit star) and the wordmark live in one single place in the
+code, [web/src/logo.ts](web/src/logo.ts). The icon in the browser tab comes from there too.
 
-Ein Unternehmen setzt sein **eigenes Logo** in der Konfiguration: `brand.logo` (und optional
-`brand.logoDark` für die dunklen Designs) nennt eine Datei in `config/brand/`. Es steht dann oben
-links an der Stelle des Lumantic-Logos, im Hauptmenü wie in jedem Kosmos, und oben rechts
-erscheint klein «powered by lumantic». Ein Beispiel liegt bei: `config/brand/musterbank.svg`.
+A company sets its **own logo** in the configuration: `brand.logo` (and optionally
+`brand.logoDark` for the dark designs) names a file in `config/brand/`. It then stands at the
+top left in place of the Lumantic logo, in the main menu and in every Kosmos, and «powered by
+lumantic» appears small at the top right. An example is included: `config/brand/musterbank.svg`.
 
-## Lumina, die Regeln dahinter
+## Lumina, the rules behind it
 
-Jede Kennzahl wird pro Monat, Quartal und Jahr eingestuft:
+Every key figure is rated per month, quarter and year:
 
-| Stufe | Wann |
+| Level | When |
 |---|---|
-| Regulatorisch verletzt | Grenze unterschritten (bzw. Limit überschritten) |
-| Unter internem Ziel | Ziel um mehr als 3 % verfehlt |
-| Knapp verfehlt | Ziel verfehlt, aber innerhalb von 3 % |
-| Anhaltender Trend | sechs Bewegungen in Folge in die falsche Richtung (Regel der statistischen Prozesskontrolle) |
-| Auffällige Bewegung | mehr als 2 Standardabweichungen und mindestens 5 % vom Üblichen der letzten 8 Perioden, in die falsche Richtung |
-| Gute Nachricht | ebenso ungewöhnlich, aber in die gute Richtung |
-| Erholung, noch knapp | nach einem Alarm wieder im Ziel, aber noch ohne 2 % Sicherheitsabstand (Hysterese) |
+| Limit breached | below the regulatory minimum (or above the limit) |
+| Below internal target | target missed by more than 3% |
+| Narrowly missed | target missed, but within 3% |
+| Persistent trend | six moves in a row in the wrong direction (a rule of statistical process control) |
+| Unusual move | more than 2 standard deviations and at least 5% from the usual of the last 8 periods, in the wrong direction |
+| Good news | just as unusual, but in the good direction |
+| Recovering, still close | back on target after an alert, but without a 2% safety margin yet (hysteresis) |
 
-Für jede Seite erzeugt Lumina alle sinnvollen Ansichten (Verlauf gegen Grenzen,
-Zusammensetzung, Brücke, Zähler und Nenner, kumuliert, Vergleich, Tagesverlauf), bewertet
-sie nach Dringlichkeit und Aussagekraft und schlägt die beste als Nächstes vor. Was du
-änderst, bleibt so; neue Empfehlungen erscheinen nur als Vorschlag («Dazu passt», `Tab`).
+For every page Lumina makes all sensible views (trend against limits, composition, bridge,
+numerator and denominator, cumulative, comparison, days), rates them by urgency and
+expressiveness and suggests the best one next. What you change stays; new recommendations
+appear only as a suggestion («This fits», `Tab`).
 
-Die Gründe für diese Entscheidungen stehen in [design/README.md](design/README.md).
+The reasons for these decisions are in [design/README.md](design/README.md) (German).
 
-## Kennzahlen definieren
+## Defining key figures
 
-Was eine Kennzahl ist, wo sie liegt und welche Grenzen gelten, steht in einer JSON-Datei.
-Die Zahlen selbst bleiben im Goldlayer. Standard ist
-[internal/metrics/default.json](internal/metrics/default.json) mit den ALCO-Kennzahlen.
-Wer in den Einstellungen unter «Daten» eine Kennzahl hinzufügt oder ändert, bekommt eine
-eigene Datei `config/kennzahlen.json`. Sie lässt sich auch von Hand pflegen, oder man zeigt
-mit `LUMANTIC_METRICS` auf eine andere Datei.
+What a key figure is, where it lives and which bounds hold is written in a JSON file. The
+numbers themselves stay in the gold layer. The default is
+[internal/metrics/default.json](internal/metrics/default.json) with the ALCO key figures.
+Whoever adds or changes a key figure in the settings under «Data» gets a file of their own,
+`kennzahlen.json` beside the configuration. It can also be kept by hand, or `LUMANTIC_METRICS`
+points to another file.
 
 ```json
 {
@@ -224,296 +225,303 @@ mit `LUMANTIC_METRICS` auf eine andere Datei.
 }
 ```
 
-- `kind`: wie die Kennzahl über ein Quartal oder Jahr zusammenkommt: `stock` (Bestand am
-  Periodenende), `flow` (Summe), `avg` (Durchschnitt der Monate, etwa die Zinsmarge) oder
-  `ratio` (Verhältnis: Zähler und Nenner je für sich zusammengezählt, dann geteilt; braucht
-  `parts` mit `mode: "ratio"`).
-- `dir`: `1` mehr ist besser, `-1` weniger ist besser, `0` neutral.
-- `limit` ist die regulatorische Grenze, `target` das interne Ziel (bei `dir: -1` die Frühwarnung).
-- `parts` zerlegt eine Kennzahl: in Spalten (`columns`) oder nach einer Dimension (`split`, z. B. `segment`). `mode` ist `sum`, `ratio` oder `funnel`.
-  Bei `ratio` sagt `kind`, wie Zähler und Nenner zusammenkommen: `stock` (am Stichtag, wie bei
-  der LCR) oder `flow` (summiert, wie bei der Ausschussquote: Ausschuss ÷ gefertigte Teile).
-- `daily` ist optional: eine Tabelle mit einer Zeile pro Tag (oder pro Tag und Teil). Sie speist die Tageswerte und
-  macht die Kennzahl auch in Wochen und Tagen lesbar. Prozente brauchen eine Zeile pro Tag, denn Lumantic summiert die
-  Zeilen eines Tages.
+- `kind`: how the key figure adds up over a quarter or a year: `stock` (balance at the end of
+  the period), `flow` (sum), `avg` (average of the months, such as the interest margin) or
+  `ratio` (numerator and denominator added up each on their own, then divided; needs `parts`
+  with `mode: "ratio"`).
+- `dir`: `1` more is better, `-1` less is better, `0` neutral.
+- `limit` is the regulatory bound, `target` the internal target (with `dir: -1` the early warning).
+- `parts` splits a key figure: into columns (`columns`) or by a dimension (`split`, e.g.
+  `segment`). `mode` is `sum`, `ratio` or `funnel`. With `ratio`, `kind` says how numerator and
+  denominator add up: `stock` (at the reporting date, as for the LCR) or `flow` (summed, as for
+  the scrap rate: scrap ÷ parts made).
+- `daily` is optional: a table with one row per day (or per day and part). It feeds the daily
+  values and makes the key figure readable in weeks and days as well. Percentages need one row
+  per day, as Lumantic sums the rows of a day.
 
-Beim Start prüft Lumantic jede Tabelle und Spalte gegen den Katalog. Fehlt einer Kennzahl
-eine Spalte, fällt nur sie weg; die Einstellungen zeigen, was fehlt.
+At the start Lumantic checks every table and column against the catalogue. If a key figure lacks
+a column, only that figure drops out; the settings show what is missing.
 
-Einheiten (`unit`): `%`, Geld in Mio. CHF (`Mio`, als Mrd. gezeigt mit `Mrd`, `Tsd` für
-Tausend CHF), `Stk` (Stück), `Tage`, `h` (Stunden) und `Zahl`. Dazu kommen Felder für den
-Katalog: `formula` (die Berechnung in Worten), `owner` (wer für die Kennzahl geradesteht) und
-`bounds`, Ziele und Grenzen mit Gültigkeit, etwa ein Budget pro Jahr:
+Units (`unit`): `%`, money in millions of CHF (`Mio`, shown as billions with `Mrd`, `Tsd` for
+thousands of CHF), `Stk` (pieces), `Tage` (days), `h` (hours) and `Zahl` (number). Further
+fields serve the catalogue: `formula` (the calculation in words), `owner` (who answers for the
+key figure) and `bounds`, targets and limits that hold for a time, such as a budget per year:
 
 ```json
 "bounds": [ { "kind": "ziel", "value": 8.0, "name": "Budget 2025", "from": "2025-01", "until": "2025-12" },
             { "kind": "ziel", "value": 9.0, "name": "Budget 2026", "from": "2026-01" } ]
 ```
 
-Bei einem Fluss ist ein solches Ziel ein **Jahresbudget**, ausser es sagt `"per": "monat"`. Ein einzelnes
-`target` gilt wie bisher pro Monat; mit `"targetPer": "jahr"` ist es ein Jahresziel. Lumantic verteilt ein
-Jahresziel nach dem Branchenstandard: ein Zwölftel pro Monat, im Monat gleichmässig auf die Arbeitstage Montag
-bis Freitag. Umstellen lässt sich das pro Kennzahl mit `phasing` (auch im Sternkatalog unter «Verteilung»):
-`arbeitstage` (das Jahr nach seinen Arbeitstagen), `kalendertage` (nach allen Tagen) oder `profil` mit
-`"profile": [12 Gewichte]`, zum Beispiel mehr am Quartalsende. `phasing` ganz oben in der Datei gilt für alle.
+For a flow such a target is an **annual budget**, unless it says `"per": "monat"`. A single
+`target` holds per month as before; with `"targetPer": "jahr"` it is an annual target. Lumantic
+spreads an annual target by the industry standard: one twelfth per month, within the month
+evenly over the working days Monday to Friday. This can be changed per key figure with
+`phasing` (also in the star catalogue under «Spread»): `arbeitstage` (the year by its working
+days), `kalendertage` (by all days) or `profil` with `"profile": [12 weights]`, for example
+more at the end of a quarter. `phasing` at the top of the file holds for all.
 
-Englische Wörter stehen unter `en`, für die englische Oberfläche: bei einer Kennzahl `name`, `long`, `short`,
-`desc`, `targetName` und `limitName`, bei einer Gruppe `name`, bei einem Ereignis `title` und `text`, ganz oben
-`title` und `source`, bei einem Begriff `term` und `definition`, in `extra` dazu `formula`.
+English words go under `en`, for the English interface: for a key figure `name`, `long`,
+`short`, `desc`, `targetName` and `limitName`, for a group `name`, for an event `title` and
+`text`, at the top `title` and `source`, for a term `term` and `definition`, in `extra` also
+`formula`.
 
 ```json
 "en": { "name": "Interest margin", "short": "NIM", "desc": "Net interest income relative to interest-earning assets, annualised." }
 ```
 
-## Zeitraster: Tag, Woche, Monat, Quartal, Jahr
+## Rasters: day, week, month, quarter, year
 
-Neben dem Datum auf «Heute» steht die Wahl des Rasters: **Tag**, **Woche**, **Monat**,
-**Quartal** oder **Jahr** (Taste `G`). Im Quartal zeigt jede Seite das Quartal, die Sätze vergleichen mit dem Vorquartal,
-die Diagramme beschriften ihre Achse in Quartalen, und `←` `→` gehen ein Quartal. Quartal und
-Jahr entstehen aus den Monaten, nach der Art der Kennzahl: ein Bestand zählt mit seinem letzten
-Monat, ein Fluss wird summiert, ein Durchschnitt gemittelt, ein Verhältnis aus Zähler und Nenner
-gerechnet. Prozente werden nie gemittelt, wenn ihre Teile bekannt sind.
+Beside the date on «Today» stands the choice of raster: **day**, **week**, **month**,
+**quarter** or **year** (key `G`). In quarters every page shows the quarter, the sentences
+compare with the previous quarter, the charts label their axis in quarters, and `←` `→` move by
+a quarter. Quarters and years come from the months, by the kind of key figure: a balance counts
+with its last month, a flow is summed, an average averaged, a ratio computed from numerator and
+denominator. Percentages are never averaged when their parts are known.
 
-Ein laufendes Quartal heisst «Q4 2026 bis Oktober». Ein Fluss darin wird mit denselben Monaten
-des Vorjahrs verglichen und mit dem Ziel bis heute, nicht mit dem ganzen.
+A running quarter is called «Q4 2026 through October». A flow in it is compared with the same
+months of the previous year and with the target so far, not with the whole.
 
-**Woche und Tag** gibt es, sobald eine Kennzahl eine Tagestabelle hat (`daily`). Wochen zählen nach
-ISO 8601 ab Montag und entstehen nur aus Tagen, nie aus Monaten: «KW 46 2026». Eine laufende Woche
-heisst «KW 46 2026 bis Dienstag» und wird mit denselben Tagen der Vorwoche verglichen. Ein Tag ohne
-Zeile ist leer, nie null. Das Wochen- oder Tagesziel eines Flusses ist die Summe seiner Tage (siehe
-Jahresbudget oben). Eine Kennzahl ohne Tageswerte bleibt in Woche und Tag bei ihrem Monat und sagt
-«nur monatlich erhoben». Der Server schickt die Tage der letzten 90 Tage und die Wochen der letzten
-zwei Jahre.
+**Week and day** exist as soon as a key figure has a daily table (`daily`). Weeks count by
+ISO 8601 from Monday and come only from days, never from months: «Week 46 2026». A running week is
+called «Week 46 2026 through Tuesday» and compared with the same days of the previous week. A day
+without a row is empty, never zero. The weekly or daily target of a flow is the sum of its days
+(see annual budget above). A key figure without daily values stays with its month in weeks and
+days and says «monthly only». The server sends the days of the last 90 days and the
+weeks of the last two years.
 
-Der Status hat ein festes Raster: «Heute» und das Hauptmenü urteilen im **Standardraster** des
-Kosmos (Einstellungen → Daten → Raster, Standard Monat), damit eine Kennzahl beim Umschalten
-nicht von ruhig auf rot springt. Die Themen-Seiten urteilen im Raster, in dem man liest. Das
-gewählte Raster merkt sich der Arbeitsbereich.
+The status has a fixed raster: «Today» and the main menu judge in the Kosmos's **standard
+raster** (Settings → Data → Raster, month by default), so a key figure does not jump from calm
+to red when you switch. The topic pages judge in the raster you read in. The workspace remembers
+the chosen raster.
 
-## Katalog: was die Zahlen bedeuten
+## Catalogue: what the numbers mean
 
-Jeder Kosmos hat einen **Sternkatalog** (Taste `C`, oder «Katalog» in der Leiste unten): jede
-Kennzahl als Eintrag mit Definition, Berechnung, Quelle, Einheit, Art, Richtung, Zielen über die
-Zeit und Eigner, dazu die Begriffe des Hauses mit Synonymen und die Tabellen darunter. Im
-Hauptmenü durchsucht er alle Kosmen. Lumina bekommt die Definitionen und Begriffe mit und
-versteht so «Termintreue» als Liefertreue.
+Every Kosmos has a **star catalogue** (key `C`, or «Catalogue» in the bar at the bottom): every
+key figure as an entry with definition, calculation, source, unit, kind, direction, targets over
+time and owner, plus the words of the house with synonyms and the tables beneath. In the main
+menu it searches all Kosmen. Lumina gets the definitions and words and so understands
+«Termintreue» as delivery reliability.
 
-Die Bedeutung kommt aus drei Quellen, Feld für Feld in dieser Reihenfolge, und jedes Feld zeigt
-seine Herkunft:
+The meaning comes from three sources, field by field in this order, and every field shows where
+it came from:
 
-1. ● **Fachkatalog in der Quelle:** drei Tabellen oder Views mit festen Namen im Goldlayer
-   (`lumantic_kennzahlen`, `lumantic_ziele`, `lumantic_begriffe`). Gibt es sie, baut sich ein
-   Kosmos aus ihnen, ohne Kennzahlen-Datei. Was dort steht, ändert man dort.
-2. ○ **In Lumantic ergänzt:** eigene Kennzahlen in der Kennzahlen-Datei, und was der Fachkatalog
-   offen lässt (`extra`, zum Beispiel ein Ziel oder eine Definition). Das ergänzt man direkt im
-   Sternkatalog.
-3. ◌ **Vermutet:** Einheit und Art aus dem Spaltennamen (`_pct` ist Prozent, `_mio` Mio. CHF,
-   `_stk` Stück), immer nur ein Vorschlag.
+1. ● **Company catalogue in the source:** three tables or views with fixed names in the gold
+   layer (`lumantic_kennzahlen`, `lumantic_ziele`, `lumantic_begriffe`). If they exist, a Kosmos
+   builds itself from them, without a key figure file. What stands there is changed there.
+2. ○ **Added in Lumantic:** own key figures in the key figure file, and what the company
+   catalogue leaves open (`extra`, for example a target or a definition). This is added right in
+   the star catalogue.
+3. ◌ **Guessed:** unit and kind from the column name (`_pct` is percent, `_mio` millions of
+   CHF, `_stk` pieces), always only a suggestion.
 
-Lumantic schreibt nie in die Datenbank. Wer einen in Lumantic begonnenen Katalog in den Goldlayer
-übernehmen will, lädt ihn im Sternkatalog unter «Tabellen» als SQL herunter: Es legt die drei
-Views an, und von da an liest Lumantic den Katalog aus der Quelle. Englische Wörter stehen im
-Fachkatalog in den Spalten `name_en`, `definition_en`, `thema_en` und `begriff_en`. Vertrag und Spalten im Detail:
-`config/README.md`, Abschnitt «Katalog». Der Beispiel-Kosmos «Industrie» zeigt alle drei
-Herkünfte.
+Lumantic never writes into the database. Whoever wants to take a catalogue begun in Lumantic
+into the gold layer downloads it in the star catalogue under «Tables» as SQL: it creates the
+three views, and from then on Lumantic reads the catalogue from the source. English words stand
+in the company catalogue in the columns `name_en`, `definition_en`, `thema_en` and `begriff_en`.
+Contract and columns in detail: `config/README.md`, section «Katalog». The example Kosmos
+«Industry» shows all three origins.
 
-## Datenquelle anbinden
+## Connecting a data source
 
-Beim allerersten Start fragt die App «Wo liegt dein Goldlayer?» und zeigt die fünf Arten als
-Karten; eine Karte öffnet das passende Formular. Später geht dasselbe in den Einstellungen unter
-**Daten**. «Verbindung prüfen» zeigt die gefundenen Tabellen, «Speichern» übernimmt sie.
-Scheitert die neue Quelle, bleibt die alte.
-Das gilt für den Kosmos, in dem man gerade ist; eine weitere Datenquelle wird ein weiterer
-Kosmos (siehe «Mehrere Kosmen»).
+Under **Settings › Data** you pick one of five kinds; «Test the connection» shows the tables found,
+«Save» takes them. If the new source fails, the old one stays. This holds for the Kosmos you are
+in; a further data source becomes a further Kosmos (see «Several Kosmen»). In a source folder
+without settings, the very first start asks «Where does your gold layer live?» with the five
+kinds as cards.
 
-- **DuckDB-Datei:** Pfad zur Datei und Schema-Präfix. Beschreibungen kommen aus
-  `COMMENT ON TABLE/COLUMN`.
-- **Ordner mit Parquet- oder CSV-Dateien:** Jede Datei wird die Tabelle `<schema>.<dateiname>`,
-  jeder Unterordner mit Parquet-Dateien ebenfalls. DuckDB liest dabei nur in diesem Ordner.
-- **Snowflake:** Konto, Benutzer, Warehouse, Datenbank, Schema und optional eine Rolle. Anmeldung
-  mit Schlüsselpaar (empfohlen) oder Token. Lumantic nutzt die SQL API, keinen Treiber.
-- **Databricks:** Adresse des Workspace, ID des SQL-Warehouse, Katalog und Schema. Anmeldung
-  als Service Principal mit OAuth (empfohlen) oder mit persönlichem Token. Lumantic nutzt die
-  SQL Statement Execution API.
-- **Windmill:** Die zwei Skripte aus `adapters/windmill/` in Windmill anlegen, dann Adresse,
-  Workspace und Token eintragen. Der Adapter ruft
-  `POST /api/w/{workspace}/jobs/run_wait_result/p/{pfad}` auf. Das ist noch nicht gegen eine
-  echte Windmill-Instanz getestet.
+- **DuckDB file:** path to the file and schema prefix. Descriptions come from
+  `COMMENT ON TABLE/COLUMN`. Lumantic opens it read-only for each query, so a loading job can
+  write it in between.
+- **Folder of Parquet or CSV files:** every file becomes the table `<schema>.<file name>`, every
+  subfolder of Parquet files as well. DuckDB reads only inside this folder.
+- **Snowflake:** account, user, warehouse, database, schema and optionally a role. Sign-in with
+  a key pair (recommended) or a token. Lumantic uses the SQL API, no driver.
+- **Databricks:** workspace address, SQL warehouse ID, catalog and schema. Sign-in as a service
+  principal with OAuth (recommended) or with a personal token. Lumantic uses the SQL Statement
+  Execution API.
+- **Windmill:** create the two scripts from `adapters/windmill/` in Windmill, then enter address,
+  workspace and token. The adapter calls
+  `POST /api/w/{workspace}/jobs/run_wait_result/p/{path}`. Not yet tested against a real
+  Windmill instance.
 
-Eine Tabelle braucht eine Datumsspalte (`DATE` oder `TIMESTAMP`), damit Kennzahlen aus ihr
-Zeitreihen werden.
+A table needs a date column (`DATE` or `TIMESTAMP`) for key figures from it to become time
+series.
 
-Jede Datenbank bekommt ihr eigenes SQL: Lumantic stellt seine Fragen als Struktur (Summen pro
-Monat oder Tag, Werte einer Dimension, Zeilen pro Tabelle), und ein Dialekt pro Datenbank schreibt
-sie (`internal/adapter/dialect.go`). An Snowflake und Databricks geht nur, was mit `SELECT` oder
-`WITH` beginnt und nur eine Anweisung ist. Felder und Einrichtung im Detail: `config/README.md`.
-Snowflake und Databricks sind gegen nachgebaute Antworten ihrer Schnittstellen getestet, noch
-nicht gegen echte Konten.
+Every database gets its own SQL: Lumantic asks its questions as a structure (sums per month or
+day, values of a dimension, rows per table), and one dialect per database writes them
+(`internal/adapter/dialect.go`). Only what begins with `SELECT` or `WITH` and is a single
+statement goes to Snowflake and Databricks. Fields and setup in detail: `config/README.md`.
+Snowflake and Databricks are tested against rebuilt answers of their interfaces, not yet against
+real accounts.
 
-## Aktualisierung
+## Refresh
 
-Lumantic liest einen Kosmos immer ganz neu, nie nur den neusten Tag; so kommen auch Korrekturen
-an alten Tagen mit. Beim Öffnen einer Seite fragt es die Datenbank nie. Neu gelesen wird:
+Lumantic always reads a Kosmos anew as a whole, never only the newest day; so corrections to old
+days come along. Opening a page never asks the database: the figures come from memory. A Kosmos
+is read again:
 
-- **auf Anstoss:** Der letzte Schritt des Ladeprozesses ruft `POST /api/refresh?k=<kosmos>` mit
-  dem Aktualisierungs-Token des Kosmos auf (`Authorization: Bearer …`, oder als Passwort einer
-  Basic-Anmeldung, wie es viele Webhook-Werkzeuge anbieten). Lumantic antwortet sofort mit `202`
-  und liest im Hintergrund. Kommt ein Anstoss, während gelesen wird, liest Lumantic danach noch
-  einmal, nie öfter. Den Token erzeugt man in den Einstellungen unter **Daten › Aktualisierung**;
-  er erscheint einmal, gespeichert wird nur ein Hash. Für Windmill liegt eine Vorlage in
-  `adapters/windmill/refresh.py`.
-- **zu festen Zeiten**, zum Beispiel täglich um 06:00. Das ist der Standard für Snowflake,
-  Databricks und Windmill: Das Warehouse wacht einmal auf.
-- **wenn sich Dateien ändern:** Bei einer DuckDB-Datei oder einem Ordner schaut Lumantic alle
-  paar Minuten auf Anzahl, Grösse und Zeit der Dateien (Standard: alle 5 Minuten), ohne die
-  Daten zu lesen. Für Warehouses gibt es das nicht, weil schon die Frage das Warehouse weckt.
-- **von Hand** mit «Neu laden».
+- **on a nudge:** the last step of the loading job calls `POST /api/refresh?k=<kosmos>` with the
+  Kosmos's refresh token (`Authorization: Bearer …`, or as the password of a basic sign-in, as
+  many webhook tools offer). Lumantic answers `202` at once and reads in the background. If a
+  nudge comes while it reads, it reads once more afterwards, never more often. Create the token
+  in the settings under **Data › Refresh**; it is shown once, only a hash is stored. A template
+  for Windmill is in `adapters/windmill/refresh.py`.
+- **at fixed times**, for example daily at 06:00. That is the default for Snowflake, Databricks
+  and Windmill: the warehouse wakes once.
+- **when files change:** for a DuckDB file or a folder, Lumantic looks at the number, size and
+  time of the files every few minutes (default: every 5 minutes), without reading the data.
+  There is no such thing for warehouses, as the question alone would wake the warehouse.
+- **by hand** with «Read again».
 
-`GET /api/refresh?k=<kosmos>` sagt einem Ladeprozess, wie der letzte Lauf ging und wann der
-nächste kommt. Offene Seiten hören über `GET /api/events` (Server-Sent Events) von jedem Lauf.
-Brachte er neue Zahlen, erscheint oben «Neue Zahlen · Stand 07:42» mit «Zeigen»; eine Seite im
-Hintergrund übernimmt sie still und öffnet wieder dort, wo man war.
+`GET /api/refresh?k=<kosmos>` tells a loading job how the last run went and when the next one
+comes. Open pages hear of every run through `GET /api/events` (server-sent events). If it
+brought new figures, «New figures · as of 07:42» appears at the top with «Show»; a page in the
+background takes them quietly and opens again where you were.
 
-Liegen die Tagesdateien eines Ladeprozesses in einem Unterordner, ist der Ordner eine Tabelle:
-Jeder Tag kommt als Datei dazu, und `union_by_name` hält das aus, wenn später eine Spalte
-dazukommt. Ordner der Form `jahr=2026/monat=11/` liest DuckDB als Partitionen.
+If a loading job's daily files lie in a subfolder, the folder is one table: every day comes in
+as a file, and `union_by_name` copes when a column is added later. Folders of the form
+`jahr=2026/monat=11/` are read by DuckDB as partitions.
 
-## Anmeldung und Rechte
+## Login and rights
 
-Ohne Anmeldung ist Lumantic für einen Rechner: Alle dürfen alles, und es hört nur auf `127.0.0.1`. Für mehrere Personen
-meldet man sich über einen Proxy davor an (zum Beispiel einen Authentik-Outpost) oder mit OpenID Connect (Authentik,
-Entra ID, Keycloak, ADFS). Die Windows-Anmeldung übernimmt dabei der Anbieter. Lumantic hat keine eigenen Benutzer
-und keine Passwörter. Es nimmt Konto, Name und Gruppen aus der Anmeldung:
+Without a login Lumantic is for one machine: everyone may do everything, and it listens only on
+`127.0.0.1`. Reachable from outside without a login (as in a container), it shows only the
+examples. For several people you sign in through a proxy in front (an Authentik outpost, for
+example) or with OpenID Connect (Authentik, Entra ID, Keycloak, ADFS). The Windows sign-in is
+handled by the provider. Lumantic has no users and no passwords of its own. It takes account,
+name and groups from the sign-in:
 
-- **Administratoren** (`auth.admins`) ändern Datenquellen, Lumina und Kosmen und sehen alle Kosmen.
-- **Ein Kosmos** zeigt sich nur den Gruppen unter `access`; die anderen sehen ihn auch im Hauptmenü nicht.
-- **Kennzahlen pflegen** dürfen Administratoren und die Gruppen unter `editors`.
-- **Eine Kennzahl** kann eigene Gruppen haben (`access` in der Kennzahlen-Datei).
-- **Im Namen der Person:** Bei Snowflake und Databricks kann Lumantic mit der Anmeldung der Person fragen
-  (`rights: "source"`); dann gelten die Rechte der Datenbank, auch Zeilenfilter und Masken.
+- **Administrators** (`auth.admins`) change data sources, Lumina and Kosmen and see every Kosmos.
+- **A Kosmos** shows itself only to the groups under `access`; the others do not see it in the
+  main menu either.
+- **Key figures** may be looked after by administrators and the groups under `editors`.
+- **A key figure** can have groups of its own (`access` in the key figure file).
+- **In the person's name:** with Snowflake and Databricks Lumantic can ask with the person's
+  sign-in (`rights: "source"`); then the database's rights hold, including row filters and masks.
 
-Jede Person hat ihre eigenen Seiten, und `data/zugriff.log` hält fest, wer sich anmeldet und welchen Kosmos öffnet.
-Einrichtung im Detail: `config/README.md`, Abschnitt «Anmeldung und Rechte».
+Everyone has their own pages, and `zugriff.log` records who signs in and opens which Kosmos.
+Setup in detail: `config/README.md`, section «Anmeldung und Rechte».
 
-## Lumina mit Claude
+## Lumina with Claude
 
-Ohne API-Token sucht Lumina Fragen nach Stichwörtern ab. Mit Token (Einstellungen → Lumina,
-oder `ANTHROPIC_API_KEY`) beantwortet Claude die Frage in ein bis drei Sätzen und schlägt
-bis zu drei Diagramme vor. Standardmodell ist `claude-opus-5-5`.
+Without an API token, Lumina searches questions by keywords. With a token (Settings → Lumina, or
+`ANTHROPIC_API_KEY`) Claude answers the question in one to three sentences and suggests up to
+three charts. The default model is `claude-opus-5-5`.
 
-Lumina schickt die Frage und die ausgewerteten Kennzahlen des gezeigten Monats an Anthropic
-(Wert, Vormonat, Ziel, Limit, Stufe, die letzten 13 Monate, Teile), keine Datenzeilen aus dem
-Goldlayer. Das Token liegt in `data/secrets.json`, nie in der Konfiguration, und die App zeigt
-davon nur die letzten vier Zeichen. Läuft der Zugang über ein Firmen-Gateway, trägt man dessen
-Adresse ein. Die Regeln, Sätze und Empfehlungen auf den Seiten laufen ohne KI.
+Lumina sends the question and the evaluated key figures of the month shown to Anthropic (value,
+previous month, target, limit, level, the last 13 months, parts), no data rows from the gold
+layer. The token lives in `secrets.json`, never in the configuration, and the app shows only its
+last four characters. If access runs through a company gateway, enter its address. The rules,
+sentences and recommendations on the pages run without AI.
 
-## Architektur
+## Architecture
 
 ```
-             Browser (web/: Kosmos-Raum in JS, Einstellungen und Designs in TypeScript)
-                │  JSON-API
+             Browser (web/: the Kosmos room in JS, settings and designs in TypeScript)
+                │  JSON API
    ┌────────────┴──────────────────────────────────────────┐
-   │ Go-Server (ein Programm, Oberfläche eingebettet)       │
-   │  config   Einstellungen, Umgebungsvariablen, Tokens    │
-   │  source   baut aus den Einstellungen die Datenquelle   │
-   │  metrics  Definitionen + Goldlayer → Zeitreihen        │
-   │  ai       Claude für Lumina                            │
-   │  store    Arbeitsbereich: Seiten, Blöcke, Darstellung  │
+   │ Go server (one program, interface and DuckDB inside)   │
+   │  config   settings, environment variables, tokens      │
+   │  source   builds the data source from the settings     │
+   │  metrics  definitions + gold layer → time series       │
+   │  ai       Claude for Lumina                            │
+   │  store    workspace: pages, blocks, look               │
    └────────────┬──────────────────────────────────────────┘
-                │  zwei Anschlüsse: describe() und query()
-        Adapter: duckdb · files (Parquet/CSV) · snowflake · databricks · windmill
+                │  two connectors: describe() and query()
+        Adapters: duckdb · files (Parquet/CSV) · snowflake · databricks · windmill
                 │
-        Goldlayer der Teams
+        The teams' gold layers
 ```
 
-| Ordner | Inhalt |
+| Folder | Contents |
 |---|---|
-| `cmd/lumantic` | Server |
-| `cmd/seed` | erzeugt zum Entwickeln die Beispiel-Goldlayer «ALCO» und «Retail Banking» als DuckDB-Datei, «Firmenkunden», «Privatkunden» und «Industrie» als CSV-Ordner (alle Zahlen erfunden) |
-| `internal/beispiele` | die Beispiele selbst: Geschichten in Zahlen, die immer im letzten Monat enden; der erste Start schreibt Industrie und ALCO |
-| `config/beispiele/` | Kennzahlen-Definitionen der Beispiel-Kosmen «Firmenkunden» und «Privatkunden» |
-| `config/` | Vorlage und Beschreibung der Einstellungen, Firmen-Designs in `brand/` |
-| `internal/config` | Einstellungen laden, prüfen, speichern; Tokens |
-| `internal/auth` | Anmeldung: keine, über einen Proxy oder mit OpenID Connect |
-| `internal/katalog` | Fachkatalog lesen, mit Lumantics Definitionen und Vermutungen zusammenführen, als SQL ausgeben |
-| `internal/source`, `internal/adapter` | Datenquelle aus den Einstellungen; DuckDB-, Ordner- und Windmill-Adapter, die SQL-Dialekte; DuckDB eingebaut (`duckdb_builtin.go`, mit cgo) oder als CLI |
-| `internal/adapter/snowflake`, `internal/adapter/databricks` | Snowflake über die SQL API, Databricks über die SQL Statement Execution API |
-| `internal/metrics` | Kennzahlen-Definitionen, Prüfung gegen den Katalog, Laden der Zeitreihen, Bearbeiten |
-| `internal/ai`, `internal/lumina` | Claude für Lumina; Fragen-Karten der ersten Oberfläche |
-| `internal/server` | HTTP-API |
-| `internal/i18n` | Lumantics Meldungen auf Englisch: die deutschen Formate mit ihrer Übersetzung, angewandt am Rand der API |
-| `web/src/kosmos/` | der Raum: nummerierte JS-Teile, die `vite.config.ts` zu einem Modul zusammenfügt |
-| `web/src/menu.ts`, `logo.ts` | Hauptmenü der Kosmen; das Logo, an einer Stelle |
-| `web/src/settings.ts`, `themes.ts`, `prefs.ts`, `main.ts` | Einstellungen, Designs, gespeicherte Wahl, Start |
-| `web/src/i18n.ts` | die Sprache der Oberfläche; Texte stehen zweisprachig am Ort: `tr("Heute", "Today")` |
-| `web/src/styles/` | `themes.css` (die Designs), `kosmos.css`, `settings.css`, `app.css` |
-| `design/` | Entwürfe und Begründungen, frühere Oberflächen in `archive/` |
-| `adapters/windmill` | Vorlagen für die Windmill-Skripte: Struktur, Abfragen und der Anstoss nach einem Flow |
+| `cmd/lumantic` | the server |
+| `cmd/seed` | writes the example gold layers for development: «ALCO» and «Retail Banking» as a DuckDB file, «Firmenkunden», «Privatkunden» and «Industrie» as CSV folders (all figures invented) |
+| `internal/beispiele` | the examples themselves: stories in numbers that always end last month; the first start writes Industry and ALCO |
+| `config/beispiele/` | key figure definitions of the example Kosmen Industrie, Firmenkunden and Privatkunden |
+| `config/` | template and description of the settings, corporate designs in `brand/` |
+| `internal/config` | loading, checking and saving the settings; tokens |
+| `internal/auth` | sign-in: none, through a proxy or with OpenID Connect |
+| `internal/katalog` | reading the company catalogue, merging it with Lumantic's definitions and guesses, writing it as SQL |
+| `internal/source`, `internal/adapter` | data source from the settings; DuckDB, folder and Windmill adapters, the SQL dialects; DuckDB built in (`duckdb_builtin.go`, with cgo) or as the CLI |
+| `internal/adapter/snowflake`, `internal/adapter/databricks` | Snowflake through the SQL API, Databricks through the SQL Statement Execution API |
+| `internal/metrics` | key figure definitions, checks against the catalogue, loading the time series, editing |
+| `internal/ai`, `internal/lumina` | Claude for Lumina; question cards of the first interface |
+| `internal/server` | HTTP API |
+| `internal/i18n` | Lumantic's messages in English: the German formats with their translation, applied at the edge of the API |
+| `web/src/kosmos/` | the room: numbered JS parts that `vite.config.ts` joins into one module |
+| `web/src/menu.ts`, `logo.ts` | the main menu of the Kosmen; the logo, in one place |
+| `web/src/settings.ts`, `themes.ts`, `prefs.ts`, `main.ts` | settings, designs, the saved choice, start |
+| `web/src/i18n.ts` | the language of the interface; texts stand in place in both languages: `tr("Heute", "Today")` |
+| `web/src/styles/` | `themes.css` (the designs), `kosmos.css`, `settings.css`, `app.css` |
+| `design/` | drafts and reasons (German), earlier interfaces in `archive/` |
+| `adapters/windmill` | templates for the Windmill scripts: structure, queries and the nudge after a flow |
 
 ### API
 
 | | |
 |---|---|
-| `GET /api/metrics` | Kennzahlen mit Monats-, Wochen- und Tagesreihen, Teilen, Ereignissen und dem Standardraster (503 ohne Daten) |
-| `GET /api/workspace`, `PUT /api/workspace` | Seiten, Blöcke und die persönliche Darstellung |
-| `GET /api/settings`, `PUT /api/settings` | Einstellungen für alle (Tokens nie im Klartext) |
-| `POST /api/settings/data/test` | eine Datenquelle prüfen, ohne zu speichern |
-| `PUT /api/settings/secret` | einen Token setzen oder entfernen; die von Snowflake und Databricks gehören zum Kosmos aus `?k=` |
-| `POST /api/refresh` | einen Kosmos neu lesen: mit Aktualisierungs-Token sofort `202` und im Hintergrund, aus der App wartend |
-| `GET /api/refresh` | Stand des letzten Laufs, Dauer, Auslöser und der nächste Termin |
-| `POST`/`DELETE /api/refresh/token` | den Aktualisierungs-Token eines Kosmos erzeugen (einmal angezeigt) oder entfernen |
-| `GET /api/events` | Meldungen an offene Seiten, wenn ein Kosmos neu gelesen wurde (Server-Sent Events) |
-| `GET /api/me` | wer angemeldet ist und was diese Person ändern darf |
-| `GET /api/katalog` | der Sternkatalog eines Kosmos: Einträge mit Herkunft je Feld, Begriffe, Tabellen |
-| `PUT /api/katalog/kennzahl/{id}`, `PUT /api/katalog/begriffe` | ergänzen, was der Fachkatalog offen lässt; die Begriffe von Lumantic |
-| `GET /api/katalog/export?format=sql` | den Katalog als SQL für die drei Views im Goldlayer (oder `json`) |
-| `/auth/login`, `/auth/callback`, `/auth/logout` | Anmeldung mit OpenID Connect; beim Proxy nur das Abmelden |
-| `POST /api/settings/ai/test` | eine kurze Anfrage an Claude |
-| `POST /api/refresh` | Katalog und Kennzahlen neu lesen |
-| `GET/POST /api/kpis`, `PUT/DELETE /api/kpis/{id}` | Kennzahlen-Definitionen |
-| `POST /api/lumina/ask` | eine Frage an Lumina mit den Fakten des Monats |
-| `GET /api/catalog` | der Katalog, wie Lumina ihn sieht |
-| `GET/POST /api/kosmen`, `DELETE /api/kosmen/{id}` | alle Kosmen mit Status; einen weiteren anlegen; einen entfernen |
-| `GET /brand/…` | Logo und Schriften aus `config/brand/` |
+| `GET /api/metrics` | key figures with monthly, weekly and daily series, parts, events and the standard raster (503 without data) |
+| `GET /api/workspace`, `PUT /api/workspace` | pages, blocks and the personal look |
+| `GET /api/settings`, `PUT /api/settings` | settings for everyone (tokens never in plain text) |
+| `POST /api/settings/data/test` | test a data source without saving |
+| `PUT /api/settings/secret` | set or remove a token; those of Snowflake and Databricks belong to the Kosmos from `?k=` |
+| `POST /api/refresh` | read a Kosmos anew: with a refresh token `202` at once and in the background, from the app waiting |
+| `GET /api/refresh` | state of the last run, its duration, what started it and the next time |
+| `POST`/`DELETE /api/refresh/token` | create a Kosmos's refresh token (shown once) or remove it |
+| `GET /api/events` | messages to open pages when a Kosmos was read anew (server-sent events) |
+| `GET /api/me` | who is signed in and what this person may change |
+| `GET /api/katalog` | the star catalogue of a Kosmos: entries with the origin of each field, terms, tables |
+| `PUT /api/katalog/kennzahl/{id}`, `PUT /api/katalog/begriffe` | add what the company catalogue leaves open; Lumantic's terms |
+| `GET /api/katalog/export?format=sql` | the catalogue as SQL for the three views in the gold layer (or `json`) |
+| `/auth/login`, `/auth/callback`, `/auth/logout` | sign-in with OpenID Connect; with a proxy only signing out |
+| `POST /api/settings/ai/test` | a short request to Claude |
+| `GET/POST /api/kpis`, `PUT/DELETE /api/kpis/{id}` | key figure definitions |
+| `POST /api/lumina/ask` | a question to Lumina with the facts of the month |
+| `GET /api/catalog` | the catalogue as Lumina sees it |
+| `GET/POST /api/kosmen`, `DELETE /api/kosmen/{id}` | all Kosmen with their status; add one; remove one |
+| `GET /brand/…` | logo and fonts from `config/brand/` |
+| `GET /healthz` | whether Lumantic runs, without a login (for containers; `lumantic health` asks it) |
 
-Alles, was einen Kosmos betrifft (Kennzahlen, Arbeitsbereich, Datenquelle, Katalog), nimmt
-`?k=<id>`; ohne ist der erste Kosmos gemeint. Anfragen, die etwas ändern, müssen JSON sein und
-von derselben Seite kommen. Die API antwortet auf Englisch, wenn `Accept-Language` mit `en` beginnt,
-das Cookie `lumantic_lang=en` gesetzt ist oder `?lang=en` dasteht.
+Everything that concerns a Kosmos (key figures, workspace, data source, catalogue) takes
+`?k=<id>`; without it the first Kosmos is meant. Requests that change something must be JSON and
+come from the same site. The API answers in English when `Accept-Language` begins with `en`, the
+cookie `lumantic_lang=en` is set or `?lang=en` is given.
 
 ## Tests
 
 ```powershell
 go test ./...
 cd web; npm run build; cd ..
-node scripts/ui-test/run.mjs     # Oberfläche in Echtzeit: ein Kosmos (Desktop, Handy, reduzierte Bewegung), Hauptmenü mit dreien, kurzes Fenster, Raster, Englisch
+node scripts/ui-test/run.mjs     # the interface in real time: one Kosmos (desktop, phone, reduced motion), main menu with three, short window, rasters, English
 ```
 
-Die CI prüft beide Wege von DuckDB, eingebaut und als CLI, auf Linux und Windows. Ein Tag `v*` baut
-die Dateien für fünf Systeme und das Image, probiert jedes einmal aus und veröffentlicht sie
+The CI checks both ways of DuckDB, built in and as the CLI, on Linux and Windows. A tag `v*`
+builds the files for five systems and the image, tries each once and publishes them
 (`.github/workflows/release.yml`).
 
-`run.mjs` startet einen Testserver mit festen Kennzahlen (`scripts/ui-test/mock-api.mjs`),
-spielt die App in Edge ohne Fenster mit echten Tasten und Klicks durch und legt
-Bildschirmfotos in `scripts/ui-test/shots/` ab.
+`run.mjs` starts a test server with fixed key figures (`scripts/ui-test/mock-api.mjs`), plays the
+app in Edge without a window with real keys and clicks, and puts screenshots in
+`scripts/ui-test/shots/`.
 
-## Nächste Schritte
+## Next steps
 
-- Rechte auf einzelne Teile einer Kennzahl (Region Ost sieht nur Ost) und Rechte wie die Windows-Ordnerrechte
-- Kennzahlen eines neuen Kosmos aus seinen Tabellen vorschlagen
-- Feiertage beim Verteilen von Zielen auf Arbeitstage (je nach Kanton)
-- Lagebericht als Nachricht in Teams oder per Mail, jeden Morgen
-- Windmill, Snowflake und Databricks gegen echte Instanzen testen
-- Korrektur für Mehrfachvergleiche, wenn Lumina sehr viele Reihen prüft
+- Rights on single parts of a key figure (region East sees only East) and rights like Windows
+  folder rights
+- Suggesting the key figures of a new Kosmos from its tables
+- Holidays when spreading targets over working days (per canton)
+- A morning report as a message in Teams or by mail
+- Testing Windmill, Snowflake and Databricks against real instances
+- Correcting for multiple comparisons when Lumina checks very many series
 
-## Mitmachen
+## Contributing
 
-Ideen und Fehler sind als Issue jederzeit willkommen. Pull Requests bitte erst nach Absprache in
-einem Issue; wie das geht und wo Hilfe am meisten bringt, steht in
-[CONTRIBUTING.md](CONTRIBUTING.md) (englisch). Sicherheitslücken bitte privat melden, siehe
-[SECURITY.md](SECURITY.md).
+Ideas and bugs are always welcome as issues. Pull requests please only after agreeing on them in
+an issue; how that works and where help counts most is in [CONTRIBUTING.md](CONTRIBUTING.md).
+Please report security holes privately, see [SECURITY.md](SECURITY.md).
 
-## Lizenz
+## License
 
-Lumantic steht unter der [Apache License 2.0](LICENSE). Hinweise zu den mitgelieferten Schriften
-stehen in [NOTICE](NOTICE).
+Lumantic is licensed under the [Apache License 2.0](LICENSE). Notes on the bundled fonts are in
+[NOTICE](NOTICE); the licences of everything else inside the program come with every release as
+`THIRD_PARTY_NOTICES.txt`.

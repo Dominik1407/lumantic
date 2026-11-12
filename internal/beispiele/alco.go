@@ -121,35 +121,35 @@ func generateALCO() alcoSeries {
 
 const monthCol = "Monat, angegeben als erster Tag des Monats; Bestände per Monatsende"
 
-func alcoTables() []table {
+func alcoTables() []Table {
 	s := generateALCO()
 	f4 := func(v float64) string { return ftoa(v, 4) }
-	liq := table{name: "liquiditaet_monat", desc: "Liquiditätskennzahlen per Monatsende",
-		cols: []column{
+	liq := Table{Name: "liquiditaet_monat", Desc: "Liquiditätskennzahlen per Monatsende",
+		Cols: []Column{
 			{"monat", "DATE", monthCol},
 			{"lcr_pct", "DOUBLE", "Liquidity Coverage Ratio in Prozent"},
 			{"nsfr_pct", "DOUBLE", "Net Stable Funding Ratio in Prozent"},
 			{"hqla_mio_chf", "DOUBLE", "Hochliquide Aktiva (HQLA) in Mio. CHF"},
 			{"nettomittelabfluesse_mio_chf", "DOUBLE", "Nettomittelabflüsse der nächsten 30 Tage in Mio. CHF"},
 		}}
-	cap := table{name: "eigenmittel_monat", desc: "Eigenmittelquoten per Monatsende",
-		cols: []column{
+	cap := Table{Name: "eigenmittel_monat", Desc: "Eigenmittelquoten per Monatsende",
+		Cols: []Column{
 			{"monat", "DATE", monthCol},
 			{"cet1_pct", "DOUBLE", "Hartes Kernkapital in Prozent der risikogewichteten Positionen"},
 			{"leverage_pct", "DOUBLE", "Kernkapital im Verhältnis zum Gesamtengagement in Prozent"},
 		}}
-	irr := table{name: "zinsrisiko_monat", desc: "Zinsrisiko im Bankenbuch per Monatsende",
-		cols: []column{
+	irr := Table{Name: "zinsrisiko_monat", Desc: "Zinsrisiko im Bankenbuch per Monatsende",
+		Cols: []Column{
 			{"monat", "DATE", monthCol},
 			{"delta_eve_pct", "DOUBLE", "Barwertverlust bei einem Zinsschock in Prozent des Kernkapitals"},
 		}}
-	inc := table{name: "erfolg_monat", desc: "Zinserfolg pro Monat",
-		cols: []column{
+	inc := Table{Name: "erfolg_monat", Desc: "Zinserfolg pro Monat",
+		Cols: []Column{
 			{"monat", "DATE", monthCol},
 			{"zinsmarge_pct", "DOUBLE", "Nettozinsmarge in Prozent, annualisiert"},
 		}}
-	bal := table{name: "bilanz_monat", desc: "Bilanzpositionen per Monatsende in Mio. CHF",
-		cols: []column{
+	bal := Table{Name: "bilanz_monat", Desc: "Bilanzpositionen per Monatsende in Mio. CHF",
+		Cols: []Column{
 			{"monat", "DATE", monthCol},
 			{"bilanzsumme_mio_chf", "DOUBLE", "Total Aktiven"},
 			{"hypotheken_mio_chf", "DOUBLE", "Hypothekarforderungen"},
@@ -158,33 +158,33 @@ func alcoTables() []table {
 			{"kontokorrente_mio_chf", "DOUBLE", "Kundeneinlagen auf Kontokorrenten"},
 			{"festgeld_mio_chf", "DOUBLE", "Kundeneinlagen als Festgeld"},
 		}}
-	nnm := table{name: "neugeld_monat", desc: "Netto-Neugeld pro Monat und Kundensegment in Mio. CHF",
-		cols: []column{
+	nnm := Table{Name: "neugeld_monat", Desc: "Netto-Neugeld pro Monat und Kundensegment in Mio. CHF",
+		Cols: []Column{
 			{"monat", "DATE", monthCol},
 			{"segment", "VARCHAR", "Kundensegment"},
 			{"nettoneugeld_mio_chf", "DOUBLE", "Zugeflossene minus abgeflossene Kundenvermögen"},
 		}}
-	pipe := table{name: "pipeline_monat", desc: "Hypotheken-Pipeline per Monatsende nach Stufe in Mio. CHF",
-		cols: []column{
+	pipe := Table{Name: "pipeline_monat", Desc: "Hypotheken-Pipeline per Monatsende nach Stufe in Mio. CHF",
+		Cols: []Column{
 			{"monat", "DATE", monthCol},
 			{"stufe", "VARCHAR", "Stufe in der Pipeline: Anfrage, Offerte oder Zusage"},
 			{"volumen_mio_chf", "DOUBLE", "Volumen, noch nicht ausbezahlt"},
 		}}
 	for t := 0; t < alcoMonths; t++ {
 		d := monthDate(t)
-		liq.rows = append(liq.rows, []string{d, f4(s.lcr[t]), f4(s.nsfr[t]), f4(s.hqla[t]), f4(s.outflow[t])})
-		cap.rows = append(cap.rows, []string{d, f4(s.cet1[t]), f4(s.lev[t])})
-		irr.rows = append(irr.rows, []string{d, f4(s.eve[t])})
-		inc.rows = append(inc.rows, []string{d, f4(s.nim[t])})
-		bal.rows = append(bal.rows, []string{d, f4(s.bal[t]), f4(s.mort[t]), f4(s.dep[t]), f4(s.save[t]), f4(s.curr[t]), f4(s.term[t])})
+		liq.Rows = append(liq.Rows, []string{d, f4(s.lcr[t]), f4(s.nsfr[t]), f4(s.hqla[t]), f4(s.outflow[t])})
+		cap.Rows = append(cap.Rows, []string{d, f4(s.cet1[t]), f4(s.lev[t])})
+		irr.Rows = append(irr.Rows, []string{d, f4(s.eve[t])})
+		inc.Rows = append(inc.Rows, []string{d, f4(s.nim[t])})
+		bal.Rows = append(bal.Rows, []string{d, f4(s.bal[t]), f4(s.mort[t]), f4(s.dep[t]), f4(s.save[t]), f4(s.curr[t]), f4(s.term[t])})
 		for i, seg := range segments {
-			nnm.rows = append(nnm.rows, []string{d, seg, f4(s.nnm[i][t])})
+			nnm.Rows = append(nnm.Rows, []string{d, seg, f4(s.nnm[i][t])})
 		}
 		for i, st := range stages {
-			pipe.rows = append(pipe.rows, []string{d, st, f4(s.pipe[i][t])})
+			pipe.Rows = append(pipe.Rows, []string{d, st, f4(s.pipe[i][t])})
 		}
 	}
-	return append([]table{liq, cap, irr, inc, bal, nnm, pipe}, alcoDaily(s)...)
+	return append([]Table{liq, cap, irr, inc, bal, nnm, pipe}, alcoDaily(s)...)
 }
 
 // Business days from September 2026 (story time) to the last weekday before today.
@@ -213,7 +213,7 @@ func bridge(r *mulberry, from, to float64, n int, noise float64) []float64 {
 	return out
 }
 
-func alcoDaily(s alcoSeries) []table {
+func alcoDaily(s alcoSeries) []Table {
 	r := &mulberry{s: 2611}
 	days := businessDays()
 	byMonth := map[int][]int{}
@@ -271,31 +271,31 @@ func alcoDaily(s alcoSeries) []table {
 	}
 
 	dayCol := "Geschäftstag"
-	liq := table{name: "liquiditaet_tag", desc: "Liquidität pro Geschäftstag",
-		cols: []column{
+	liq := Table{Name: "liquiditaet_tag", Desc: "Liquidität pro Geschäftstag",
+		Cols: []Column{
 			{"datum", "DATE", dayCol},
 			{"lcr_pct", "DOUBLE", "Liquidity Coverage Ratio in Prozent, Tageswert"},
 			{"hqla_mio_chf", "DOUBLE", "Hochliquide Aktiva in Mio. CHF"},
 			{"nettomittelabfluesse_mio_chf", "DOUBLE", "Nettomittelabflüsse der nächsten 30 Tage in Mio. CHF"},
 		}}
-	depT := table{name: "einlagen_tag", desc: "Kundeneinlagen pro Geschäftstag in Mio. CHF",
-		cols: []column{
+	depT := Table{Name: "einlagen_tag", Desc: "Kundeneinlagen pro Geschäftstag in Mio. CHF",
+		Cols: []Column{
 			{"datum", "DATE", dayCol},
 			{"kundeneinlagen_mio_chf", "DOUBLE", "Verpflichtungen aus Kundeneinlagen, Tagesendbestand"},
 		}}
-	nnmT := table{name: "neugeld_tag", desc: "Netto-Neugeld pro Geschäftstag und Kundensegment in Mio. CHF",
-		cols: []column{
+	nnmT := Table{Name: "neugeld_tag", Desc: "Netto-Neugeld pro Geschäftstag und Kundensegment in Mio. CHF",
+		Cols: []Column{
 			{"datum", "DATE", dayCol},
 			{"segment", "VARCHAR", "Kundensegment"},
 			{"nettoneugeld_mio_chf", "DOUBLE", "Zugeflossene minus abgeflossene Kundenvermögen an diesem Tag"},
 		}}
 	for i, d := range days {
 		ds := d.Format("2006-01-02")
-		liq.rows = append(liq.rows, []string{ds, ftoa(lcr[i], 4), ftoa(lcr[i]*outflow[i]/100, 4), ftoa(outflow[i], 4)})
-		depT.rows = append(depT.rows, []string{ds, ftoa(dep[i], 4)})
+		liq.Rows = append(liq.Rows, []string{ds, ftoa(lcr[i], 4), ftoa(lcr[i]*outflow[i]/100, 4), ftoa(outflow[i], 4)})
+		depT.Rows = append(depT.Rows, []string{ds, ftoa(dep[i], 4)})
 		for seg, name := range segments {
-			nnmT.rows = append(nnmT.rows, []string{ds, name, ftoa(nnm[i][seg], 4)})
+			nnmT.Rows = append(nnmT.Rows, []string{ds, name, ftoa(nnm[i][seg], 4)})
 		}
 	}
-	return []table{liq, depT, nnmT}
+	return []Table{liq, depT, nnmT}
 }

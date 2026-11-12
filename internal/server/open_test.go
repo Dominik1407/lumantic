@@ -51,7 +51,8 @@ func TestOwnDataReplacesAnExample(t *testing.T) {
 	if f.Data.Example || f.Metrics != "" || f.Data.Path != "zwei" {
 		t.Fatalf("still an example: %+v %q", f.Data, f.Metrics)
 	}
-	if !config.Moved(config.Data{Type: "files", Path: "a"}, config.Data{Type: "files", Path: "b"}) || config.Moved(config.Data{Name: "A"}, config.Data{Name: "B"}) {
-		t.Fatal("Moved")
+	renamed := config.Data{Name: "B", Example: true}
+	if config.Adopt(config.Data{Name: "A", Example: true}, &renamed) || !renamed.Example {
+		t.Fatal("a new name alone keeps an example")
 	}
 }

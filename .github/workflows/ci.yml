@@ -53,8 +53,7 @@ jobs:
         if: matrix.cgo == '0'
         shell: bash
         run: |
-          v=$(go list -m -f '{{.Version}}' github.com/duckdb/duckdb-go-bindings); n=${v#v0.}; n=${n%%.*}
-          duckdb="v${n:0:1}.$((10#${n:1:2})).$((10#${n:3:2}))"
+          duckdb=$(bash scripts/duckdb-version.sh)
           case "$RUNNER_OS" in Windows) zip=duckdb_cli-windows-amd64.zip ;; *) zip=duckdb_cli-linux-amd64.zip ;; esac
           mkdir -p "$RUNNER_TEMP/duckdb"
           curl -fsSL -o "$RUNNER_TEMP/duckdb.zip" "https://github.com/duckdb/duckdb/releases/download/$duckdb/$zip"
@@ -64,5 +63,7 @@ jobs:
       - name: Vet
         run: go vet ./...
 
+      # With cgo the race detector watches the queries that run side by side.
       - name: Test
-        run: go test ./...
+        shell: bash
+        run: go test ${{ matrix.cgo == '1' && runner.os == 'Linux' && '-race' || '' }} ./...

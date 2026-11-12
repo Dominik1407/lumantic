@@ -15,6 +15,7 @@ import (
 
 	"github.com/Dominik1407/lumantic/internal/adapter"
 	"github.com/Dominik1407/lumantic/internal/catalog"
+	"golang.org/x/sync/errgroup"
 )
 
 //go:embed default.json
@@ -78,6 +79,32 @@ type Def struct {
 // Words are the English texts of a definition, by field. Lumantic translates
 // its own texts; what a team defines it writes here in English, if it wants.
 type Words map[string]string
+
+// Or is the English word for key when English is asked for and there is one;
+// else de.
+func (w Words) Or(english bool, key, de string) string {
+	if english && w[key] != "" {
+		return w[key]
+	}
+	return de
+}
+
+// With sets the English word for key, or removes it when v is empty; nil when
+// no word remains.
+func (w Words) With(key, v string) Words {
+	if v = strings.TrimSpace(v); v == "" {
+		delete(w, key)
+	} else {
+		if w == nil {
+			w = Words{}
+		}
+		w[key] = v
+	}
+	if len(w) == 0 {
+		return nil
+	}
+	return w
+}
 
 // Units a figure can have. Money is kept in Mio. CHF ("Mrd" only changes how it
 // reads, "Tsd" is thousands of CHF); the others are pieces, days, hours and
@@ -395,11 +422,30 @@ type Data struct {
 	Grain  string    `json:"grain,omitempty"` // the Kosmos' standard raster; set by the server
 }
 
+// queryAll runs the queries side by side, four at a time: on a warehouse each
+// mostly waits for the network, and every answer is a few hundred rows. The
+// first error stops the others.
+func queryAll(ctx context.Context, ad adapter.Adapter, fetches map[string]*fetch) error {
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(4)
+	dialect := adapter.DialectOf(ad)
+	for _, f := range fetches {
+		g.Go(func() (err error) {
+			if f.answer, err = ad.Query(ctx, f.sql(dialect)); err != nil {
+				return fmt.Errorf("%s: %w", f.table, err)
+			}
+			return nil
+		})
+	}
+	return g.Wait()
+}
+
 // fetch is one query: a table at one grain, optionally split by a dimension.
 type fetch struct {
 	table, timeCol, split string
 	daily                 bool
 	cols                  []string
+	answer                []adapter.Row
 	rows                  map[string]map[string]map[string]float64 // period -> split value -> column -> value
 }
 
@@ -466,15 +512,13 @@ func Load(ctx context.Context, ad adapter.Adapter, cat *catalog.Catalog, c *Conf
 			}
 		}
 	}
-	dialect := adapter.DialectOf(ad)
+	if err := queryAll(ctx, ad, fetches); err != nil {
+		return nil, err
+	}
 	months, days := map[string]bool{}, map[string]bool{}
 	for _, f := range fetches {
-		rows, err := ad.Query(ctx, f.sql(dialect))
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", f.table, err)
-		}
 		f.rows = map[string]map[string]map[string]float64{}
-		for _, r := range rows {
+		for _, r := range f.answer {
 			p, s := adapter.String(r, "p"), adapter.String(r, "s")
 			if f.rows[p] == nil {
 				f.rows[p] = map[string]map[string]float64{}

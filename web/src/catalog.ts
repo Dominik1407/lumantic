@@ -3,7 +3,7 @@
 // says where it comes from: the company catalog in the source (a filled dot), an addition in Lumantic (a ring) or a
 // guess from a column name (a dashed ring). What the company catalog says is shown, never changed here; what it leaves
 // open can be added in place. In a Kosmos it shows that Kosmos; from the main menu every Kosmos, with one search.
-import { isEn, tr } from "./i18n";
+import { EN, monthLabel as month, NUM, pick, tr } from "./i18n";
 import { api, ApiError, MAIN, type Katalog, type KatalogBound, type KatalogEntry, type KatalogTerm } from "./api";
 import { $, h } from "./dom";
 
@@ -14,9 +14,6 @@ export interface CatalogHost {
   still(): boolean;
 }
 
-const EN = isEn();
-const MON = EN ? ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] : ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
-const NUM = EN ? ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"] : ["Kein", "Ein", "Zwei", "Drei", "Vier", "Fünf", "Sechs", "Sieben", "Acht", "Neun", "Zehn", "Elf", "Zwölf"];
 const FROM: Record<string, string> = EN ? { quelle: "from the company catalogue", lumantic: "added in Lumantic", vermutet: "guessed, from type and column name" }
   : { quelle: "aus dem Fachkatalog", lumantic: "in Lumantic ergänzt", vermutet: "vermutet, aus Typ und Spaltenname" };
 const FROM_SHORT: Record<string, string> = { ...FROM, vermutet: EN ? "guessed" : "vermutet" };
@@ -42,17 +39,15 @@ const ROLE: Record<string, string> = EN ? { time: "Time", dimension: "Dimension"
 // The fields whose origin a row shows as its trace, in this order.
 const TRACE = ["desc", "unit", "kind", "dir", "target", "owner"];
 
-const month = (ym: string) => { const [y, m] = (ym || "").split("-").map(Number); return y && m ? `${MON[m - 1]} ${y}` : ""; };
 const num = (v: number) => (Math.abs(v) >= 1000 ? Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, EN ? "," : "’") : String(v));
 // A value with its unit: «92 Mio. CHF» in German, «CHF 92m» in English.
 const withUnit = (v: number, unit: string) => {
   const ch = EN && { Mio: "m", Mrd: "bn", Tsd: "k" }[unit];
   return ch ? `CHF ${num(v)}${ch}` : EN && unit === "%" ? `${num(v)}%` : `${num(v)} ${UNIT_SHORT[unit] ?? ""}`.trim();
 };
-// A word of the business in the language of the interface: its English words where the team wrote them. What is
-// saved stays the German, so the English only ever shows.
-const word = (t: KatalogTerm) => (EN && t.en?.term) || t.term;
-const meaning = (t: KatalogTerm) => (EN && t.en?.definition) || t.definition;
+// A word of the business in the language of the interface. What is saved stays the German; the English only shows.
+const word = (t: KatalogTerm) => pick(t, "term", t.term);
+const meaning = (t: KatalogTerm) => pick(t, "definition", t.definition);
 const errText = (e: unknown) => (e instanceof ApiError ? e.message : tr("Der Server antwortet nicht.", "The server does not answer."));
 const mark = (from: string | undefined) => h("i", { class: "kt-o", "data-from": from || "lumantic", title: FROM[from || "lumantic"], "aria-label": FROM[from || "lumantic"] });
 

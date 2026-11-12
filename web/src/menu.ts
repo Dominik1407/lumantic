@@ -4,7 +4,7 @@
 import { readKosmos, type KosmosSummary } from "virtual:kosmos";
 import { api, type KosmosInfo } from "./api";
 import { $, h, sv } from "./dom";
-import { isEn, tr } from "./i18n";
+import { isEn, LANG, NUM, tr } from "./i18n";
 
 export interface MenuHost {
   enter(id: string): void; // go into a Kosmos
@@ -17,8 +17,6 @@ export interface MenuHost {
   canAdd(): boolean; // may connect a further Kosmos (admins)
 }
 
-const NUM = isEn() ? ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"]
-  : ["Kein", "Ein", "Zwei", "Drei", "Vier", "Fünf", "Sechs", "Sieben", "Acht", "Neun", "Zehn", "Elf", "Zwölf"];
 const TYPE: Record<string, string> = { duckdb: tr("DuckDB-Datei", "DuckDB file"), files: tr("Ordner mit Dateien", "Folder of files"), snowflake: "Snowflake", databricks: "Databricks", windmill: "Windmill" };
 // «Drei Kosmen.», «Three Kosmen.»
 const countKosmen = (n: number) => (n === 1 ? tr("Ein Kosmos.", "One Kosmos.") : `${NUM[n] || n} Kosmen.`);
@@ -142,7 +140,7 @@ export async function showMenu(list: KosmosInfo[], host: MenuHost, note = "") {
 
   // Each Kosmos is read on its own, so a slow or broken one does not hold the others back.
   await Promise.all(items.filter((it) => it.info.status.ok).map(async (it) => {
-    try { it.sum = readKosmos({ ...(await api.metricsOf(it.info.id)), lang: isEn() ? "en" : "de" }); } catch { it.info = { ...it.info, status: { ...it.info.status, ok: false, error: tr("Die Kennzahlen lassen sich gerade nicht laden.", "The key figures cannot be loaded right now.") } }; }
+    try { it.sum = readKosmos({ ...(await api.metricsOf(it.info.id)), lang: LANG }); } catch { it.info = { ...it.info, status: { ...it.info.status, ok: false, error: tr("Die Kennzahlen lassen sich gerade nicht laden.", "The key figures cannot be loaded right now.") } }; }
     draw(it);
   }));
   const need = items.filter((it) => it.sum && it.sum.counts.alert > 0).length, watch = items.some((it) => it.sum && it.sum.counts.watch > 0), down = items.filter((it) => !it.sum).length;
