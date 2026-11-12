@@ -2,32 +2,32 @@
 const keysEl = $("keys"), keysBtn = $("btn-keys");
 // Each row: what the hand does and what happens. id ties a pressed key to its row.
 const KEY_ROWS = () => [
-  ["Orte", [
-    ["h", ["H"], "Heute"],
-    ["n", ["1", "–", "9"], "Eine Themen-Seite"],
-    ["0", ["0"], "Alle Seiten im Überblick"],
-    ["c", ["C"], "Sternkatalog"],
-    ...(HOST.many() ? [["k", ["K"], "Alle Kosmen"]] : []),
+  [tr("Orte", "Places"), [
+    ["h", ["H"], tr("Heute", "Today")],
+    ["n", ["1", "–", "9"], tr("Eine Themen-Seite", "A topic page")],
+    ["0", ["0"], tr("Alle Seiten im Überblick", "All pages at a glance")],
+    ["c", ["C"], tr("Sternkatalog", "Star catalogue")],
+    ...(HOST.many() ? [["k", ["K"], tr("Alle Kosmen", "All Kosmen")]] : []),
   ]],
-  ["Zeit", [
-    ["lr", ["←", "→"], "Eine Periode zurück, vor"],
-    ["slr", ["Shift", "←", "→"], "Ein Jahr zurück, vor"],
-    ["g", ["G"], "Raster: Tag bis Jahr"],
-    ["z", ["Z"], "Heute und Rückblick"],
-    ["space", ["Leertaste"], "Die Geschichte abspielen"],
+  [tr("Zeit", "Time"), [
+    ["lr", ["←", "→"], tr("Eine Periode zurück, vor", "One period back, on")],
+    ["slr", ["Shift", "←", "→"], tr("Ein Jahr zurück, vor", "One year back, on")],
+    ["g", ["G"], tr("Raster: Tag bis Jahr", "Raster: day to year")],
+    ["z", ["Z"], tr("Heute und Rückblick", "Today and looking back")],
+    ["space", [tr("Leertaste", "Space")], tr("Die Geschichte abspielen", "Play the story")],
   ]],
-  ["Lesen und bauen", [
-    ["wheel", ["Mausrad"], "Seite lesen, daneben zoomen"],
-    ["ud", ["↑", "↓"], "Weiterlesen"],
-    ["slash", ["/"], "Baustein einfügen"],
-    ["tab", ["Tab"], "Luminas Vorschlag übernehmen"],
-    ["del", ["Entf"], "Gewählten Baustein entfernen"],
+  [tr("Lesen und bauen", "Read and build"), [
+    ["wheel", [tr("Mausrad", "Wheel")], tr("Seite lesen, daneben zoomen", "Read the page, zoom beside it")],
+    ["ud", ["↑", "↓"], tr("Weiterlesen", "Read on")],
+    ["slash", ["/"], tr("Baustein einfügen", "Add a block")],
+    ["tab", ["Tab"], tr("Luminas Vorschlag übernehmen", "Accept Lumina's suggestion")],
+    ["del", [tr("Entf", "Del")], tr("Gewählten Baustein entfernen", "Remove the chosen block")],
   ]],
-  ["Überall", [
-    ["comma", [","], "Einstellungen"],
-    ["i", ["I"], "Die Idee"],
-    ["q", ["?"], "Diese Tasten"],
-    ["esc", ["Esc"], "Schliessen, was offen ist"],
+  [tr("Überall", "Everywhere"), [
+    ["comma", [","], tr("Einstellungen", "Settings")],
+    ["i", ["I"], tr("Die Idee", "The idea")],
+    ["q", ["?"], tr("Diese Tasten", "These keys")],
+    ["esc", ["Esc"], tr("Schliessen, was offen ist", "Close what is open")],
   ]],
 ];
 function buildKeys() {
@@ -35,7 +35,7 @@ function buildKeys() {
   const col = (groups) => h("div", { class: "keys-col" }, ...groups.map(([title, rows]) => h("section", { class: "keys-group" },
     h("h3", { text: title }),
     ...rows.map(([id, caps, what]) => h("div", { class: "keys-row", "data-key": id, style: `--i:${i++}` },
-      h("span", { class: "keys-caps" }, ...caps.map((c) => (c === "–" ? h("span", { class: "keys-to", text: "bis" }) : h("kbd", { class: "kc" + (c.length > 2 ? " is-wide" : ""), text: c })))),
+      h("span", { class: "keys-caps" }, ...caps.map((c) => (c === "–" ? h("span", { class: "keys-to", text: tr("bis", "to") }) : h("kbd", { class: "kc" + (c.length > 2 ? " is-wide" : ""), text: c })))),
       h("span", { class: "keys-what", text: what }))))));
   const rows = KEY_ROWS();
   $("keys-grid").replaceChildren(col(rows.slice(0, 2)), col(rows.slice(2)));

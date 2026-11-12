@@ -133,7 +133,7 @@ function beginStarDrag(d) {
   d.only = st.type === "block" && b.kind === "quiet" ? st.pg : null; // the quiet line stays on its page
   d.copy = !d.only && (st.type === "chip" || b.auto);
   const k = st.type === "chip" ? K[st.k] : b.kind === "kpi" ? K[b.k] : null, m = st.type === "chip" && st.under ? lens.m : effM(b);
-  $("carry").replaceChildren(k ? `${SHORT[k.id]} ${compact(k, k.series[m])}` : b.kind === "note" ? "Notiz" : "Ruhig", ...(d.copy ? [h("small", { text: "Kopie" })] : []));
+  $("carry").replaceChildren(k ? `${SHORT[k.id]} ${compact(k, k.series[m])}` : b.kind === "note" ? tr("Notiz", "Note") : tr("Ruhig", "Calm"), ...(d.copy ? [h("small", { text: tr("Kopie", "Copy") })] : []));
   $("carry").hidden = false;
   st.el.classList.add("is-drag");
   if (!seenHint) { seenHint = true; save(); }
@@ -264,15 +264,15 @@ function flyPlace(id) {
 function renderPlaces() {
   const mk = (id, name, key) => {
     const pg = pages.get(id), c = pg && pg.sys && pg.sys !== "heute" ? levelCounts(T.base, scopeOf(pg), true) : null;
-    return h("button", { type: "button", "data-place": id, "aria-current": String(id === activeId), title: key ? `${name} (Taste ${key})` : name }, c && c.alert ? h("i", { class: "pl-al", title: "braucht dich" }) : null, name);
+    return h("button", { type: "button", "data-place": id, "aria-current": String(id === activeId), title: key ? tr(`${name} (Taste ${key})`, `${name} (key ${key})`) : name }, c && c.alert ? h("i", { class: "pl-al", title: tr("braucht dich", "needs you") }) : null, name);
   };
   // The last item is not a place: the settings. A gear and the word, on a phone the gear alone.
-  const gear = h("button", { type: "button", class: "pl-set", "data-settings": "1", "aria-label": "Einstellungen", title: "Einstellungen (Taste ,)", "aria-expanded": String(HOST.settingsOpen()) },
-    sv("svg", { class: "gear", viewBox: "-8 -8 16 16", "aria-hidden": "true" }, sv("path", { d: GEAR_D }), sv("circle", { r: 2.2 })), h("span", { class: "pl-word", text: "Einstellungen" }));
+  const gear = h("button", { type: "button", class: "pl-set", "data-settings": "1", "aria-label": tr("Einstellungen", "Settings"), title: tr("Einstellungen (Taste ,)", "Settings (key ,)"), "aria-expanded": String(HOST.settingsOpen()) },
+    sv("svg", { class: "gear", viewBox: "-8 -8 16 16", "aria-hidden": "true" }, sv("path", { d: GEAR_D }), sv("circle", { r: 2.2 })), h("span", { class: "pl-word", text: tr("Einstellungen", "Settings") }));
   // Before the gear: the Sternkatalog, where every star of the room has its entry.
-  const kat = h("button", { type: "button", class: "pl-set pl-kat", "data-katalog": "1", "aria-label": "Sternkatalog", title: "Sternkatalog (Taste C)" },
-    sv("svg", { class: "gear", viewBox: "-8 -8 16 16", "aria-hidden": "true" }, sv("path", { d: "M0,-6.5 L1.6,-1.6 L6.5,0 L1.6,1.6 L0,6.5 L-1.6,1.6 L-6.5,0 L-1.6,-1.6 Z" })), h("span", { class: "pl-word", text: "Katalog" }));
-  $("places").replaceChildren(mk("heute", "Heute", "H"), ...GROUP_ORDER.map((g, i) => mk("g:" + g, GROUPS[g], i < 9 ? String(i + 1) : "")), ...[...pages.values()].filter((pg) => !pg.sys && pg.title).map((pg) => mk(pg.id, pg.title, "")), mk("all", "Überblick", "0"), kat, gear);
+  const kat = h("button", { type: "button", class: "pl-set pl-kat", "data-katalog": "1", "aria-label": tr("Sternkatalog", "Star catalogue"), title: tr("Sternkatalog (Taste C)", "Star catalogue (key C)") },
+    sv("svg", { class: "gear", viewBox: "-8 -8 16 16", "aria-hidden": "true" }, sv("path", { d: "M0,-6.5 L1.6,-1.6 L6.5,0 L1.6,1.6 L0,6.5 L-1.6,1.6 L-6.5,0 L-1.6,-1.6 Z" })), h("span", { class: "pl-word", text: tr("Katalog", "Catalogue") }));
+  $("places").replaceChildren(mk("heute", tr("Heute", "Today"), "H"), ...GROUP_ORDER.map((g, i) => mk("g:" + g, GROUPS[g], i < 9 ? String(i + 1) : "")), ...[...pages.values()].filter((pg) => !pg.sys && pg.title).map((pg) => mk(pg.id, pg.title, "")), mk("all", tr("Überblick", "Overview"), "0"), kat, gear);
 }
 // A gear of eight teeth, drawn once: an outer ring of teeth around a hole.
 const GEAR_D = (() => {
@@ -296,7 +296,7 @@ let memoTimer = 0, playTimer = 0, rulerTimer = 0, rulerPinned = false, scrub = f
 function syncBack() {
   const back = $("back");
   back.hidden = atToday();
-  if (!back.hidden) back.replaceChildren(`Rückblick · ${periodOf(T.base)[narrow() ? "label" : "long"]}`, h("span", { text: "Zurück zu heute" }));
+  if (!back.hidden) back.replaceChildren(`${tr("Rückblick", "Looking back")} · ${periodOf(T.base)[narrow() ? "label" : "long"]}`, h("span", { text: tr("Zurück zu heute", "Back to today") }));
 }
 function baseChanged(mode) {
   renderAll(mode);
@@ -348,7 +348,7 @@ function syncGrain() {
   const pg = pages.get("heute");
   pg.grain.querySelectorAll("[data-grain]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.grain === G)));
   pg.grain.dataset.fine = String(fine(G));
-  pg.when.title = `Ziehen reist durch die ${PLURAL[G]}`;
+  pg.when.title = tr(`Ziehen reist durch die ${PLURAL[G]}`, `Drag to travel through the ${PLURAL[G]}`);
 }
 // Z: today ↔ the last moment visited, with the lens' circle sweeping the room.
 function toggleZ() {
@@ -380,7 +380,7 @@ function stopPlay() {
 function syncPlay() {
   const b = pages.get("heute").play;
   b.setAttribute("aria-pressed", String(T.playing));
-  b.setAttribute("aria-label", T.playing ? "Anhalten" : "Geschichte abspielen");
+  b.setAttribute("aria-label", T.playing ? tr("Anhalten", "Pause") : tr("Geschichte abspielen", "Play the story"));
   b.textContent = T.playing ? "II" : "▶";
 }
 function showRuler(ms) {

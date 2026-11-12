@@ -14,6 +14,7 @@ import (
 	"github.com/Dominik1407/lumantic/internal/adapter"
 	"github.com/Dominik1407/lumantic/internal/auth"
 	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/i18n"
 	"github.com/Dominik1407/lumantic/internal/metrics"
 )
 
@@ -83,7 +84,7 @@ func (s *Server) gate(next http.Handler) http.Handler {
 			default:
 				w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 				w.WriteHeader(401)
-				w.Write([]byte("Die Anmeldung fehlt. Lumantic erwartet sie vom Proxy davor; ruf Lumantic über dessen Adresse auf."))
+				w.Write([]byte(i18n.Text(r, "Die Anmeldung fehlt. Lumantic erwartet sie vom Proxy davor; ruf Lumantic über dessen Adresse auf.")))
 			}
 			return
 		}

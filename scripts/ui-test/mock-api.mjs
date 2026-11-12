@@ -2,8 +2,9 @@
 // A stand-in for the Go server, for the real-time UI tests: serves web/dist and answers the API in memory, following
 // the server's contract (internal/server). Figures come from fixtures/metrics.json, captured once from a real run.
 //
-//   node scripts/ui-test/mock-api.mjs [--port 8098] [--empty] [--kosmen]
+//   node scripts/ui-test/mock-api.mjs [--port 8098] [--empty] [--kosmen] [--en]
 //
+// --en starts with English as the team's language (ui.language).
 // --empty starts without data (GET /api/metrics answers 503). --kosmen starts with three Kosmen instead of one, so
 // the app opens in its main menu. POST /__mock with {"empty": true|false}, {"fresh": true} or {"brand": {...}} changes the state,
 // GET /__mock shows it: what was saved, asked and stored.
@@ -84,7 +85,8 @@ const state = {
     ? [kosmos("main", "ALCO"), kosmos("firmenkunden", "Firmenkunden", ["lcr", "nsfr", "eve", "nnm"], "goldlayer/firmenkunden"), kosmos("privatkunden", "Privatkunden", ["cet1", "lev", "bal", "mort"], "goldlayer/privatkunden")]
     : [kosmos("main", "Goldlayer ALCO")],
   config: {
-    ui: { design: "nebel", font: "", accent: "", motion: "voll", textSize: "normal", start: "heute", lens: "1J", hints: true },
+    // German unless --en: the headless browser speaks English, the runs read German texts.
+    ui: { design: "nebel", font: "", accent: "", motion: "voll", textSize: "normal", start: "heute", lens: "1J", hints: true, language: argv.includes("--en") ? "en" : "de" },
     ai: { enabled: true, provider: "anthropic", model: "claude-opus-5-5", baseURL: "" },
     brand: { name: "", logo: "", logoDark: "", designs: [] },
   },
@@ -153,7 +155,7 @@ function status(k) {
 const info = (k) => ({ id: k.id, name: k.data.name, type: k.data.type, main: k.id === "main", status: status(k) });
 function settings(k) {
   const c = state.config, tok = secret("anthropicToken");
-  return { me: meOf(), version: "0.10.0", configPath: "config/lumantic.json", configExists: state.saves > 0, locked: ["data.duckdb"], ui: c.ui,
+  return { me: meOf(), version: "0.11.0", configPath: "config/lumantic.json", configExists: state.saves > 0, locked: ["data.duckdb"], ui: c.ui,
     kosmos: { id: k.id, main: k.id === "main", count: state.kosmen.length },
     data: { ...k.data, windmill: { ...k.data.windmill, token: secret("windmillToken") },
       snowflake: { ...snowflake(), ...k.data.snowflake, token: secret("snowflakeToken", k.id) },

@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/i18n"
 )
 
 const (
@@ -170,12 +171,12 @@ func (o *oidc) login(w http.ResponseWriter, r *http.Request) {
 	next := localPath(r.URL.Query().Get("next"))
 	d, err := o.discover(r.Context())
 	if err != nil {
-		page(w, http.StatusBadGateway, msgUnreachable, err.Error(), o.LoginURL(next))
+		page(w, r, http.StatusBadGateway, msgUnreachable, err.Error(), o.LoginURL(next))
 		return
 	}
 	auth, err := url.Parse(d.Auth)
 	if err != nil {
-		page(w, http.StatusBadGateway, msgUnreachable, err.Error(), o.LoginURL(next))
+		page(w, r, http.StatusBadGateway, msgUnreachable, err.Error(), o.LoginURL(next))
 		return
 	}
 	state, nonce, verifier := random(32), random(32), random(32)
@@ -214,7 +215,7 @@ func (o *oidc) callback(w http.ResponseWriter, r *http.Request) {
 				detail = e
 			}
 		}
-		page(w, http.StatusBadRequest, "Der Anbieter hat die Anmeldung abgelehnt.", detail, again)
+		page(w, r, http.StatusBadRequest, "Der Anbieter hat die Anmeldung abgelehnt.", detail, again)
 		return
 	}
 	if !ok {
@@ -223,18 +224,18 @@ func (o *oidc) callback(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/", http.StatusFound)
 			return
 		}
-		page(w, http.StatusBadRequest, ErrExpired.Error(), "", again)
+		page(w, r, http.StatusBadRequest, ErrExpired.Error(), "", again)
 		return
 	}
 	code := q.Get("code")
 	if code == "" {
-		page(w, http.StatusBadRequest, "Der Anbieter hat keinen Code geliefert.", "", again)
+		page(w, r, http.StatusBadRequest, "Der Anbieter hat keinen Code geliefert.", "", again)
 		return
 	}
 	ctx := r.Context()
 	d, err := o.discover(ctx)
 	if err != nil {
-		page(w, http.StatusBadGateway, msgUnreachable, err.Error(), again)
+		page(w, r, http.StatusBadGateway, msgUnreachable, err.Error(), again)
 		return
 	}
 	tr, err := o.tokenRequest(ctx, d, url.Values{
@@ -244,21 +245,21 @@ func (o *oidc) callback(w http.ResponseWriter, r *http.Request) {
 		"code_verifier": {p.verifier},
 	})
 	if err != nil {
-		page(w, http.StatusBadGateway, "Der Anbieter hat die Anmeldung nicht bestätigt.", err.Error(), again)
+		page(w, r, http.StatusBadGateway, "Der Anbieter hat die Anmeldung nicht bestätigt.", err.Error(), again)
 		return
 	}
 	if tr.IDToken == "" {
-		page(w, http.StatusBadGateway, "Der Anbieter hat kein ID-Token geliefert.", "", again)
+		page(w, r, http.StatusBadGateway, "Der Anbieter hat kein ID-Token geliefert.", "", again)
 		return
 	}
 	claims, err := o.verifyIDToken(ctx, d, tr.IDToken, p.nonce)
 	if err != nil {
-		page(w, http.StatusBadRequest, "Die Anmeldung konnte nicht geprüft werden.", err.Error(), again)
+		page(w, r, http.StatusBadRequest, "Die Anmeldung konnte nicht geprüft werden.", err.Error(), again)
 		return
 	}
 	u, err := o.userFrom(claims)
 	if err != nil {
-		page(w, http.StatusBadRequest, "Die Anmeldung konnte nicht geprüft werden.", err.Error(), again)
+		page(w, r, http.StatusBadRequest, "Die Anmeldung konnte nicht geprüft werden.", err.Error(), again)
 		return
 	}
 
@@ -570,18 +571,23 @@ func noStore(w http.ResponseWriter) {
 }
 
 // page is the short page a failed login ends on, with a way to try again.
-func page(w http.ResponseWriter, status int, msg, detail, again string) {
+// It speaks the language the person chose in Lumantic, else the browser's.
+func page(w http.ResponseWriter, r *http.Request, status int, msg, detail, again string) {
 	noStore(w)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(status)
+	lang := "de"
+	if i18n.Wants(r) {
+		lang = "en"
+	}
 	if detail != "" {
-		detail = `<p style="opacity:.6;font-size:.875rem">` + html.EscapeString(detail) + `</p>`
+		detail = `<p style="opacity:.6;font-size:.875rem">` + html.EscapeString(i18n.Text(r, detail)) + `</p>`
 	}
 	fmt.Fprintf(w, `<!doctype html>
-<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="light dark"><title>Anmeldung – Lumantic</title></head>
+<html lang="%s"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark"><title>%s</title></head>
 <body style="font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 1rem;line-height:1.5">
-<p>%s</p>%s<p><a href="%s">Nochmals anmelden</a></p>
+<p>%s</p>%s<p><a href="%s">%s</a></p>
 </body></html>
-`, html.EscapeString(msg), detail, html.EscapeString(again))
+`, lang, i18n.Text(r, "Anmeldung – Lumantic"), html.EscapeString(i18n.Text(r, msg)), detail, html.EscapeString(again), i18n.Text(r, "Nochmals anmelden"))
 }

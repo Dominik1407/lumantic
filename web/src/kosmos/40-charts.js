@@ -114,7 +114,7 @@ const CHARTS = {
         const a = Math.max(w0, i - r.run), xa = flow ? X(a) - slot / 2 : X(a), xb = flow ? X(i) + slot / 2 : X(i);
         fr.zones.append(sv("rect", { class: "c-run", x: xa, width: Math.max(2, xb - xa), y: 0, height: 188 }));
         runLab.hidden = false;
-        runLab.textContent = `${r.run} ${k.dir > 0 ? "Rückgänge" : "Anstiege"} in Folge`;
+        runLab.textContent = EN ? `${r.run} ${k.dir > 0 ? "declines" : "rises"} in a row` : `${r.run} ${k.dir > 0 ? "Rückgänge" : "Anstiege"} in Folge`;
         runLab.style.top = "4px";
         runLab.style.left = xa < 330 ? `calc(${(xa / 6).toFixed(2)}% + 6px)` : "auto";
         runLab.style.right = xa < 330 ? "auto" : `calc(${(100 - xb / 6).toFixed(2)}% + 6px)`;
@@ -130,7 +130,7 @@ const CHARTS = {
         });
         fr.over.append(sv("line", { class: "c-zero", x1: 0, x2: 600, y1: y0, y2: y0, ...NSS }));
         dot.hidden = true;
-        legend.replaceChildren(key(box("var(--ink-2)"), PER_WORD[g] + "wert"), key(h("i", { class: "out" }), `${PER_WORD[g]}ziel als Umriss`), key(box("var(--alert)"), "unter dem Ziel"));
+        legend.replaceChildren(key(box("var(--ink-2)"), cap(perNoun(g, "wert", "value"))), key(h("i", { class: "out" }), tr(`${PER_WORD[g]}ziel als Umriss`, `${cap(PER_WORD[g])} target as outline`)), key(box("var(--alert)"), tr("unter dem Ziel", "below target")));
       } else {
         const pts = vals.map((v, j) => [w0 + j, v]), holes = pts.some((p) => hole(p[0])), d = holes ? lineGaps(pts, X, Y, hole) : lineD(pts, X, Y);
         fr.ghost.append(sv("path", { class: "c-ghost", d, ...NSS }));
@@ -140,7 +140,7 @@ const CHARTS = {
         dot.style.left = (X(i) / 6).toFixed(2) + "%";
         dot.style.top = (Y(S[i]) / 2).toFixed(2) + "%";
         to = X(i) + 1;
-        legend.replaceChildren(...(i < w1 ? [key(h("i", { style: "background:var(--ink);opacity:.25" }), `blass: der weitere Verlauf bis ${P[w1].label}`)] : []));
+        legend.replaceChildren(...(i < w1 ? [key(h("i", { style: "background:var(--ink);opacity:.25" }), tr(`blass: der weitere Verlauf bis ${P[w1].label}`, `pale: how it went on, up to ${P[w1].label}`))] : []));
       }
       fr.hv = { at: (f) => (flow ? Math.min(w1, w0 + Math.floor(f * n)) : Math.round(w0 + Math.min(1, (f * 600) / 592) * (w1 - w0))), x: (t) => X(t) / 6, text: (t) => `${P[t].label} · ${F(k, S[t])}` };
       fr.hi.textContent = F(k, hi); fr.lo.textContent = F(k, lo);
@@ -194,7 +194,7 @@ const CHARTS = {
         fr.hv = { at: (f) => Math.round(w0 + f * (w1 - w0)), x: (t) => X(t) / 6, text: (t) => `${P[t].label} · ${F(k, S[t])}` };
       }
       const now = names.map((nm) => PS[nm][i]), tot = sum(now.map(Math.abs)) || 1;
-      legend.replaceChildren(...names.map((nm, j) => key(box(PART_COLORS[j]), `${nm} ${flow ? (now[j] < 0 ? "−" : "+") + amount(k, now[j]) : Math.round((now[j] / tot) * 100) + " %"}`)), ...(flow ? [] : [h("span", { text: "von unten nach oben gestapelt" })]));
+      legend.replaceChildren(...names.map((nm, j) => key(box(PART_COLORS[j]), `${nm} ${flow ? (now[j] < 0 ? "−" : "+") + amount(k, now[j]) : Math.round((now[j] / tot) * 100) + " %"}`)), ...(flow ? [] : [h("span", { text: tr("von unten nach oben gestapelt", "stacked from bottom to top") })]));
       fr.x0.textContent = P[w0].label; fr.x1.textContent = P[w1].label;
       return to;
     };
@@ -204,7 +204,7 @@ const CHARTS = {
     return indexed(fr, legend, names.map((nm, j) => ({ name: nm, k, of: (g) => seriesOf(k, g, nm), color: PART_COLORS[j] })), () => `${k.name} = ${names[0]} ÷ ${names[1]}`);
   },
   compare(k, fr, legend, opt) {
-    return indexed(fr, legend, opt.ks.map((id, j) => ({ name: K[id].name, k: K[id], of: (g) => seriesOf(K[id], g), color: PART_COLORS[j] })), (first) => `beide ab ${first} = 100`);
+    return indexed(fr, legend, opt.ks.map((id, j) => ({ name: K[id].name, k: K[id], of: (g) => seriesOf(K[id], g), color: PART_COLORS[j] })), (first) => tr(`beide ab ${first} = 100`, `both from ${first} = 100`));
   },
 
   // Kumuliert: the months of the year, their running total and the path to the annual target.
@@ -226,12 +226,13 @@ const CHARTS = {
       dot.hidden = false;
       dot.style.left = (X(m) / 6).toFixed(2) + "%";
       dot.style.top = (Y(cv) / 2).toFixed(2) + "%";
-      tLab.replaceChildren(h("i", { style: "background:var(--accent)" }), `Jahresziel ${F(k, target)}`);
+      tLab.replaceChildren(h("i", { style: "background:var(--accent)" }), `${tr("Jahresziel", "Annual target")} ${F(k, target)}`);
       tLab.style.cssText = `right:0;top:max(0px, calc(${(Y(target) / 2).toFixed(1)}% - 17px))`;
-      legend.replaceChildren(key(box("var(--ink-2)"), "Monat"), key(h("i", { style: "background:var(--c1)" }), "kumuliert"), key(dash("var(--accent)"), "Zielpfad"),
-        h("span", { text: `${PERIODS.monat[m].y} bis ${MON[mOf(m)]}: ${F(k, cv)}, ${amount(k, cv - path)} ${cv < path ? "unter" : "über"} dem Zielpfad` }));
+      legend.replaceChildren(key(box("var(--ink-2)"), tr("Monat", "Month")), key(h("i", { style: "background:var(--c1)" }), tr("kumuliert", "cumulative")), key(dash("var(--accent)"), tr("Zielpfad", "Target path")),
+        h("span", { text: EN ? `${PERIODS.monat[m].y} through ${MON[mOf(m)]}: ${F(k, cv)}, ${amount(k, cv - path)} ${cv < path ? "below" : "above"} the target path`
+          : `${PERIODS.monat[m].y} bis ${MON[mOf(m)]}: ${F(k, cv)}, ${amount(k, cv - path)} ${cv < path ? "unter" : "über"} dem Zielpfad` }));
       fr.hi.textContent = F(k, hi); fr.lo.textContent = lo < 0 ? F(k, lo) : "";
-      fr.x0.textContent = "Jan " + PERIODS.monat[m].y; fr.x1.textContent = "Dez";
+      fr.x0.textContent = MON[0] + " " + PERIODS.monat[m].y; fr.x1.textContent = MON[11];
       fr.hv = null;
       return ((m - jan + 1) / 12) * 600;
     };
@@ -248,16 +249,16 @@ const CHARTS = {
       if (m < (flow ? 23 : 12)) {
         labs.concat(cats).forEach((l) => (l.hidden = true));
         empty.hidden = false;
-        empty.textContent = "Für die Brücke braucht es zwölf Monate Geschichte.";
+        empty.textContent = tr("Für die Brücke braucht es zwölf Monate Geschichte.", "The bridge needs twelve months of history.");
         legend.replaceChildren();
         return 600;
       }
       empty.hidden = true;
       const val = (arr, t) => (flow ? sum(arr.slice(Math.max(0, t - 11), t + 1)) : arr[t]);
-      const start = val(k.series, m - 12), end = val(k.series, m), steps = [{ name: flow ? "12 Monate davor" : PERIODS.monat[m - 12].label, from: 0, to: start, kind: "base" }];
+      const start = val(k.series, m - 12), end = val(k.series, m), steps = [{ name: flow ? tr("12 Monate davor", "12 months earlier") : PERIODS.monat[m - 12].label, from: 0, to: start, kind: "base" }];
       let acc = start;
       names.forEach((nm) => { const d = val(k.parts[nm], m) - val(k.parts[nm], m - 12); steps.push({ name: nm, from: acc, to: acc + d, kind: d * (k.dir || 1) >= 0 ? "good" : "alert" }); acc += d; });
-      steps.push({ name: flow ? "letzte 12 Monate" : PERIODS.monat[m].label, from: 0, to: end, kind: "end" });
+      steps.push({ name: flow ? tr("letzte 12 Monate", "last 12 months") : PERIODS.monat[m].label, from: 0, to: end, kind: "end" });
       const lo = Math.min(0, ...steps.map((s) => Math.min(s.from, s.to))), hi = Math.max(...steps.map((s) => Math.max(s.from, s.to)));
       const zl = flow ? lo : Math.max(0, Math.min(...steps.map((s) => Math.min(s.from || s.to, s.to))) * 0.92), top = hi + (hi - zl) * 0.06;
       const Y = (v) => 188 - ((v - zl) / (top - zl || 1)) * 164, slot = 600 / count;
@@ -284,7 +285,7 @@ const CHARTS = {
       const a = DAILY.a, days = DAYS.slice(a), vals = k.daily.slice(a).map((v) => (v === null || v === undefined ? NaN : v)), n = vals.length, ok = vals.filter(Number.isFinite);
       fr.clear();
       fr.hv = null;
-      if (!ok.length) { dot.hidden = mLab.hidden = true; empty.hidden = false; empty.textContent = "Für diese Kennzahl gibt es keine Tageswerte."; legend.replaceChildren(); fr.hi.textContent = fr.lo.textContent = fr.x0.textContent = fr.x1.textContent = ""; return 600; }
+      if (!ok.length) { dot.hidden = mLab.hidden = true; empty.hidden = false; empty.textContent = tr("Für diese Kennzahl gibt es keine Tageswerte.", "This figure has no daily values."); legend.replaceChildren(); fr.hi.textContent = fr.lo.textContent = fr.x0.textContent = fr.x1.textContent = ""; return 600; }
       empty.hidden = true;
       let lo = Math.min(...ok), hi = Math.max(...ok);
       if (flow) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
@@ -309,10 +310,10 @@ const CHARTS = {
         dot.hidden = li < 0;
         if (li >= 0) { dot.style.left = (X(li) / 6).toFixed(2) + "%"; dot.style.top = (Y(vals[li]) / 2).toFixed(2) + "%"; }
       }
-      legend.replaceChildren(h("span", { text: `${flow ? "Tageswerte" : "Stand an jedem Tag"} · ${dayLabel(days[0])} bis ${dayLabel(days[n - 1])}` }));
+      legend.replaceChildren(h("span", { text: `${flow ? tr("Tageswerte", "Daily values") : tr("Stand an jedem Tag", "Level on each day")} · ${dayLabel(days[0])} ${tr("bis", "to")} ${dayLabel(days[n - 1])}` }));
       fr.hi.textContent = F(k, hi); fr.lo.textContent = F(k, lo);
       fr.x0.textContent = dayLabel(days[0]); fr.x1.textContent = dayLabel(days[n - 1]);
-      fr.hv = { at: (f) => clamp(flow ? Math.floor(f * n) : Math.round(f * (n - 1)), 0, n - 1), x: (i) => X(i) / 6, text: (i) => `${dayLabel(days[i])} · ${Number.isFinite(vals[i]) ? F(k, vals[i]) : "keine Daten"}` };
+      fr.hv = { at: (f) => clamp(flow ? Math.floor(f * n) : Math.round(f * (n - 1)), 0, n - 1), x: (i) => X(i) / 6, text: (i) => `${dayLabel(days[i])} · ${Number.isFinite(vals[i]) ? F(k, vals[i]) : tr("keine Daten", "no data")}` };
       return 600;
     };
   },

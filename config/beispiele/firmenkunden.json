@@ -1,16 +1,18 @@
 {
   "title": "Firmenkunden",
   "source": "Goldlayer · Firmenkunden",
+  "en": { "title": "Corporate clients", "source": "Gold layer · Corporate clients" },
   "groups": [
-    { "id": "vol", "name": "Volumen" },
-    { "id": "ertrag", "name": "Ertrag" },
-    { "id": "risiko", "name": "Risiko" }
+    { "id": "vol", "name": "Volumen", "en": { "name": "Volume" } },
+    { "id": "ertrag", "name": "Ertrag", "en": { "name": "Income" } },
+    { "id": "risiko", "name": "Risiko", "en": { "name": "Risk" } }
   ],
   "kpis": [
     {
       "id": "vol", "group": "vol", "name": "Kreditvolumen", "long": "Kredite an Firmenkunden", "short": "Kredite",
       "unit": "Mrd", "dec": 1, "kind": "stock", "dir": 1, "target": 9400,
       "desc": "Ausstehende Kredite an Firmenkunden per Monatsende.",
+      "en": { "name": "Loan volume", "long": "Loans to corporate clients", "short": "Loans", "desc": "Outstanding loans to corporate clients at month end." },
       "monthly": { "table": "gold.kredite_monat", "value": "kreditvolumen_mio_chf" },
       "parts": { "mode": "sum", "split": "segment", "order": ["KMU", "Grossfirmen", "Immobilien"] }
     },
@@ -18,6 +20,7 @@
       "id": "neu", "group": "vol", "name": "Neugeschäft", "long": "Neu ausbezahlte Kredite", "short": "Neugeschäft",
       "unit": "Mio", "dec": 0, "kind": "flow", "dir": 1, "target": 180, "targetName": "Monatsziel",
       "desc": "Neu ausbezahlte Kredite im Monat, über alle Segmente.",
+      "en": { "name": "New business", "long": "Newly paid-out loans", "short": "New business", "desc": "Loans newly paid out in the month, across all segments.", "targetName": "Monthly target" },
       "monthly": { "table": "gold.kredite_monat", "value": "neugeschaeft_mio_chf" },
       "parts": { "mode": "sum", "split": "segment", "order": ["KMU", "Grossfirmen", "Immobilien"] }
     },
@@ -25,35 +28,40 @@
       "id": "einl", "group": "vol", "name": "Firmeneinlagen", "long": "Einlagen der Firmenkunden", "short": "Einlagen",
       "unit": "Mrd", "dec": 1, "kind": "stock", "dir": 1,
       "desc": "Verpflichtungen gegenüber Firmenkunden per Monatsende.",
+      "en": { "name": "Corporate deposits", "long": "Deposits of corporate clients", "short": "Deposits", "desc": "Amounts due to corporate clients at month end." },
       "monthly": { "table": "gold.einlagen_monat", "value": "firmeneinlagen_mio_chf" }
     },
     {
       "id": "marge", "group": "ertrag", "name": "Kreditmarge", "long": "Marge über dem Refinanzierungssatz", "short": "Marge",
       "unit": "%", "dec": 2, "kind": "stock", "dir": 1, "target": 1.6,
       "desc": "Durchschnittliche Marge des Kreditbuchs über dem Refinanzierungssatz.",
+      "en": { "name": "Loan margin", "long": "Margin over the funding rate", "short": "Margin", "desc": "Average margin of the loan book over the funding rate." },
       "monthly": { "table": "gold.qualitaet_monat", "value": "kreditmarge_pct" }
     },
     {
       "id": "npl", "group": "risiko", "name": "Ausfallquote", "long": "Anteil notleidender Kredite", "short": "Ausfallquote",
       "unit": "%", "dec": 2, "kind": "stock", "dir": -1, "target": 1.2, "limit": 2, "targetName": "Frühwarnung", "limitName": "Risikolimit",
       "desc": "Notleidende Kredite in Prozent des Kreditvolumens.",
+      "en": { "name": "Default rate", "long": "Share of non-performing loans", "short": "Default rate", "desc": "Non-performing loans as a percentage of the loan volume.", "targetName": "Early warning", "limitName": "Risk limit" },
       "monthly": { "table": "gold.qualitaet_monat", "value": "ausfallquote_pct" }
     },
     {
       "id": "limit", "group": "risiko", "name": "Limitenauslastung", "long": "Beanspruchte Kreditlimiten", "short": "Auslastung",
       "unit": "%", "dec": 0, "kind": "stock", "dir": -1, "target": 75, "targetName": "Frühwarnung",
       "desc": "Beanspruchte Kreditlimiten in Prozent der zugesagten. Steigt sie rasch, brauchen Kunden Liquidität.",
+      "en": { "name": "Limit utilisation", "long": "Credit limits drawn", "short": "Utilisation", "desc": "Credit limits drawn as a percentage of those committed. When it rises fast, clients need liquidity.", "targetName": "Early warning" },
       "monthly": { "table": "gold.qualitaet_monat", "value": "limitenauslastung_pct" }
     },
     {
       "id": "wb", "group": "risiko", "name": "Wertberichtigungen", "long": "Bestand an Wertberichtigungen", "short": "Wertber.",
       "unit": "Mio", "dec": 0, "kind": "stock", "dir": 0,
       "desc": "Bestand an Wertberichtigungen für Ausfallrisiken per Monatsende.",
+      "en": { "name": "Value adjustments", "long": "Stock of value adjustments", "short": "Adjustments", "desc": "Stock of value adjustments for default risks at month end." },
       "monthly": { "table": "gold.qualitaet_monat", "value": "wertberichtigungen_mio_chf" }
     }
   ],
   "events": [
-    { "month": "2020-04", "title": "Überbrückungskredite", "text": "Im Frühling 2020 werden ungewöhnlich viele Kredite neu ausbezahlt, die Limiten sind stark beansprucht." },
-    { "month": "2023-06", "title": "Höhepunkt der Zinswende", "text": "Die Kreditmarge erreicht ihren höchsten Stand." }
+    { "month": "2020-04", "title": "Überbrückungskredite", "text": "Im Frühling 2020 werden ungewöhnlich viele Kredite neu ausbezahlt, die Limiten sind stark beansprucht.", "en": { "title": "Bridging loans", "text": "In spring 2020, unusually many loans are newly paid out; limits are heavily drawn." } },
+    { "month": "2023-06", "title": "Höhepunkt der Zinswende", "text": "Die Kreditmarge erreicht ihren höchsten Stand.", "en": { "title": "Peak of the rate turnaround", "text": "The loan margin reaches its highest level." } }
   ]
 }

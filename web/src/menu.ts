@@ -4,6 +4,7 @@
 import { readKosmos, type KosmosSummary } from "virtual:kosmos";
 import { api, type KosmosInfo } from "./api";
 import { $, h, sv } from "./dom";
+import { isEn, tr } from "./i18n";
 
 export interface MenuHost {
   enter(id: string): void; // go into a Kosmos
@@ -16,8 +17,11 @@ export interface MenuHost {
   canAdd(): boolean; // may connect a further Kosmos (admins)
 }
 
-const NUM = ["Kein", "Ein", "Zwei", "Drei", "Vier", "Fünf", "Sechs", "Sieben", "Acht", "Neun", "Zehn", "Elf", "Zwölf"];
-const TYPE: Record<string, string> = { duckdb: "DuckDB-Datei", files: "Ordner mit Dateien", snowflake: "Snowflake", databricks: "Databricks", windmill: "Windmill" };
+const NUM = isEn() ? ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"]
+  : ["Kein", "Ein", "Zwei", "Drei", "Vier", "Fünf", "Sechs", "Sieben", "Acht", "Neun", "Zehn", "Elf", "Zwölf"];
+const TYPE: Record<string, string> = { duckdb: tr("DuckDB-Datei", "DuckDB file"), files: tr("Ordner mit Dateien", "Folder of files"), snowflake: "Snowflake", databricks: "Databricks", windmill: "Windmill" };
+// «Drei Kosmen.», «Three Kosmen.»
+const countKosmen = (n: number) => (n === 1 ? tr("Ein Kosmos.", "One Kosmos.") : `${NUM[n] || n} Kosmen.`);
 const rad = (deg: number) => (deg * Math.PI) / 180;
 // A small steady number from a name, so a sky looks the same every time without looking ruled.
 const hash = (s: string) => { let x = 7; for (const c of s) x = (x * 31 + c.charCodeAt(0)) % 9973; return x; };
@@ -72,7 +76,7 @@ interface Item { info: KosmosInfo; sum: KosmosSummary | null; el: HTMLButtonElem
 
 export async function showMenu(list: KosmosInfo[], host: MenuHost, note = "") {
   const root = $("kmenu"), items: Item[] = [];
-  const hl = h("h1", { class: "km-hl", text: list.length === 1 ? "Ein Kosmos." : `${NUM[list.length] || list.length} Kosmen.` });
+  const hl = h("h1", { class: "km-hl", text: countKosmen(list.length) });
   const ol = h("ol", { class: "km-list" });
   let leaving = false;
 
@@ -92,32 +96,32 @@ export async function showMenu(list: KosmosInfo[], host: MenuHost, note = "") {
   function draw(it: Item) {
     const { info, sum } = it, st = info.status;
     const tone = sum ? (sum.counts.alert ? "alert" : sum.counts.watch ? "watch" : "calm") : st.ok ? "calm" : "off";
-    const say = sum ? sum.headline : st.ok ? "Lumantic liest …" : st.tables > 0 && st.kpis === 0 ? "Noch keine Kennzahlen." : "Antwortet nicht.";
-    const meta = sum ? `${sum.stars.length} ${sum.stars.length === 1 ? "Kennzahl" : "Kennzahlen"} · ${sum.month}` : st.ok ? TYPE[info.type] || info.type : st.error;
+    const say = sum ? sum.headline : st.ok ? tr("Lumantic liest …", "Lumantic is reading …") : st.tables > 0 && st.kpis === 0 ? tr("Noch keine Kennzahlen.", "No key figures yet.") : tr("Antwortet nicht.", "Not answering.");
+    const meta = sum ? `${sum.stars.length} ${sum.stars.length === 1 ? tr("Kennzahl", "figure") : tr("Kennzahlen", "figures")} · ${sum.month}` : st.ok ? TYPE[info.type] || info.type : st.error;
     it.el.dataset.tone = tone;
     it.el.replaceChildren(sum ? sky(sum) : noSky(), h("span", { class: "km-name", text: info.name || sum?.title || info.id }), h("span", { class: "km-say", text: say }), h("span", { class: "km-meta", text: meta }));
   }
 
   list.forEach((info, i) => {
-    const el = h("button", { type: "button", class: "km-k", "data-id": info.id, style: `--n:${i}`, title: i < 9 ? `${info.name} öffnen (Taste ${i + 1})` : `${info.name} öffnen` });
+    const el = h("button", { type: "button", class: "km-k", "data-id": info.id, style: `--n:${i}`, title: i < 9 ? tr(`${info.name} öffnen (Taste ${i + 1})`, `Open ${info.name} (key ${i + 1})`) : tr(`${info.name} öffnen`, `Open ${info.name}`) });
     const it: Item = { info, sum: null, el };
     el.addEventListener("click", () => enter(it));
     items.push(it);
     draw(it);
     ol.append(h("li", {}, el));
   });
-  const add = h("button", { type: "button", class: "km-k km-new", style: `--n:${list.length}`, title: "Einen weiteren Goldlayer verbinden (Taste N)", onclick: () => host.add() },
+  const add = h("button", { type: "button", class: "km-k km-new", style: `--n:${list.length}`, title: tr("Einen weiteren Goldlayer verbinden (Taste N)", "Connect a further gold layer (key N)"), onclick: () => host.add() },
     (() => { const s = noSky(); s.append(sv("path", { class: "km-plus", d: "M120 91v18M111 100h18" })); return s; })(),
-    h("span", { class: "km-name", text: "Kosmos hinzufügen" }), h("span", { class: "km-meta", text: "einen weiteren Goldlayer verbinden" }));
+    h("span", { class: "km-name", text: tr("Kosmos hinzufügen", "Add a Kosmos") }), h("span", { class: "km-meta", text: tr("einen weiteren Goldlayer verbinden", "connect a further gold layer") }));
   if (host.canAdd()) ol.append(h("li", {}, add));
 
-  root.replaceChildren(h("div", { class: "km-in" }, h("header", { class: "km-head" }, h("p", { class: "km-eye", text: "Deine Kosmen" }), hl, note ? h("p", { class: "km-note", role: "status", text: note }) : null), ol));
+  root.replaceChildren(h("div", { class: "km-in" }, h("header", { class: "km-head" }, h("p", { class: "km-eye", text: tr("Deine Kosmen", "Your Kosmen") }), hl, note ? h("p", { class: "km-note", role: "status", text: note }) : null), ol));
   root.hidden = false;
 
   // The places row lists the Kosmen, as it lists the pages inside one.
   const places = () => $("places").replaceChildren(
-    ...items.map((it, i) => h("button", { type: "button", title: i < 9 ? `${it.info.name} (Taste ${i + 1})` : it.info.name, onclick: () => enter(it) },
-      it.sum?.counts.alert ? h("i", { class: "pl-al", title: "braucht dich" }) : null, it.info.name)),
+    ...items.map((it, i) => h("button", { type: "button", title: i < 9 ? tr(`${it.info.name} (Taste ${i + 1})`, `${it.info.name} (key ${i + 1})`) : it.info.name, onclick: () => enter(it) },
+      it.sum?.counts.alert ? h("i", { class: "pl-al", title: tr("braucht dich", "needs you") }) : null, it.info.name)),
     katalogButton(() => host.catalog()), gear(() => host.settings()));
   places();
   $("btn-idee").style.visibility = "hidden";
@@ -138,20 +142,22 @@ export async function showMenu(list: KosmosInfo[], host: MenuHost, note = "") {
 
   // Each Kosmos is read on its own, so a slow or broken one does not hold the others back.
   await Promise.all(items.filter((it) => it.info.status.ok).map(async (it) => {
-    try { it.sum = readKosmos(await api.metricsOf(it.info.id)); } catch { it.info = { ...it.info, status: { ...it.info.status, ok: false, error: "Die Kennzahlen lassen sich gerade nicht laden." } }; }
+    try { it.sum = readKosmos({ ...(await api.metricsOf(it.info.id)), lang: isEn() ? "en" : "de" }); } catch { it.info = { ...it.info, status: { ...it.info.status, ok: false, error: tr("Die Kennzahlen lassen sich gerade nicht laden.", "The key figures cannot be loaded right now.") } }; }
     draw(it);
   }));
   const need = items.filter((it) => it.sum && it.sum.counts.alert > 0).length, watch = items.some((it) => it.sum && it.sum.counts.watch > 0), down = items.filter((it) => !it.sum).length;
-  const first = list.length === 1 ? "Ein Kosmos." : `${NUM[list.length] || list.length} Kosmen.`;
-  const second = need === 1 ? (list.length === 1 ? "Er braucht dich." : "Einer braucht dich.") : need > 1 ? `${NUM[need] || need} brauchen dich.` : down === items.length ? "" : watch ? "Fast alles ruhig." : "Alles ruhig.";
+  const first = countKosmen(list.length);
+  const second = isEn()
+    ? (need === 1 ? (list.length === 1 ? "It needs you." : "One needs you.") : need > 1 ? `${NUM[need] || need} need you.` : down === items.length ? "" : watch ? "Almost all calm." : "All calm.")
+    : need === 1 ? (list.length === 1 ? "Er braucht dich." : "Einer braucht dich.") : need > 1 ? `${NUM[need] || need} brauchen dich.` : down === items.length ? "" : watch ? "Fast alles ruhig." : "Alles ruhig.";
   hl.textContent = [first, second].filter(Boolean).join(" ");
   places();
 }
 
 // The Sternkatalog's place in the row: a small star and the word, on a phone the star alone. The room draws the same.
 export function katalogButton(onclick: () => void): HTMLElement {
-  return h("button", { type: "button", class: "pl-set pl-kat", "data-katalog": "1", "aria-label": "Sternkatalog", title: "Sternkatalog (Taste C)", onclick },
-    sv("svg", { class: "gear", viewBox: "-8 -8 16 16", "aria-hidden": "true" }, sv("path", { d: STAR_D })), h("span", { class: "pl-word", text: "Katalog" }));
+  return h("button", { type: "button", class: "pl-set pl-kat", "data-katalog": "1", "aria-label": tr("Sternkatalog", "Star catalogue"), title: tr("Sternkatalog (Taste C)", "Star catalogue (key C)"), onclick },
+    sv("svg", { class: "gear", viewBox: "-8 -8 16 16", "aria-hidden": "true" }, sv("path", { d: STAR_D })), h("span", { class: "pl-word", text: tr("Katalog", "Catalogue") }));
 }
 // A four-pointed star, the catalog's sign.
 const STAR_D = "M0,-6.5 L1.6,-1.6 L6.5,0 L1.6,1.6 L0,6.5 L-1.6,1.6 L-6.5,0 L-1.6,-1.6 Z";
@@ -163,6 +169,6 @@ const GEAR_D = (() => {
   return d + "Z";
 })();
 export function gear(onclick: () => void): HTMLElement {
-  return h("button", { type: "button", class: "pl-set", "data-settings": "1", "aria-label": "Einstellungen", title: "Einstellungen (Taste ,)", "aria-expanded": "false", onclick },
-    sv("svg", { class: "gear", viewBox: "-8 -8 16 16", "aria-hidden": "true" }, sv("path", { d: GEAR_D }), sv("circle", { r: 2.2 })), h("span", { class: "pl-word", text: "Einstellungen" }));
+  return h("button", { type: "button", class: "pl-set", "data-settings": "1", "aria-label": tr("Einstellungen", "Settings"), title: tr("Einstellungen (Taste ,)", "Settings (key ,)"), "aria-expanded": "false", onclick },
+    sv("svg", { class: "gear", viewBox: "-8 -8 16 16", "aria-hidden": "true" }, sv("path", { d: GEAR_D }), sv("circle", { r: 2.2 })), h("span", { class: "pl-word", text: tr("Einstellungen", "Settings") }));
 }

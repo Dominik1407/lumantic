@@ -1,16 +1,18 @@
 {
   "title": "Privatkunden",
   "source": "Goldlayer · Privatkunden",
+  "en": { "title": "Private clients", "source": "Gold layer · Private clients" },
   "groups": [
-    { "id": "hypo", "name": "Hypotheken" },
-    { "id": "anlegen", "name": "Anlegen und Zahlen" },
-    { "id": "kunden", "name": "Kundenbeziehung" }
+    { "id": "hypo", "name": "Hypotheken", "en": { "name": "Mortgages" } },
+    { "id": "anlegen", "name": "Anlegen und Zahlen", "en": { "name": "Investing and paying" } },
+    { "id": "kunden", "name": "Kundenbeziehung", "en": { "name": "Client relationship" } }
   ],
   "kpis": [
     {
       "id": "hypo", "group": "hypo", "name": "Hypothekarbestand", "long": "Hypotheken an Privatkunden", "short": "Hypotheken",
       "unit": "Mrd", "dec": 1, "kind": "stock", "dir": 1, "target": 20500,
       "desc": "Hypothekarforderungen gegenüber Privatkunden per Monatsende.",
+      "en": { "name": "Mortgage book", "long": "Mortgages to private clients", "short": "Mortgages", "desc": "Mortgage loans to private clients at month end." },
       "monthly": { "table": "gold.hypotheken_monat", "value": "bestand_mio_chf" },
       "parts": { "mode": "sum", "split": "laufzeit", "order": ["Fest bis 5 Jahre", "Fest über 5 Jahre", "SARON"] }
     },
@@ -18,6 +20,7 @@
       "id": "neuhypo", "group": "hypo", "name": "Neuhypotheken", "long": "Neu ausbezahlte Hypotheken", "short": "Neuhypotheken",
       "unit": "Mio", "dec": 0, "kind": "flow", "dir": 1, "target": 150, "targetName": "Monatsziel", "season": true,
       "desc": "Neu ausbezahlte Hypotheken im Monat. Der Frühling ist stärker als der Herbst.",
+      "en": { "name": "New mortgages", "long": "Newly paid-out mortgages", "short": "New mortgages", "desc": "Mortgages newly paid out in the month. Spring is stronger than autumn.", "targetName": "Monthly target" },
       "monthly": { "table": "gold.hypotheken_monat", "value": "neugeschaeft_mio_chf" },
       "parts": { "mode": "sum", "split": "laufzeit", "order": ["Fest bis 5 Jahre", "Fest über 5 Jahre", "SARON"] }
     },
@@ -25,35 +28,40 @@
       "id": "vorsorge", "group": "anlegen", "name": "Vorsorgegelder", "long": "Vorsorgegelder der Säule 3a", "short": "Vorsorge 3a",
       "unit": "Mrd", "dec": 1, "kind": "stock", "dir": 1,
       "desc": "Guthaben der Säule 3a per Monatsende.",
+      "en": { "name": "Pension savings", "long": "Pillar 3a pension savings", "short": "Pillar 3a", "desc": "Pillar 3a balances at month end." },
       "monthly": { "table": "gold.anlagen_monat", "value": "vorsorge_mio_chf" }
     },
     {
       "id": "karten", "group": "anlegen", "name": "Kartenumsatz", "long": "Umsatz mit Debit- und Kreditkarten", "short": "Karten",
       "unit": "Mio", "dec": 0, "kind": "flow", "dir": 1, "season": true,
       "desc": "Umsatz mit Karten im Monat. Der Dezember liegt jedes Jahr deutlich höher.",
+      "en": { "name": "Card turnover", "long": "Turnover with debit and credit cards", "short": "Cards", "desc": "Card turnover in the month. December is clearly higher every year." },
       "monthly": { "table": "gold.anlagen_monat", "value": "kartenumsatz_mio_chf" }
     },
     {
       "id": "digital", "group": "kunden", "name": "Digitalquote", "long": "Aufträge über App und E-Banking", "short": "Digital",
       "unit": "%", "dec": 0, "kind": "stock", "dir": 1, "target": 65,
       "desc": "Anteil der Aufträge, die Kundinnen und Kunden selbst über App und E-Banking erteilen.",
+      "en": { "name": "Digital share", "long": "Orders through app and e-banking", "short": "Digital", "desc": "Share of orders that clients place themselves through the app and e-banking." },
       "monthly": { "table": "gold.kunden_monat", "value": "digitalquote_pct" }
     },
     {
       "id": "churn", "group": "kunden", "name": "Kündigungsquote", "long": "Aufgelöste Kundenbeziehungen", "short": "Kündigungen",
       "unit": "%", "dec": 2, "kind": "stock", "dir": -1, "target": 0.6, "targetName": "Frühwarnung",
       "desc": "Aufgelöste Kundenbeziehungen in Prozent des Bestands, pro Monat.",
+      "en": { "name": "Churn rate", "long": "Closed client relationships", "short": "Churn", "desc": "Closed client relationships as a percentage of the base, per month.", "targetName": "Early warning" },
       "monthly": { "table": "gold.kunden_monat", "value": "kuendigungsquote_pct" }
     },
     {
       "id": "cir", "group": "kunden", "name": "Cost-Income-Ratio", "long": "Aufwand im Verhältnis zum Ertrag", "short": "Cost/Income",
       "unit": "%", "dec": 1, "kind": "stock", "dir": -1, "target": 62, "targetName": "Frühwarnung",
       "desc": "Geschäftsaufwand in Prozent des Geschäftsertrags, rollierend über zwölf Monate.",
+      "en": { "name": "Cost-income ratio", "long": "Expenses relative to income", "short": "Cost/income", "desc": "Operating expenses as a percentage of operating income, rolling over twelve months.", "targetName": "Early warning" },
       "monthly": { "table": "gold.kunden_monat", "value": "cost_income_pct" }
     }
   ],
   "events": [
-    { "month": "2020-04", "title": "Läden geschlossen", "text": "Der Kartenumsatz bricht für zwei Monate ein, die Digitalquote steigt." },
-    { "month": "2026-10", "title": "Neue App", "text": "Die neue App geht live. Deutlich mehr Aufträge kommen digital." }
+    { "month": "2020-04", "title": "Läden geschlossen", "text": "Der Kartenumsatz bricht für zwei Monate ein, die Digitalquote steigt.", "en": { "title": "Shops closed", "text": "Card turnover slumps for two months; the digital share rises." } },
+    { "month": "2026-10", "title": "Neue App", "text": "Die neue App geht live. Deutlich mehr Aufträge kommen digital.", "en": { "title": "New app", "text": "The new app goes live. Clearly more orders come in digitally." } }
   ]
 }

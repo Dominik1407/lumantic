@@ -10,6 +10,7 @@ import (
 	"github.com/Dominik1407/lumantic/internal/adapter"
 	"github.com/Dominik1407/lumantic/internal/catalog"
 	"github.com/Dominik1407/lumantic/internal/config"
+	"github.com/Dominik1407/lumantic/internal/i18n"
 	"github.com/Dominik1407/lumantic/internal/katalog"
 	"github.com/Dominik1407/lumantic/internal/metrics"
 )
@@ -74,12 +75,22 @@ func (s *Server) getKatalog(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, out)
 		return
 	}
+	// In English the words a team wrote in English. Lumantic's own words stay
+	// as they are, so that what someone edits is what is stored.
+	english := i18n.Wants(r)
+	say := func(w metrics.Words, key, de string) string {
+		if english && w[key] != "" {
+			return w[key]
+		}
+		return de
+	}
 	topics := map[string]string{}
 	for _, g := range m.Groups {
+		g.Name = say(g.En, "name", g.Name)
 		topics[g.ID] = g.Name
+		out.Topics = append(out.Topics, g)
 	}
-	out.Topics = append(out.Topics, m.Groups...)
-	out.Terms = append(out.Terms, m.Terms...)
+	out.Terms = append(out.Terms, m.Terms...) // with their English words; the interface picks
 	months := map[string][2]string{}
 	if figs, _ := s.figuresFor(r, id, k); figs != nil {
 		for _, kpi := range figs.KPIs {
@@ -160,7 +171,9 @@ func (s *Server) getKatalog(w http.ResponseWriter, r *http.Request) {
 		if d.Limit != nil {
 			f["limit"] = field{*d.Limit, from("limit")}
 		}
-		e := entry{ID: d.ID, Name: d.Name, Topic: topics[d.Group], Fields: f, Bounds: d.Bounds}
+		f["desc"] = field{say(d.En, "desc", d.Desc), from("desc")}
+		f["formula"] = field{say(d.En, "formula", d.Formula), from("formula")}
+		e := entry{ID: d.ID, Name: say(d.En, "name", d.Name), Topic: topics[d.Group], Fields: f, Bounds: d.Bounds}
 		if missing := d.Missing(k.cat); len(missing) > 0 {
 			e.Status = strings.Join(missing, ", ")
 		}
@@ -211,7 +224,10 @@ func (s *Server) putKatalogEntry(w http.ResponseWriter, r *http.Request) {
 				return 409, fmt.Errorf("%s kommt aus dem Fachkatalog und lässt sich nur dort ändern.", fieldNames[editable[key]])
 			}
 		}
+		// In English the words go to the English side; the German stay as they are.
+		words := englishWords(patch, i18n.Wants(r))
 		if i := c.Find(id); i >= 0 {
+			c.KPIs[i].En = words(c.KPIs[i].En)
 			return 0, applyPatch(&c.KPIs[i], patch)
 		}
 		if origins["name"] != katalog.FromSource {
@@ -221,6 +237,7 @@ func (s *Server) putKatalogEntry(w http.ResponseWriter, r *http.Request) {
 			c.Extra = map[string]metrics.Extra{}
 		}
 		ex := c.Extra[id]
+		ex.En = words(ex.En)
 		if err := applyExtra(&ex, patch); err != nil {
 			return 422, err
 		}
@@ -232,6 +249,39 @@ func (s *Server) putKatalogEntry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.getKatalog(w, r)
+}
+
+// englishWords takes the texts of a patch that have an English side (desc,
+// formula, targetName, limitName) out of it when the person works in English,
+// and gives back how to put them into a definition's English words.
+func englishWords(patch map[string]json.RawMessage, english bool) func(metrics.Words) metrics.Words {
+	taken := map[string]json.RawMessage{}
+	if english {
+		for _, key := range []string{"desc", "formula", "targetName", "limitName"} {
+			if raw, ok := patch[key]; ok {
+				taken[key] = raw
+				delete(patch, key)
+			}
+		}
+	}
+	return func(w metrics.Words) metrics.Words {
+		for key, raw := range taken {
+			v, err := text(raw)
+			if err != nil {
+				continue
+			}
+			if w == nil {
+				w = metrics.Words{}
+			}
+			if w[key] = v; v == "" {
+				delete(w, key)
+			}
+		}
+		if len(w) == 0 {
+			return nil
+		}
+		return w
+	}
 }
 
 func text(raw json.RawMessage) (string, error) {

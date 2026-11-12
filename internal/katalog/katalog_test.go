@@ -237,3 +237,31 @@ func TestAveragesAndRatiosFromTheCatalog(t *testing.T) {
 		t.Fatalf("problems: %v", problems)
 	}
 }
+
+// English words of the company catalog stand beside the German ones; the
+// export gives them back as the same columns.
+func TestEnglishColumns(t *testing.T) {
+	src := source{rows: map[string][]adapter.Row{
+		`"lumantic_kennzahlen"`: {{"id": "umsatz", "name": "Umsatz", "definition": "Fakturierter Umsatz.", "thema": "Finanzen", "tabelle": "gold.finanzen_monat",
+			"wert_spalte": "umsatz_mio", "name_en": "Revenue", "definition_en": "Invoiced revenue.", "thema_en": "Finance"}},
+		`"lumantic_begriffe"`: {{"begriff": "OEE", "definition": "Anlageneffektivität", "begriff_en": "OEE", "definition_en": "Equipment effectiveness"}},
+	}}
+	c, err := Read(context.Background(), src, industry())
+	if err != nil {
+		t.Fatal(err)
+	}
+	k := c.KPIs[0]
+	if k.Name != "Umsatz" || k.En["name"] != "Revenue" || k.En["desc"] != "Invoiced revenue." || c.Topics[0].En["name"] != "Finance" {
+		t.Fatalf("%+v %+v", k, c.Topics)
+	}
+	if c.Terms[0].En["definition"] != "Equipment effectiveness" {
+		t.Fatalf("%+v", c.Terms)
+	}
+	m, _ := Merge(c, &metrics.Config{}, industry())
+	sql := SQL(m, "lumantic", adapter.DialectOf(src))
+	for _, want := range []string{`'Revenue', 'Invoiced revenue.', 'Finance'`, `"name_en", "definition_en", "thema_en"`, `'Equipment effectiveness'`} {
+		if !strings.Contains(sql, want) {
+			t.Errorf("export lacks %s:\n%s", want, sql)
+		}
+	}
+}

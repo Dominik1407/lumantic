@@ -6,9 +6,9 @@ import { api, MAIN, type UiPrefs } from "./api";
 
 export interface Prefs extends UiPrefs { lastPage: string }
 
-export const DEFAULTS: Prefs = { design: "nebel", font: "", accent: "", motion: "voll", textSize: "normal", start: "heute", lens: "1J", hints: true, lastPage: "" };
+export const DEFAULTS: Prefs = { language: "", design: "nebel", font: "", accent: "", motion: "voll", textSize: "normal", start: "heute", lens: "1J", hints: true, lastPage: "" };
 const CHOICES: Record<string, readonly unknown[]> = {
-  motion: ["voll", "ruhig"], textSize: ["normal", "gross"], start: ["heute", "ueberblick", "zuletzt"], lens: ["1M", "1Q", "1J"], hints: [true, false],
+  language: ["", "de", "en"], motion: ["voll", "ruhig"], textSize: ["normal", "gross"], start: ["heute", "ueberblick", "zuletzt"], lens: ["1M", "1Q", "1J"], hints: [true, false],
 };
 const LOCAL = "lumantic.workspace.v2";
 

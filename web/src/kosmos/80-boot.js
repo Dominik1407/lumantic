@@ -25,7 +25,7 @@ function resetAll() {
   toggleIdee(false);
   HOST.save(snapshot());
   flyTo(framePage(pages.get("heute")));
-  toast("Der Raum ist wieder so, wie Lumina ihn hält.");
+  toast(tr("Der Raum ist wieder so, wie Lumina ihn hält.", "The room is back the way Lumina keeps it."));
 }
 
 function resize() {

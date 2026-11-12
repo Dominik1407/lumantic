@@ -74,7 +74,7 @@ function ghostOf(el) {
 
 // ───────────── Sentences ─────────────
 const factEl = (evd, kids, cls) => h("span", { class: "fact" + (cls ? " " + cls : ""), role: "button", tabindex: "0", "data-ev": evd, "aria-expanded": "false" }, ...kids);
-const sparkButton = (sp) => h("span", { class: "spk", role: "button", tabindex: "0", "data-ev": "trend", "aria-label": "Verlauf zeigen", "aria-expanded": "false" }, sp);
+const sparkButton = (sp) => h("span", { class: "spk", role: "button", tabindex: "0", "data-ev": "trend", "aria-label": tr("Verlauf zeigen", "Show the trend"), "aria-expanded": "false" }, sp);
 function buildSegs(segs, slots, k, m) {
   const f = document.createDocumentFragment();
   for (const s of segs) {

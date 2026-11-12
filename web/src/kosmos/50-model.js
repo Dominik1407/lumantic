@@ -3,13 +3,14 @@
 // A block: { id, page, kind: "kpi" | "quiet" | "note" | "ghost" | "answer", k, form, open (evidence view), segs (note), q and text (Lumina's answer), t (month held on the block), auto }
 // Lumina's pages hold auto blocks, written again for every month. Everything else belongs to the person.
 const pages = new Map(), blocks = new Map(), VIEWS = new Map(), STARS = new Map(), dismissed = new Set();
-const FORMS = ["zeile", "satz", "zahl", "diagramm"], FORM_NAME = { zeile: "Zeile", satz: "Satz", zahl: "Zahl", diagramm: "Diagramm" };
-const VIEW_NAME = { trend: "Verlauf", run: "Verlauf", parts: "Zusammensetzung", bridge: "Brücke", cum: "Kumuliert", drivers: "Zähler und Nenner", compare: "Vergleich", daily: "Tagesverlauf" };
+const FORMS = ["zeile", "satz", "zahl", "diagramm"], FORM_NAME = EN ? { zeile: "Line", satz: "Sentence", zahl: "Number", diagramm: "Chart" } : { zeile: "Zeile", satz: "Satz", zahl: "Zahl", diagramm: "Diagramm" };
+const VIEW_NAME = EN ? { trend: "Trend", run: "Trend", parts: "Composition", bridge: "Bridge", cum: "Cumulative", drivers: "Numerator and denominator", compare: "Comparison", daily: "Days" }
+  : { trend: "Verlauf", run: "Verlauf", parts: "Zusammensetzung", bridge: "Brücke", cum: "Kumuliert", drivers: "Zähler und Nenner", compare: "Vergleich", daily: "Tagesverlauf" };
 let seq = 0, activeId = null, hotStar = null, selId = null, seenHint = false;
 const newId = (p) => p + (++seq).toString(36) + Math.floor(Math.random() * 1296).toString(36);
 const scopeOf = (pg) => (pg.sys && pg.sys !== "heute" ? pg.sys.slice(2) : "all");
 const topicId = (kid) => "g:" + K[kid].group;
-const pageName = (pg) => (pg.sys === "heute" ? "Heute" : pg.sys ? GROUPS[pg.sys.slice(2)] : pg.title || "Eigene Seite");
+const pageName = (pg) => (pg.sys === "heute" ? tr("Heute", "Today") : pg.sys ? GROUPS[pg.sys.slice(2)] : pg.title || tr("Eigene Seite", "Own page"));
 // Lumina's form for a figure: on «Heute» a sentence for what needs you and one line for the rest, on a topic page the number.
 const defForm = (pg, kid) => (pg.sys === "heute" ? (kid && stateOf(K[kid], T.base).level !== "alert" && stateOf(K[kid], T.base).level !== "calm" ? "zeile" : "satz") : pg.sys ? "zahl" : "satz");
 const blocksOf = (pg) => pg.blocks.map((id) => blocks.get(id)).filter(Boolean);

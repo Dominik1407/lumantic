@@ -1,18 +1,20 @@
 {
   "title": "ALCO",
   "source": "Goldlayer · ALCO",
+  "en": { "title": "ALCO", "source": "Gold layer · ALCO" },
   "groups": [
-    { "id": "liq", "name": "Liquidität" },
-    { "id": "kap", "name": "Kapital" },
-    { "id": "zins", "name": "Zinsrisiko" },
-    { "id": "bil", "name": "Bilanz" },
-    { "id": "wachs", "name": "Wachstum" }
+    { "id": "liq", "name": "Liquidität", "en": { "name": "Liquidity" } },
+    { "id": "kap", "name": "Kapital", "en": { "name": "Capital" } },
+    { "id": "zins", "name": "Zinsrisiko", "en": { "name": "Interest rate risk" } },
+    { "id": "bil", "name": "Bilanz", "en": { "name": "Balance sheet" } },
+    { "id": "wachs", "name": "Wachstum", "en": { "name": "Growth" } }
   ],
   "kpis": [
     {
       "id": "lcr", "group": "liq", "name": "LCR", "long": "Liquidity Coverage Ratio", "short": "LCR",
       "unit": "%", "dec": 0, "kind": "stock", "dir": 1, "limit": 100, "target": 125,
       "desc": "Hochliquide Aktiva im Verhältnis zu den Nettomittelabflüssen der nächsten 30 Tage.",
+      "en": { "desc": "High-quality liquid assets relative to net cash outflows over the next 30 days." },
       "monthly": { "table": "gold_alco.liquiditaet_monat", "value": "lcr_pct" },
       "daily": { "table": "gold_alco.liquiditaet_tag", "value": "lcr_pct" },
       "parts": { "mode": "ratio", "columns": [
@@ -24,18 +26,21 @@
       "id": "nsfr", "group": "liq", "name": "NSFR", "long": "Net Stable Funding Ratio", "short": "NSFR",
       "unit": "%", "dec": 0, "kind": "stock", "dir": 1, "limit": 100, "target": 110,
       "desc": "Verfügbare stabile Refinanzierung im Verhältnis zur erforderlichen.",
+      "en": { "desc": "Available stable funding relative to required stable funding." },
       "monthly": { "table": "gold_alco.liquiditaet_monat", "value": "nsfr_pct" }
     },
     {
       "id": "cet1", "group": "kap", "name": "CET1-Quote", "long": "Hartes Kernkapital", "short": "CET1",
       "unit": "%", "dec": 1, "kind": "stock", "dir": 1, "limit": 10.5, "target": 14,
       "desc": "Hartes Kernkapital in Prozent der risikogewichteten Positionen.",
+      "en": { "name": "CET1 ratio", "long": "Common equity tier 1", "desc": "Common equity tier 1 capital as a percentage of risk-weighted assets." },
       "monthly": { "table": "gold_alco.eigenmittel_monat", "value": "cet1_pct" }
     },
     {
       "id": "lev", "group": "kap", "name": "Leverage Ratio", "long": "Ungewichtete Eigenmittelquote", "short": "Leverage",
       "unit": "%", "dec": 1, "kind": "stock", "dir": 1, "limit": 3, "target": 5, "hidden": true,
       "desc": "Kernkapital im Verhältnis zum Gesamtengagement.",
+      "en": { "long": "Unweighted capital ratio", "desc": "Tier 1 capital relative to total exposure." },
       "monthly": { "table": "gold_alco.eigenmittel_monat", "value": "leverage_pct" }
     },
     {
@@ -43,24 +48,28 @@
       "unit": "%", "dec": 1, "kind": "stock", "dir": -1, "limit": 15, "target": 13,
       "limitName": "FINMA-Ausreissertest", "targetName": "Frühwarnung",
       "desc": "Verlust des Barwerts bei einem Zinsschock, in Prozent des Kernkapitals.",
+      "en": { "name": "Interest rate risk ΔEVE", "long": "Economic value sensitivity", "desc": "Loss of economic value under an interest rate shock, as a percentage of tier 1 capital.", "targetName": "Early warning", "limitName": "FINMA outlier test" },
       "monthly": { "table": "gold_alco.zinsrisiko_monat", "value": "delta_eve_pct" }
     },
     {
       "id": "nim", "group": "zins", "name": "Zinsmarge", "long": "Nettozinsmarge", "short": "Zinsmarge",
       "unit": "%", "dec": 2, "kind": "avg", "dir": 1, "season": true,
       "desc": "Zinserfolg im Verhältnis zu den zinstragenden Aktiven, annualisiert.",
+      "en": { "name": "Interest margin", "long": "Net interest margin", "short": "NIM", "desc": "Net interest income relative to interest-earning assets, annualised." },
       "monthly": { "table": "gold_alco.erfolg_monat", "value": "zinsmarge_pct" }
     },
     {
       "id": "bal", "group": "bil", "name": "Bilanzsumme", "long": "Total Aktiven", "short": "Bilanzsumme",
       "unit": "Mrd", "dec": 1, "kind": "stock", "dir": 0,
       "desc": "Total der Aktiven per Monatsende.",
+      "en": { "name": "Total assets", "long": "Total assets", "short": "Total assets", "desc": "Total assets at month end." },
       "monthly": { "table": "gold_alco.bilanz_monat", "value": "bilanzsumme_mio_chf" }
     },
     {
       "id": "dep", "group": "bil", "name": "Kundeneinlagen", "long": "Verpflichtungen aus Kundeneinlagen", "short": "Einlagen",
       "unit": "Mrd", "dec": 1, "kind": "stock", "dir": 1,
       "desc": "Einlagen von Kundinnen und Kunden per Monatsende.",
+      "en": { "name": "Customer deposits", "long": "Amounts due in respect of customer deposits", "short": "Deposits", "desc": "Deposits of customers at month end." },
       "monthly": { "table": "gold_alco.bilanz_monat", "value": "kundeneinlagen_mio_chf" },
       "daily": { "table": "gold_alco.einlagen_tag", "value": "kundeneinlagen_mio_chf" },
       "parts": { "mode": "sum", "columns": [
@@ -73,12 +82,14 @@
       "id": "mort", "group": "bil", "name": "Hypotheken", "long": "Hypothekarforderungen", "short": "Hypotheken",
       "unit": "Mrd", "dec": 1, "kind": "stock", "dir": 0, "hidden": true,
       "desc": "Ausstehende Hypotheken per Monatsende.",
+      "en": { "name": "Mortgages", "long": "Mortgage loans", "short": "Mortgages", "desc": "Outstanding mortgages at month end." },
       "monthly": { "table": "gold_alco.bilanz_monat", "value": "hypotheken_mio_chf" }
     },
     {
       "id": "nnm", "group": "wachs", "name": "Netto-Neugeld", "long": "Zuflüsse minus Abflüsse", "short": "Netto-Neugeld",
       "unit": "Mio", "dec": 0, "kind": "flow", "dir": 1, "target": 30, "season": true,
       "desc": "Neu zugeflossene minus abgeflossene Kundenvermögen. Ziel: 30 Mio. CHF pro Monat.",
+      "en": { "name": "Net new money", "long": "Inflows minus outflows", "short": "Net new money", "desc": "Client assets that flowed in minus those that flowed out. Target: CHF 30m per month." },
       "monthly": { "table": "gold_alco.neugeld_monat", "value": "nettoneugeld_mio_chf" },
       "daily": { "table": "gold_alco.neugeld_tag", "value": "nettoneugeld_mio_chf" },
       "parts": { "mode": "sum", "split": "segment", "order": ["Privatkunden", "Vermögensverwaltung", "Firmenkunden"] }
@@ -87,17 +98,18 @@
       "id": "pipe", "group": "wachs", "name": "Hypotheken-Pipeline", "long": "Anfragen, Offerten und Zusagen", "short": "Pipeline",
       "unit": "Mio", "dec": 0, "kind": "stock", "dir": 1, "target": 500, "season": true,
       "desc": "Volumen der Hypotheken, die angefragt, offeriert oder zugesagt, aber noch nicht ausbezahlt sind.",
+      "en": { "name": "Mortgage pipeline", "long": "Requests, offers and commitments", "short": "Pipeline", "desc": "Volume of mortgages requested, offered or committed but not yet paid out." },
       "monthly": { "table": "gold_alco.pipeline_monat", "value": "volumen_mio_chf" },
       "parts": { "mode": "funnel", "split": "stufe", "order": ["Anfrage", "Offerte", "Zusage"] }
     }
   ],
   "events": [
-    { "month": "2020-03", "title": "Pandemie", "text": "Die Bank baut Liquiditätsreserven auf, Kundengelder fliessen zu." },
-    { "month": "2022-09", "title": "SNB beendet Negativzinsen", "text": "Der Leitzins steigt auf 0.5 %. Die Zinsmarge beginnt zu steigen." },
-    { "month": "2023-03", "title": "Marktturbulenzen", "text": "Innert weniger Wochen fliessen ungewöhnlich viele Kundengelder zu." },
-    { "month": "2023-06", "title": "Leitzins 1.75 %", "text": "Höhepunkt der Zinswende. Festgeld wird attraktiv, Sparkonten verlieren." },
-    { "month": "2025-01", "title": "Basel III final", "text": "Neue Eigenmittelvorschriften gelten. Die CET1-Quote sinkt einmalig." },
-    { "month": "2025-06", "title": "Leitzins 0 %", "text": "Die SNB senkt auf null. Druck auf die Zinsmarge." },
-    { "month": "2026-08", "title": "Mandate gekündigt", "text": "Zwei grosse Vermögensverwaltungs-Mandate gehen. Das wirkt auf Netto-Neugeld und LCR." }
+    { "month": "2020-03", "title": "Pandemie", "text": "Die Bank baut Liquiditätsreserven auf, Kundengelder fliessen zu.", "en": { "title": "Pandemic", "text": "The bank builds up liquidity reserves; client money flows in." } },
+    { "month": "2022-09", "title": "SNB beendet Negativzinsen", "text": "Der Leitzins steigt auf 0.5 %. Die Zinsmarge beginnt zu steigen.", "en": { "title": "SNB ends negative rates", "text": "The policy rate rises to 0.5%. The interest margin begins to rise." } },
+    { "month": "2023-03", "title": "Marktturbulenzen", "text": "Innert weniger Wochen fliessen ungewöhnlich viele Kundengelder zu.", "en": { "title": "Market turmoil", "text": "Within a few weeks, unusually much client money flows in." } },
+    { "month": "2023-06", "title": "Leitzins 1.75 %", "text": "Höhepunkt der Zinswende. Festgeld wird attraktiv, Sparkonten verlieren.", "en": { "title": "Policy rate 1.75%", "text": "Peak of the rate turnaround. Term deposits become attractive, savings accounts lose." } },
+    { "month": "2025-01", "title": "Basel III final", "text": "Neue Eigenmittelvorschriften gelten. Die CET1-Quote sinkt einmalig.", "en": { "title": "Basel III final", "text": "New capital rules apply. The CET1 ratio drops once." } },
+    { "month": "2025-06", "title": "Leitzins 0 %", "text": "Die SNB senkt auf null. Druck auf die Zinsmarge.", "en": { "title": "Policy rate 0%", "text": "The SNB cuts to zero. Pressure on the interest margin." } },
+    { "month": "2026-08", "title": "Mandate gekündigt", "text": "Zwei grosse Vermögensverwaltungs-Mandate gehen. Das wirkt auf Netto-Neugeld und LCR.", "en": { "title": "Mandates terminated", "text": "Two large asset management mandates leave. This affects net new money and the LCR." } }
   ]
 }

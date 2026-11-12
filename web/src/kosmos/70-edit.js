@@ -53,7 +53,7 @@ function wireMenu() {
 }
 function toast(msg, undo) {
   const t = $("toast");
-  t.replaceChildren(msg, ...(undo ? [h("button", { type: "button", onclick: () => { t.hidden = true; undo(); } }, "Rückgängig")] : []));
+  t.replaceChildren(msg, ...(undo ? [h("button", { type: "button", onclick: () => { t.hidden = true; undo(); } }, tr("Rückgängig", "Undo"))] : []));
   t.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { t.hidden = true; }, undo ? 6500 : 3400);
@@ -137,7 +137,7 @@ function removeBlock(id, silent) {
   if (gone) removePage(pg); else renderPage(pg, "edit");
   save();
   if (silent) return;
-  toast(b.kind === "note" ? "Notiz entfernt." : b.kind === "answer" ? "Antwort entfernt." : `${K[b.k].name} entfernt.`, () => {
+  toast(b.kind === "note" ? tr("Notiz entfernt.", "Note removed.") : b.kind === "answer" ? tr("Antwort entfernt.", "Answer removed.") : tr(`${K[b.k].name} entfernt.`, `${K[b.k].name} removed.`), () => {
     const back = pages.get(was.id) || addPage(was);
     insertBlock(back, kept, at);
     renderPage(back, "edit");
@@ -223,29 +223,32 @@ function flyHome(kid) {
 }
 function openBlockMenu(b, anchor, byKey) {
   const pg = pages.get(b.page), k = b.kind === "kpi" ? K[b.k] : null, i = pg.blocks.indexOf(b.id), st = STARS.get("B:" + b.id);
-  const items = [{ head: k ? k.name : b.kind === "note" ? "Notiz" : b.kind === "answer" ? "Antwort von Lumina" : "Ruhig" }];
-  if (k) items.push({ node: h("div", { class: "seg", role: "group", "aria-label": "Form" }, ...FORMS.map((f) =>
+  const items = [{ head: k ? k.name : b.kind === "note" ? tr("Notiz", "Note") : b.kind === "answer" ? tr("Antwort von Lumina", "Answer from Lumina") : tr("Ruhig", "Calm") }];
+  if (k) items.push({ node: h("div", { class: "seg", role: "group", "aria-label": tr("Form", "Form") }, ...FORMS.map((f) =>
     h("button", { class: "segb", type: "button", "aria-pressed": String(f === (b.form || "satz")), onclick: () => { closeMenu(); setForm(b, f); } }, FORM_NAME[f]))) });
-  if (i > 0) items.push({ label: "Nach oben", run: () => moveBlock(b, -1) });
-  if (i < pg.blocks.length - 1) items.push({ label: "Nach unten", run: () => moveBlock(b, 1) });
-  if (b.kind !== "quiet") items.push({ label: b.auto ? "Kopie auf Seite …" : "Auf Seite …", keep: true, run: () => openPageMenu(b, anchor, byKey) });
-  if (b.kind !== "answer") items.push(b.t !== null ? { label: "Wieder mitlaufen", hint: "folgt dem Raum", run: () => toggleHold(b) } : { label: `${fine(G) ? "Monat" : GRAIN_NAME[G]} festhalten`, hint: periodOf(effM(b)).label, run: () => toggleHold(b) });
-  if (k && b.page !== topicId(b.k)) items.push({ label: "Zur Heimat fliegen", hint: GROUPS[k.group], run: () => flyHome(b.k) });
-  if (k) items.push({ label: "Im Sternkatalog", hint: "C", run: () => HOST.openCatalog(b.k) });
-  if (!b.auto) items.push({ label: "Entfernen", hint: "Entf", run: () => removeBlock(b.id) });
+  if (i > 0) items.push({ label: tr("Nach oben", "Move up"), run: () => moveBlock(b, -1) });
+  if (i < pg.blocks.length - 1) items.push({ label: tr("Nach unten", "Move down"), run: () => moveBlock(b, 1) });
+  if (b.kind !== "quiet") items.push({ label: b.auto ? tr("Kopie auf Seite …", "Copy to page …") : tr("Auf Seite …", "To page …"), keep: true, run: () => openPageMenu(b, anchor, byKey) });
+  const holdWhat = fine(G) ? GRAIN_NAME.monat : GRAIN_NAME[G];
+  if (b.kind !== "answer") items.push(b.t !== null ? { label: tr("Wieder mitlaufen", "Follow the room again"), hint: tr("folgt dem Raum", "follows the room"), run: () => toggleHold(b) }
+    : { label: tr(`${holdWhat} festhalten`, `Hold this ${holdWhat.toLowerCase()}`), hint: periodOf(effM(b)).label, run: () => toggleHold(b) });
+  if (k && b.page !== topicId(b.k)) items.push({ label: tr("Zur Heimat fliegen", "Fly home"), hint: GROUPS[k.group], run: () => flyHome(b.k) });
+  if (k) items.push({ label: tr("Im Sternkatalog", "In the star catalogue"), hint: "C", run: () => HOST.openCatalog(b.k) });
+  if (!b.auto) items.push({ label: tr("Entfernen", "Remove"), hint: tr("Entf", "Del"), run: () => removeBlock(b.id) });
   selId = b.id;
   openMenu(anchor, items, { opener: st ? st.el : null, focus: !!byKey });
   invalidate();
 }
 function openPageMenu(b, anchor, byKey) {
   const others = [...pages.values()].filter((pg) => pg.id !== b.page), opener = MENU.opener;
-  openMenu(anchor, [{ head: b.auto ? "Kopie auf Seite" : "Auf Seite" }, ...others.map((pg) => ({ label: pageName(pg), hint: pg.sys ? "" : "eigene Seite", run: () => { const nb = sendBlock(b, pg); if (nb) toast(`${b.kind === "note" ? "Notiz" : K[b.k].name} liegt jetzt auf «${pageName(pg)}».`); } })),
-    { label: "Neue Seite daneben", hint: "", run: () => { const from = pages.get(b.page), pg = newPage(from.x + PAGE_W + GUT + 70, from.y); sendBlock(b, pg); makeRoom(pg, pages.get(from.id)); } }], { opener, focus: !!byKey });
+  openMenu(anchor, [{ head: b.auto ? tr("Kopie auf Seite", "Copy to page") : tr("Auf Seite", "To page") }, ...others.map((pg) => ({ label: pageName(pg), hint: pg.sys ? "" : tr("eigene Seite", "own page"),
+    run: () => { const nb = sendBlock(b, pg); if (nb) toast(tr(`${b.kind === "note" ? "Notiz" : K[b.k].name} liegt jetzt auf «${pageName(pg)}».`, `${b.kind === "note" ? "The note" : K[b.k].name} is now on «${pageName(pg)}».`)); } })),
+    { label: tr("Neue Seite daneben", "New page beside it"), hint: "", run: () => { const from = pages.get(b.page), pg = newPage(from.x + PAGE_W + GUT + 70, from.y); sendBlock(b, pg); makeRoom(pg, pages.get(from.id)); } }], { opener, focus: !!byKey });
 }
 function openLeadMenu(pg, anchor, byKey) {
   if (pg.sys) return;
-  openMenu(anchor, [{ head: pageName(pg) }, { label: "Seite benennen", run: () => setTimeout(() => pg.titleEl.focus(), 30) },
-    { label: "Seite entfernen", hint: pg.blocks.length ? `${pg.blocks.length} Bausteine` : "", run: () => { removePage(pg); save(); toast("Seite entfernt."); } }], { opener: pg.stars[0] ? pg.stars[0].el : null, focus: !!byKey });
+  openMenu(anchor, [{ head: pageName(pg) }, { label: tr("Seite benennen", "Name the page"), run: () => setTimeout(() => pg.titleEl.focus(), 30) },
+    { label: tr("Seite entfernen", "Remove the page"), hint: pg.blocks.length ? `${pg.blocks.length} ${tr("Bausteine", "blocks")}` : "", run: () => { removePage(pg); save(); toast(tr("Seite entfernt.", "Page removed.")); } }], { opener: pg.stars[0] ? pg.stars[0].el : null, focus: !!byKey });
 }
 
 // ───────────── Writing: notes, live figures, the insert line ─────────────
@@ -262,7 +265,7 @@ function openChipMenu(p, q, changed) {
   const r = document.createRange();
   r.setStart(q.node, q.start); r.setEnd(q.node, q.end);
   const b = r.getBoundingClientRect();
-  openMenu(b.width || b.height ? b : p, [{ head: "Kennzahl einfügen" }, ...list.map((k) => ({ label: k.name, hint: F(k, k.series[T.base]), run: () => insertChip(p, k, changed) }))], { editor: p });
+  openMenu(b.width || b.height ? b : p, [{ head: tr("Kennzahl einfügen", "Add a figure") }, ...list.map((k) => ({ label: k.name, hint: F(k, k.series[T.base]), run: () => insertChip(p, k, changed) }))], { editor: p });
 }
 function insertChip(p, k, changed) {
   const q = caretQuery(p);
@@ -298,7 +301,7 @@ function insMode(pg, note) {
 // Lumina answers under the line: what she understood, and a way to correct her.
 // The second action is «Lieber als Notiz ablegen» unless another label is given.
 function say(pg, text, asNote, label) {
-  pg.say.replaceChildren("Lumina: " + text, ...(asNote ? [" ", h("button", { class: "lk", type: "button", onclick: () => { asNote(); if (!label) say(pg, "Als Notiz abgelegt."); } }, label || "Lieber als Notiz ablegen")] : []));
+  pg.say.replaceChildren("Lumina: " + text, ...(asNote ? [" ", h("button", { class: "lk", type: "button", onclick: () => { asNote(); if (!label) say(pg, tr("Als Notiz abgelegt.", "Kept as a note.")); } }, label || tr("Lieber als Notiz ablegen", "Keep it as a note instead"))] : []));
   if (!reduced) pg.say.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 320 });
   clearTimeout(pg.sayTimer);
   pg.sayTimer = setTimeout(() => { pg.say.replaceChildren(); }, 9000);
@@ -309,27 +312,29 @@ function say(pg, text, asNote, label) {
 const suggestionsFor = (pg) => candidatesFor(scopeOf(pg), T.base).filter((c) => c.k && c.kind !== "compare" && CHARTS[c.kind] && viewsFor(K[c.k]).some((v) => v.kind === c.kind) && !pageHasView(pg, c.k, c.kind));
 function openSlashMenu(pg, q) {
   const ins = pg.ins, f = fold(q.trim()), hit = (s) => !f || fold(s).includes(f), done = () => { ins.replaceChildren(); closeMenu(); };
-  const sugg = f ? [] : suggestionsFor(pg).slice(0, 3).map((c) => ({ label: "✦ " + c.title, sub: shortWhy(c.why.replace(/^Grund: /, "Am stärksten bewegt: ")), run: () => { done(); addFigure(pg, c.k, { form: "diagramm", open: c.kind }); say(pg, `${VIEW_NAME[c.kind]} von ${K[c.k].name} liegt jetzt auf der Seite.`); } }));
-  const tools = [{ label: "Notiz", hint: "freier Text mit [[Kennzahlen]]", run: () => { ins.replaceChildren(); insMode(pg, true); ins.focus(); } },
-    { label: "Diagramm", hint: "eine Kennzahl als Diagramm", keep: true, run: () => openMenu(ins, [{ head: "Diagramm · Kennzahl wählen" }, ...KPIS.map((k) => ({ label: k.name, hint: k.long, run: () => { done(); addFigure(pg, k.id, { form: "diagramm" }); say(pg, `${k.name} liegt als Diagramm auf der Seite. Die Ansicht wechselst du über dem Diagramm.`); } }))], { editor: ins }) }].filter((t) => hit(t.label));
-  const figs = KPIS.filter((k) => hit(`${k.name} ${k.long} ${SHORT[k.id]}`)).map((k) => ({ label: k.name, hint: F(k, k.series[T.base]), run: () => { done(); addFigure(pg, k.id); say(pg, `${k.name} steht jetzt als eigener Baustein auf der Seite.`); } }));
-  openMenu(ins, [...(sugg.length ? [{ head: "Lumina schlägt vor" }, ...sugg] : []), ...(tools.length ? [{ head: "Baustein" }, ...tools] : []), ...(figs.length ? [{ head: "Kennzahl" }, ...figs] : []), ...(sugg.length || tools.length || figs.length ? [] : [{ head: "Kein Baustein mit diesem Namen" }])], { editor: ins });
+  const sugg = f ? [] : suggestionsFor(pg).slice(0, 3).map((c) => ({ label: "✦ " + c.title, sub: shortWhy(movedMost(c.why)), run: () => { done(); addFigure(pg, c.k, { form: "diagramm", open: c.kind }); say(pg, tr(`${VIEW_NAME[c.kind]} von ${K[c.k].name} liegt jetzt auf der Seite.`, `${VIEW_NAME[c.kind]} of ${K[c.k].name} is now on the page.`)); } }));
+  const tools = [{ label: tr("Notiz", "Note"), hint: tr("freier Text mit [[Kennzahlen]]", "free text with [[figures]]"), run: () => { ins.replaceChildren(); insMode(pg, true); ins.focus(); } },
+    { label: tr("Diagramm", "Chart"), hint: tr("eine Kennzahl als Diagramm", "a figure as a chart"), keep: true, run: () => openMenu(ins, [{ head: tr("Diagramm · Kennzahl wählen", "Chart · pick a figure") }, ...KPIS.map((k) => ({ label: k.name, hint: k.long,
+      run: () => { done(); addFigure(pg, k.id, { form: "diagramm" }); say(pg, tr(`${k.name} liegt als Diagramm auf der Seite. Die Ansicht wechselst du über dem Diagramm.`, `${k.name} is on the page as a chart. Change the view above the chart.`)); } }))], { editor: ins }) }].filter((t) => hit(t.label));
+  const figs = KPIS.filter((k) => hit(`${k.name} ${k.long} ${SHORT[k.id]}`)).map((k) => ({ label: k.name, hint: F(k, k.series[T.base]), run: () => { done(); addFigure(pg, k.id); say(pg, tr(`${k.name} steht jetzt als eigener Baustein auf der Seite.`, `${k.name} is now a block of its own on the page.`)); } }));
+  openMenu(ins, [...(sugg.length ? [{ head: tr("Lumina schlägt vor", "Lumina suggests") }, ...sugg] : []), ...(tools.length ? [{ head: tr("Baustein", "Block") }, ...tools] : []), ...(figs.length ? [{ head: tr("Kennzahl", "Figure") }, ...figs] : []),
+    ...(sugg.length || tools.length || figs.length ? [] : [{ head: tr("Kein Baustein mit diesem Namen", "No block by that name") }])], { editor: ins });
 }
 // Enter on the insert line: a note, or a question that Lumina matches to a figure, a view and a month.
 function commitInsert(pg) {
   const ins = pg.ins, segs = readNote(ins).map((s) => (s.t !== undefined ? { t: s.t.replace(/ /g, " ") } : s));
   const text = segs.map((s) => (s.t !== undefined ? s.t : K[s.k].name)).join("").trim();
   if (!text) return;
-  if (!pg.insNote && text.startsWith("/")) { say(pg, "Diesen Baustein kenne ich nicht. «/» allein zeigt, was es gibt."); return; }
+  if (!pg.insNote && text.startsWith("/")) { say(pg, tr("Diesen Baustein kenne ich nicht. «/» allein zeigt, was es gibt.", "I don't know that block. «/» alone shows what there is.")); return; }
   const clear = () => { ins.replaceChildren(); insMode(pg, false); }, asNote = () => addNote(pg, [{ t: text }]);
-  if (pg.insNote || segs.some((s) => s.k)) { clear(); addNote(pg, segs); say(pg, "Als Notiz abgelegt."); return; }
+  if (pg.insNote || segs.some((s) => s.k)) { clear(); addNote(pg, segs); say(pg, tr("Als Notiz abgelegt.", "Kept as a note.")); return; }
   const u = understand(text, T.base);
   clear();
   if (!u.question) {
     const nb = asNote();
     // With the AI on, a statement still stays a note; it goes to Lumina only when the person asks for that.
-    if (HOST.aiReady()) say(pg, "Als Notiz abgelegt. Mit einem Fragezeichen fragst du Lumina.", () => { removeBlock(nb.id, true); askLumina(pg, text); }, "Lieber Lumina fragen");
-    else say(pg, "Als Notiz abgelegt. Mit einem Fragezeichen suche ich die passende Kennzahl.");
+    if (HOST.aiReady()) say(pg, tr("Als Notiz abgelegt. Mit einem Fragezeichen fragst du Lumina.", "Kept as a note. With a question mark you ask Lumina."), () => { removeBlock(nb.id, true); askLumina(pg, text); }, tr("Lieber Lumina fragen", "Ask Lumina instead"));
+    else say(pg, tr("Als Notiz abgelegt. Mit einem Fragezeichen suche ich die passende Kennzahl.", "Kept as a note. With a question mark I look for the matching figure."));
     return;
   }
   if (HOST.aiReady()) { askLumina(pg, text); return; }
@@ -338,10 +343,11 @@ function commitInsert(pg) {
 // Without the AI Lumina matches words: a figure, a view and a month. No language model.
 function keywordAnswer(pg, text, u, asNote, lead) {
   const pre = lead ? lead + " " : "";
-  if (!u.ks.length) { asNote(); say(pg, pre + "Dazu finde ich keine Kennzahl. Ich habe es als Notiz abgelegt."); return; }
+  if (!u.ks.length) { asNote(); say(pg, pre + tr("Dazu finde ich keine Kennzahl. Ich habe es als Notiz abgelegt.", "I find no figure for that. I kept it as a note.")); return; }
   const k = u.ks[0], views = viewsFor(k), view = u.view && views.some((x) => x.kind === u.view) ? u.view : "trend", held = u.when !== null && u.when !== T.base ? u.when : null;
   addFigure(pg, k.id, { form: "satz", open: view, t: held });
-  say(pg, pre + `Verstanden: ${k.name}, ${VIEW_NAME[view]}${held !== null ? ", festgehalten auf " + periodOf(held).long : ""}.` + (u.view && u.view !== view ? ` «${VIEW_NAME[u.view]}» gibt es für diese Kennzahl nicht.` : ""), asNote);
+  say(pg, pre + tr(`Verstanden: ${k.name}, ${VIEW_NAME[view]}${held !== null ? ", festgehalten auf " + periodOf(held).long : ""}.`, `Got it: ${k.name}, ${VIEW_NAME[view]}${held !== null ? ", held on " + periodOf(held).long : ""}.`)
+    + (u.view && u.view !== view ? tr(` «${VIEW_NAME[u.view]}» gibt es für diese Kennzahl nicht.`, ` This figure has no «${VIEW_NAME[u.view]}».`) : ""), asNote);
 }
 
 // ───────────── Lumina with the AI: the server asks Claude, with the figures of the month ─────────────
@@ -351,7 +357,7 @@ const r2 = (v) => (v === null || v === undefined || !Number.isFinite(v) ? null :
 function factsFor(m) {
   return { title: TITLE, month: periodOf(m).long, figures: KPIS.map((k) => {
     const r = shownOf(k, m), d = driverOf(k, m);
-    return { id: k.id, name: k.name, unit: k.unit === "%" ? "%" : unitOf(k).full || "Zahl", value: r.gap ? null : r2(r.cur), prev: r2(r.prev), target: r2(r.tgt), limit: r2(k.reg),
+    return { id: k.id, name: k.name, unit: k.unit === "%" ? "%" : unitOf(k).full || tr("Zahl", "number"), value: r.gap ? null : r2(r.cur), prev: r2(r.prev), target: r2(r.tgt), limit: r2(k.reg),
       level: r.level, label: r.label, run: r.run, driver: d ? `${d.name} ${d.text}` : "", last13: k.series.slice(Math.max(0, m - 12), m + 1).map(r2),
       parts: k.parts ? Object.keys(k.parts).map((name) => { const pp = r.i > 0 ? partPair(k, r, name) : null; return { name, value: pp ? r2(pp[0]) : null, prev: pp ? r2(pp[1]) : null }; }) : [] };
   }) };
@@ -364,10 +370,10 @@ function viewFor(k, view) {
 function askLumina(pg, text) {
   const m = T.base;
   clearTimeout(pg.sayTimer);
-  pg.say.replaceChildren("Lumina denkt …");
+  pg.say.replaceChildren(tr("Lumina denkt …", "Lumina is thinking …"));
   HOST.ask(text, DATA.months[m], factsFor(m)).then((res) => {
     if (!pages.has(pg.id)) return;
-    const ab = insertBlock(pg, { id: newId("b"), kind: "answer", q: `${text} · ${periodOf(m).label}`, text: String(res.answer || "").trim() || "Dazu habe ich nichts gefunden." });
+    const ab = insertBlock(pg, { id: newId("b"), kind: "answer", q: `${text} · ${periodOf(m).label}`, text: String(res.answer || "").trim() || tr("Dazu habe ich nichts gefunden.", "I found nothing on that.") });
     let n = 0;
     for (const sb of Array.isArray(res.blocks) ? res.blocks.slice(0, 3) : []) {
       const k = sb && K[sb.figure];
@@ -381,12 +387,13 @@ function askLumina(pg, text) {
     save();
     reveal(ab);
     flash(ab);
-    say(pg, n ? `Geantwortet, dazu ${n === 1 ? "ein Baustein" : n + " Bausteine"}.` : "Geantwortet.");
+    say(pg, n ? tr(`Geantwortet, dazu ${n === 1 ? "ein Baustein" : n + " Bausteine"}.`, `Answered, with ${n === 1 ? "one block" : n + " blocks"}.`) : tr("Geantwortet.", "Answered."));
   }).catch((err) => {
     if (!pages.has(pg.id)) return;
     const asNote = () => addNote(pg, [{ t: text }]);
     if (err && err.status === 422) { say(pg, err.message, asNote); return; }
-    const lead = err && err.status === 409 ? "Lumina ist ohne KI eingestellt." : `Lumina ist gerade nicht erreichbar (${(err && err.message) || "keine Antwort"}). Ich habe nach Stichwörtern gesucht.`;
+    const lead = err && err.status === 409 ? tr("Lumina ist ohne KI eingestellt.", "Lumina is set up without AI.")
+      : tr(`Lumina ist gerade nicht erreichbar (${(err && err.message) || "keine Antwort"}). Ich habe nach Stichwörtern gesucht.`, `Lumina cannot be reached right now (${(err && err.message) || "no answer"}). I searched by keywords.`);
     keywordAnswer(pg, text, understand(text, m), asNote, lead);
   });
 }

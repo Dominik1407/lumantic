@@ -113,6 +113,20 @@ Wer welchen Kosmos sieht, regelt die Anmeldung (siehe «Anmeldung und Rechte»).
 Persönliches liegt im Arbeitsbereich auf dem Server, alles für alle in `config/lumantic.json`.
 Änderungen an Daten oder Kennzahlen baut der Raum beim Schliessen der Einstellungen neu auf.
 
+### Sprache
+
+Lumantic spricht Deutsch und Englisch. Unter Darstellung › Sprache wählt jede Person «Wie der
+Browser», Deutsch oder English; «Für alle speichern» macht die Wahl zum Standard des Teams
+(`ui.language`: `de`, `en` oder leer). Englisch liest Zahlen international (`CHF 92m`,
+`CHF 1.2bn`, `1,150.5`, `12.5%`, `Oct 2026`), Deutsch bleibt schweizerisch (`92 Mio. CHF`, `1’150.5`).
+
+Lumantic übersetzt nur seine eigenen Texte: den Raum, Luminas Sätze, das Hauptmenü, die
+Einstellungen, den Sternkatalog und die Meldungen des Servers. Lumina antwortet in der Sprache
+der Oberfläche. Was ein Team definiert, bleibt, wie es ist; englische Wörter stehen daneben unter
+`en` (siehe «Kennzahlen definieren»), im Fachkatalog in Spalten mit `_en`. Fehlt ein englisches
+Wort, steht das deutsche. Wer in Englisch eine Definition im Sternkatalog ändert, ändert ihre
+englischen Wörter; die deutschen bleiben.
+
 ### Designs
 
 Fünf Designs sind eingebaut: **Nacht** (der ursprüngliche Nachthimmel), **Kreide**, **Nebel**
@@ -213,6 +227,14 @@ bis Freitag. Umstellen lässt sich das pro Kennzahl mit `phasing` (auch im Stern
 `arbeitstage` (das Jahr nach seinen Arbeitstagen), `kalendertage` (nach allen Tagen) oder `profil` mit
 `"profile": [12 Gewichte]`, zum Beispiel mehr am Quartalsende. `phasing` ganz oben in der Datei gilt für alle.
 
+Englische Wörter stehen unter `en`, für die englische Oberfläche: bei einer Kennzahl `name`, `long`, `short`,
+`desc`, `targetName` und `limitName`, bei einer Gruppe `name`, bei einem Ereignis `title` und `text`, ganz oben
+`title` und `source`, bei einem Begriff `term` und `definition`, in `extra` dazu `formula`.
+
+```json
+"en": { "name": "Interest margin", "short": "NIM", "desc": "Net interest income relative to interest-earning assets, annualised." }
+```
+
 ## Zeitraster: Tag, Woche, Monat, Quartal, Jahr
 
 Neben dem Datum auf «Heute» steht die Wahl des Rasters: **Tag**, **Woche**, **Monat**,
@@ -260,7 +282,8 @@ seine Herkunft:
 
 Lumantic schreibt nie in die Datenbank. Wer einen in Lumantic begonnenen Katalog in den Goldlayer
 übernehmen will, lädt ihn im Sternkatalog unter «Tabellen» als SQL herunter: Es legt die drei
-Views an, und von da an liest Lumantic den Katalog aus der Quelle. Vertrag und Spalten im Detail:
+Views an, und von da an liest Lumantic den Katalog aus der Quelle. Englische Wörter stehen im
+Fachkatalog in den Spalten `name_en`, `definition_en`, `thema_en` und `begriff_en`. Vertrag und Spalten im Detail:
 `config/README.md`, Abschnitt «Katalog». Der Beispiel-Kosmos «Industrie» zeigt alle drei
 Herkünfte.
 
@@ -387,9 +410,11 @@ Adresse ein. Die Regeln, Sätze und Empfehlungen auf den Seiten laufen ohne KI.
 | `internal/metrics` | Kennzahlen-Definitionen, Prüfung gegen den Katalog, Laden der Zeitreihen, Bearbeiten |
 | `internal/ai`, `internal/lumina` | Claude für Lumina; Fragen-Karten der ersten Oberfläche |
 | `internal/server` | HTTP-API |
+| `internal/i18n` | Lumantics Meldungen auf Englisch: die deutschen Formate mit ihrer Übersetzung, angewandt am Rand der API |
 | `web/src/kosmos/` | der Raum: nummerierte JS-Teile, die `vite.config.ts` zu einem Modul zusammenfügt |
 | `web/src/menu.ts`, `logo.ts` | Hauptmenü der Kosmen; das Logo, an einer Stelle |
 | `web/src/settings.ts`, `themes.ts`, `prefs.ts`, `main.ts` | Einstellungen, Designs, gespeicherte Wahl, Start |
+| `web/src/i18n.ts` | die Sprache der Oberfläche; Texte stehen zweisprachig am Ort: `tr("Heute", "Today")` |
 | `web/src/styles/` | `themes.css` (die Designs), `kosmos.css`, `settings.css`, `app.css` |
 | `design/` | Entwürfe und Begründungen, frühere Oberflächen in `archive/` |
 | `adapters/windmill` | Vorlagen für die Windmill-Skripte: Struktur, Abfragen und der Anstoss nach einem Flow |
@@ -422,14 +447,15 @@ Adresse ein. Die Regeln, Sätze und Empfehlungen auf den Seiten laufen ohne KI.
 
 Alles, was einen Kosmos betrifft (Kennzahlen, Arbeitsbereich, Datenquelle, Katalog), nimmt
 `?k=<id>`; ohne ist der erste Kosmos gemeint. Anfragen, die etwas ändern, müssen JSON sein und
-von derselben Seite kommen.
+von derselben Seite kommen. Die API antwortet auf Englisch, wenn `Accept-Language` mit `en` beginnt,
+das Cookie `lumantic_lang=en` gesetzt ist oder `?lang=en` dasteht.
 
 ## Tests
 
 ```powershell
 go test ./...
 cd web; npm run build; cd ..
-node scripts/ui-test/run.mjs     # Oberfläche in Echtzeit: ein Kosmos (Desktop, Handy, reduzierte Bewegung), Hauptmenü mit dreien, kurzes Fenster, Raster
+node scripts/ui-test/run.mjs     # Oberfläche in Echtzeit: ein Kosmos (Desktop, Handy, reduzierte Bewegung), Hauptmenü mit dreien, kurzes Fenster, Raster, Englisch
 ```
 
 `run.mjs` startet einen Testserver mit festen Kennzahlen (`scripts/ui-test/mock-api.mjs`),

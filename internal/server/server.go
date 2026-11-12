@@ -438,7 +438,7 @@ func (s *Server) Routes() http.Handler {
 	if s.UI != nil {
 		mux.Handle("/", http.FileServerFS(s.UI))
 	}
-	return logRequests(guard(s.gate(mux)))
+	return logRequests(speak(guard(s.gate(mux))))
 }
 
 func logRequests(next http.Handler) http.Handler {
