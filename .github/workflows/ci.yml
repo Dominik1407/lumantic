@@ -41,18 +41,12 @@ jobs:
         with:
           go-version-file: go.mod
 
-      # DuckDB's prebuilt library for Windows wants the UCRT gcc of MSYS2.
-      - name: C compiler (Windows)
-        if: runner.os == 'Windows' && matrix.cgo == '1'
-        uses: msys2/setup-msys2@v2
-        id: msys2
-        with:
-          msystem: UCRT64
-          install: mingw-w64-ucrt-x86_64-gcc
-      - name: Put gcc on the path (Windows)
-        if: runner.os == 'Windows' && matrix.cgo == '1'
-        shell: pwsh
-        run: Add-Content $env:GITHUB_PATH "${{ steps.msys2.outputs.msys2-location }}\ucrt64\bin"
+      # DuckDB's prebuilt library for Windows links with the MinGW gcc the
+      # Windows runners bring (as duckdb-go tests it); the gcc 16 of MSYS2 lacks
+      # the thread-local symbols the library was built with.
+      - name: C compiler
+        if: matrix.cgo == '1'
+        run: gcc --version
 
       # Without cgo the DuckDB tests run the CLI, the same version as the one built in.
       - name: DuckDB CLI

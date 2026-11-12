@@ -193,7 +193,7 @@ dem eigenen PC starten. Zur Laufzeit braucht Lumantic kein Internet.
   Datenquellen, Tokens und weitere Kosmen ab. Eigene Daten verlangen eine Anmeldung oder bewusst
   `LUMANTIC_OPEN=1`. Die Anleitung bindet den Port an `127.0.0.1`.
 - **Release über native Runner.** Ein Tag `v*` baut jede Datei auf einem Runner ihres Systems
-  (Windows mit dem UCRT-gcc von MSYS2, Linux auf Ubuntu 22.04 mit libstdc++ im Programm, beide Macs
+  (Windows mit dem MinGW-gcc des Runners, Linux auf Ubuntu 22.04 mit libstdc++ im Programm, beide Macs
   auf einem Apple-Runner), startet jede einmal mit den Beispielen und legt das Release mit
   Prüfsummen an. Das Image entsteht pro Architektur auf einem eigenen Runner und wird zu einem
   zusammengeführt. Das war einfacher und robuster als Cross-Kompilieren mit cgo; GoReleaser kann das
