@@ -265,3 +265,33 @@ func TestEnglishColumns(t *testing.T) {
 		}
 	}
 }
+
+// Without an English short or long name the English interface reads the
+// English name, not the German one; the calculation and a target's name have
+// English columns of their own, and the export gives them back.
+func TestEnglishNamesFillTheGaps(t *testing.T) {
+	src := source{rows: map[string][]adapter.Row{
+		`"lumantic_kennzahlen"`: {{"id": "liefertreue", "name": "Liefertreue", "thema": "Logistik", "tabelle": "gold.kpi_monat", "wert_spalte": "liefertreue_pct",
+			"name_en": "Delivery reliability", "berechnung": "Pünktliche ÷ alle Aufträge", "berechnung_en": "On-time ÷ all orders"}},
+		`"lumantic_ziele"`: {{"kennzahl_id": "liefertreue", "art": "Grenze", "wert": 90.0, "name": "Mindestwert", "name_en": "Minimum"},
+			{"kennzahl_id": "liefertreue", "art": "Ziel", "wert": 95.0, "name": "Ziel"}},
+	}}
+	c, err := Read(context.Background(), src, industry())
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, _ := Merge(c, &metrics.Config{}, industry())
+	k := m.KPIs[0]
+	if k.Short != "Liefertreue" || k.En["short"] != "Delivery reliability" || k.En["long"] != "Delivery reliability" || k.En["formula"] != "On-time ÷ all orders" {
+		t.Fatalf("%+v", k)
+	}
+	if len(k.Bounds) != 2 || k.Bounds[0].En["name"] != "Minimum" || k.Bounds[1].En != nil {
+		t.Fatalf("bounds: %+v", k.Bounds)
+	}
+	sql := SQL(m, "lumantic", adapter.DialectOf(src))
+	for _, want := range []string{`'On-time ÷ all orders')`, `"thema_en", "berechnung_en"`, `'Mindestwert', NULL, NULL, NULL, 'Minimum')`, `"periode", "name_en"`} {
+		if !strings.Contains(sql, want) {
+			t.Errorf("export lacks %s:\n%s", want, sql)
+		}
+	}
+}

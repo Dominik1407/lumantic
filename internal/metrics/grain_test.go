@@ -121,7 +121,7 @@ func TestAnnualTargets(t *testing.T) {
 	c := &Config{Groups: []Group{{ID: "a"}}, KPIs: []Def{
 		{ID: "x", Group: "a", Unit: "Mio", Kind: "flow", Target: &year, TargetPer: "jahr", Monthly: Source{Table: "g.monat", Value: "wert"}},
 		{ID: "y", Group: "a", Unit: "Mio", Kind: "flow", Phasing: "kalendertage", Monthly: Source{Table: "g.monat", Value: "wert"},
-			Bounds: []Bound{{Kind: "ziel", Value: budget, Name: "Budget 2026", From: "2026-01"}, {Kind: "grenze", Value: 5}}},
+			Bounds: []Bound{{Kind: "ziel", Value: budget, Name: "Budget 2026", From: "2026-01"}, {Kind: "grenze", Value: 5, Name: "Mindestwert", En: Words{"name": "Minimum"}}}},
 		{ID: "z", Group: "a", Unit: "%", Kind: "stock", Monthly: Source{Table: "g.monat", Value: "wert"}, Bounds: []Bound{{Kind: "ziel", Value: 80}}},
 	}}
 	d, err := Load(context.Background(), days{}, dayCatalog(), c)
@@ -135,6 +135,10 @@ func TestAnnualTargets(t *testing.T) {
 	// A budget is annual unless it says otherwise; October has 31 of 365 days. A limit holds per month.
 	if math.Abs(*y.Target-budget*31/365) > 1e-9 || y.TargetName != "Budget 2026" || y.DayRule != "kalendertage" || *y.Limit != 5 {
 		t.Fatalf("budget: %v %q %q limit %v", *y.Target, y.TargetName, y.DayRule, *y.Limit)
+	}
+	// A bound's English name speaks in English; the definitions keep their own words.
+	if y.LimitName != "Mindestwert" || y.En["limitName"] != "Minimum" || y.En["targetName"] != "" || c.KPIs[1].En != nil {
+		t.Fatalf("limit names: %q %v, definition %v", y.LimitName, y.En, c.KPIs[1].En)
 	}
 	if *z.Target != 80 || z.TargetPer != "" {
 		t.Fatalf("a balance's target holds as it is: %v %q", *z.Target, z.TargetPer)

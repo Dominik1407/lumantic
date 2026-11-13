@@ -315,7 +315,8 @@ seine Herkunft:
 Lumantic schreibt nie in die Datenbank. Wer einen in Lumantic begonnenen Katalog in den Goldlayer
 übernehmen will, lädt ihn im Sternkatalog unter «Tabellen» als SQL herunter: Es legt die drei
 Views an, und von da an liest Lumantic den Katalog aus der Quelle. Englische Wörter stehen im
-Fachkatalog in den Spalten `name_en`, `definition_en`, `thema_en` und `begriff_en`. Vertrag und Spalten im Detail:
+Fachkatalog in den Spalten `name_en`, `definition_en`, `thema_en`, `berechnung_en` und `begriff_en`, und ein
+Ziel oder eine Grenze hat ein eigenes `name_en`. Vertrag und Spalten im Detail:
 `config/README.md`, Abschnitt «Katalog». Der Beispiel-Kosmos «Industrie» zeigt alle drei
 Herkünfte.
 

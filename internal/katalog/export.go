@@ -39,7 +39,7 @@ func SQL(c *metrics.Config, schema string, d adapter.Dialect) string {
 		english = english || g.En["name"] != ""
 	}
 	for _, k := range c.KPIs {
-		english = english || k.En["name"] != "" || k.En["desc"] != ""
+		english = english || k.En["name"] != "" || k.En["desc"] != "" || k.En["formula"] != ""
 	}
 	for _, t := range c.Terms {
 		termsEn = termsEn || len(t.En) > 0
@@ -77,9 +77,16 @@ func SQL(c *metrics.Config, schema string, d adapter.Dialect) string {
 		row := []string{lit(k.ID), lit(k.Name), lit(k.Desc), lit(groups[k.Group]), lit(unitWords[k.Unit]), lit(kindWords[k.Kind]),
 			lit(dirWords[k.Dir]), lit(k.Monthly.Table), lit(k.Monthly.Value), lit(k.Monthly.Time), lit(split), lit(k.Owner), lit(k.Formula)}
 		if english {
-			row = append(row, lit(k.En["name"]), lit(k.En["desc"]), lit(groupsEn[k.Group]))
+			row = append(row, lit(k.En["name"]), lit(k.En["desc"]), lit(groupsEn[k.Group]), lit(k.En["formula"]))
 		}
 		kpis = append(kpis, row)
+		// A target or limit keeps its English name in English.
+		bound := func(row []string, en string) []string {
+			if english {
+				row = append(row, lit(en))
+			}
+			return row
+		}
 		// A flow's target says what time it covers; a single target of Lumantic's holds per month unless it says otherwise.
 		per := func(p string, isTarget bool) string {
 			switch {
@@ -98,25 +105,27 @@ func SQL(c *metrics.Config, schema string, d adapter.Dialect) string {
 			single = "monat"
 		}
 		if k.Target != nil {
-			bounds = append(bounds, []string{lit(k.ID), lit("Ziel"), num(*k.Target), lit(k.TargetName), "NULL", "NULL", per(single, true)})
+			bounds = append(bounds, bound([]string{lit(k.ID), lit("Ziel"), num(*k.Target), lit(k.TargetName), "NULL", "NULL", per(single, true)}, k.En["targetName"]))
 		}
 		if k.Limit != nil {
-			bounds = append(bounds, []string{lit(k.ID), lit("Grenze"), num(*k.Limit), lit(k.LimitName), "NULL", "NULL", per("monat", false)})
+			bounds = append(bounds, bound([]string{lit(k.ID), lit("Grenze"), num(*k.Limit), lit(k.LimitName), "NULL", "NULL", per("monat", false)}, k.En["limitName"]))
 		}
 		for _, bd := range k.Bounds {
 			kind := "Ziel"
 			if bd.Kind == "grenze" {
 				kind = "Grenze"
 			}
-			bounds = append(bounds, []string{lit(k.ID), lit(kind), num(bd.Value), lit(bd.Name), lit(bd.From), lit(bd.Until), per(bd.Per, bd.Kind == "ziel")})
+			bounds = append(bounds, bound([]string{lit(k.ID), lit(kind), num(bd.Value), lit(bd.Name), lit(bd.From), lit(bd.Until), per(bd.Per, bd.Kind == "ziel")}, bd.En["name"]))
 		}
 	}
 	cols := []string{"id", "name", "definition", "thema", "einheit", "art", "richtung", "tabelle", "wert_spalte", "zeit_spalte", "teile_spalte", "eigner", "berechnung"}
+	boundCols := []string{"kennzahl_id", "art", "wert", "name", "gueltig_ab", "gueltig_bis", "periode"}
 	if english {
-		cols = append(cols, "name_en", "definition_en", "thema_en")
+		cols = append(cols, "name_en", "definition_en", "thema_en", "berechnung_en")
+		boundCols = append(boundCols, "name_en")
 	}
 	view(TableKPIs, cols, kpis)
-	view(TableBounds, []string{"kennzahl_id", "art", "wert", "name", "gueltig_ab", "gueltig_bis", "periode"}, bounds)
+	view(TableBounds, boundCols, bounds)
 	var terms [][]string
 	for _, t := range c.Terms {
 		row := []string{lit(t.Term), lit(t.Definition), lit(strings.Join(t.Synonyms, "; ")), lit(t.KPI)}

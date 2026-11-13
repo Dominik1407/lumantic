@@ -14,7 +14,8 @@
 //
 // Only lumantic_kennzahlen is required; missing columns are left open. Words in
 // English may stand beside the German ones: name_en, definition_en, thema_en,
-// begriff_en; the English interface reads them.
+// berechnung_en, begriff_en, and name_en of a target or limit; the English
+// interface reads them.
 package katalog
 
 import (
@@ -143,7 +144,7 @@ func Read(ctx context.Context, ad adapter.Adapter, cat *catalog.Catalog) (*Compa
 		}
 		fill("name", str(r, "name"), &k.Name)
 		fill("desc", str(r, "definition"), &k.Desc)
-		k.En = k.En.With("name", str(r, "name_en")).With("desc", str(r, "definition_en"))
+		k.En = k.En.With("name", str(r, "name_en")).With("desc", str(r, "definition_en")).With("formula", str(r, "berechnung_en"))
 		fill("formula", str(r, "berechnung"), &k.Formula)
 		fill("owner", str(r, "eigner"), &k.Owner)
 		if u := unitFrom(str(r, "einheit")); u != "" {
@@ -190,7 +191,7 @@ func Read(ctx context.Context, ad adapter.Adapter, cat *catalog.Catalog) (*Compa
 				c.Problems = append(c.Problems, fmt.Sprintf("Ein Ziel für %q ohne Wert oder Art ist übersprungen.", str(r, "kennzahl_id")))
 				continue
 			}
-			c.Bounds[id] = append(c.Bounds[id], metrics.Bound{Kind: kind, Value: v, Name: str(r, "name"),
+			c.Bounds[id] = append(c.Bounds[id], metrics.Bound{Kind: kind, Value: v, Name: str(r, "name"), En: metrics.Words(nil).With("name", str(r, "name_en")),
 				From: dateOf(str(r, "gueltig_ab")), Until: dateOf(str(r, "gueltig_bis")), Per: perFrom(str(r, "periode")), Origin: FromSource})
 		}
 	}
@@ -450,6 +451,12 @@ func guess(k *metrics.Def, cat *catalog.Catalog, o map[string]string) {
 	}
 	if k.Long == "" {
 		k.Long = k.Name
+	}
+	// In English the short and the long name are the English name where none is given, not the German one.
+	for _, f := range []string{"short", "long"} {
+		if k.En[f] == "" {
+			k.En = k.En.With(f, k.En["name"])
+		}
 	}
 	if k.Dec == 0 && k.Unit == "%" {
 		k.Dec = 1

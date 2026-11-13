@@ -235,8 +235,8 @@ Spalten ab.
 
 | Tabelle | Spalten |
 |---|---|
-| `lumantic_kennzahlen` | `id`, `name`, `definition`, `thema`, `einheit` (z. B. «Mio. CHF», «%», «Stück», «Tage»), `art` («Bestand» oder «Fluss»), `richtung` («höher ist besser», «tiefer ist besser», «neutral»), `tabelle`, `wert_spalte`, `zeit_spalte`, `teile_spalte`, `eigner`, `berechnung`; für die englische Oberfläche `name_en`, `definition_en`, `thema_en` |
-| `lumantic_ziele` | `kennzahl_id`, `art` («Ziel» oder «Grenze»), `wert`, `name`, `gueltig_ab`, `gueltig_bis`, `periode` («Jahr» oder «Monat», optional) |
+| `lumantic_kennzahlen` | `id`, `name`, `definition`, `thema`, `einheit` (z. B. «Mio. CHF», «%», «Stück», «Tage»), `art` («Bestand» oder «Fluss»), `richtung` («höher ist besser», «tiefer ist besser», «neutral»), `tabelle`, `wert_spalte`, `zeit_spalte`, `teile_spalte`, `eigner`, `berechnung`; für die englische Oberfläche `name_en`, `definition_en`, `thema_en`, `berechnung_en` |
+| `lumantic_ziele` | `kennzahl_id`, `art` («Ziel» oder «Grenze»), `wert`, `name`, `gueltig_ab`, `gueltig_bis`, `periode` («Jahr» oder «Monat», optional); für die englische Oberfläche `name_en` |
 | `lumantic_begriffe` | `begriff`, `definition`, `synonyme` (mit `;` getrennt), `kennzahl_id`; dazu `begriff_en`, `definition_en` |
 
 - Jede Zeile von `lumantic_kennzahlen` ist eine Kennzahl, jedes `thema` eine Seite. Mit dem Fachkatalog allein baut

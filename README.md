@@ -317,7 +317,8 @@ it came from:
 Lumantic never writes into the database. Whoever wants to take a catalogue begun in Lumantic
 into the gold layer downloads it in the star catalogue under «Tables» as SQL: it creates the
 three views, and from then on Lumantic reads the catalogue from the source. English words stand
-in the company catalogue in the columns `name_en`, `definition_en`, `thema_en` and `begriff_en`.
+in the company catalogue in the columns `name_en`, `definition_en`, `thema_en`, `berechnung_en`
+and `begriff_en`, and a target or limit has its own `name_en`.
 Contract and columns in detail: `config/README.md`, section «Katalog». The example Kosmos
 «Industry» shows all three origins.
 
