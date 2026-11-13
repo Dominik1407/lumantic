@@ -71,7 +71,8 @@ function buildLens() {
     h("button", { class: "l-step", type: "button", "data-lens": "next", "aria-label": tr("Linse einen Monat vor", "Lens one period on") }, "▸"));
   const more = h("div", { class: "l-more" },
     h("button", { type: "button", "data-lens": "p1", title: tr("Einen Monat vor dem Stand des Raums", "One month before the room") }, tr("1 M", "1 M")), h("button", { type: "button", "data-lens": "p3", title: tr("Ein Quartal davor", "One quarter before") }, "1 Q"),
-    h("button", { type: "button", "data-lens": "p12", title: tr("Ein Jahr davor", "One year before") }, tr("1 J", "1 Y")), h("button", { class: "l-dive", type: "button", "data-lens": "dive", title: tr("Der ganze Raum reist in diesen Monat (Doppelklick auf den Rand)", "The whole room travels to this month (double-click the rim)") }, tr("Eintauchen", "Dive in")));
+    h("button", { type: "button", "data-lens": "p12", title: tr("Ein Jahr davor", "One year before") }, tr("1 J", "1 Y")), h("button", { class: "l-dive", type: "button", "data-lens": "dive", title: tr("Der ganze Raum reist in diesen Monat (Doppelklick auf den Rand)", "The whole room travels to this month (double-click the rim)") }, tr("Eintauchen", "Dive in")),
+    h("button", { type: "button", "data-lens": "park", title: tr("Zurück in die Ecke (Esc)", "Back to the corner (Esc)") }, tr("Parken", "Park")));
   lens.el.replaceChildren(lens.svg, h("div", { class: "l-tab" }, grip, more));
 
   // Coin, rim and date tab pick the lens up and move it. The inside of the open glass lets every click through.
@@ -144,6 +145,7 @@ lens.el.addEventListener("click", (e) => {
   if (act === "prev") setLensMonth(shiftBy(lens.m, -1));
   else if (act === "next") setLensMonth(shiftBy(lens.m, 1));
   else if (act === "dive") dive(lens.m);
+  else if (act === "park") parkLens();
   else setLensMonth(T.base - Number(act.slice(1)));
 });
 // A new month in the glass: everything it touches is written again, quickly. In quarters or years the glass

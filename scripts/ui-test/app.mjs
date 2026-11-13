@@ -83,8 +83,9 @@ export default async (t) => {
   await t.wait(700);
   check("lens picked up", !(await q(`return window.__kosmos.lens.parked`)));
   await t.shot("05-linse");
-  await t.key("Escape");
+  await clickText(".l-more button", "Parken");
   await t.wait(500);
+  check("Parken puts the lens back in its corner", await q(`return window.__kosmos.lens.parked && window.__kosmos.lens.k === 0`));
   await t.key("h");
   await t.wait(2400);
 
