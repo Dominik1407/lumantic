@@ -2,6 +2,8 @@
 
 **Quiet until it matters.**
 
+https://github.com/user-attachments/assets/2e03826d-f07f-44e2-8aaa-7920f912735b
+
 Lumantic ist eine ruhige Oberfläche über dem Goldlayer eines Teams. Seiten aus Bausteinen
 liegen in einem Raum: Aus der Nähe liest man sie wie einen Brief, aus der Ferne falten sie
 sich zu Sternbildern. Lumina, die Assistentin, schreibt «Heute» und eine Seite pro Thema und

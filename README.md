@@ -2,6 +2,8 @@
 
 **Quiet until it matters.**
 
+https://github.com/user-attachments/assets/2e03826d-f07f-44e2-8aaa-7920f912735b
+
 Lumantic is a calm surface over a team's gold layer. Pages made of blocks lie in a room: up
 close you read them like a letter, from afar they fold into constellations. Lumina, the
 assistant, writes «Today» and one page per topic and gives a reason for every choice.
