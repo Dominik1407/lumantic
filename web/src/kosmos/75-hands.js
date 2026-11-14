@@ -383,15 +383,19 @@ function syncPlay() {
   b.setAttribute("aria-label", T.playing ? tr("Anhalten", "Pause") : tr("Geschichte abspielen", "Play the story"));
   b.textContent = T.playing ? "II" : "▶";
 }
+// The ruler opens in the flow of «Heute» and pushes down what lies below it. Further down the page nobody would see it,
+// only the text jumping: there it stays shut, and one that is open closes only once it is back in view.
+function rulerSeen() { const y = pages.get("heute").rr.getBoundingClientRect().top - off.top; return y >= 0 && y < H; }
 function showRuler(ms) {
   const pg = pages.get("heute");
-  pg.rr.dataset.open = "true";
+  if (rulerSeen()) pg.rr.dataset.open = "true";
   clearTimeout(rulerTimer);
   if (ms) rulerTimer = setTimeout(hideRuler, ms);
 }
 function hideRuler() {
   const pg = pages.get("heute");
-  if (rulerPinned || scrub || T.playing || pg.when.matches(":hover") || pg.rr.matches(":hover")) { rulerTimer = setTimeout(hideRuler, 900); return; }
+  if (pg.rr.dataset.open !== "true") return;
+  if (rulerPinned || scrub || T.playing || pg.when.matches(":hover") || pg.rr.matches(":hover") || (activeId === "heute" && !rulerSeen())) { rulerTimer = setTimeout(hideRuler, 900); return; }
   pg.rr.dataset.open = "false";
 }
 function showTip(anchor, head, text) {

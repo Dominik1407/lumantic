@@ -106,6 +106,25 @@ export default async (t) => {
   await until(`return window.__kosmos.T.base === 93`, 4000);
   await t.wait(1200);
 
+  // ── the ruler under the time word opens with ← → only where it can be seen: further down the page it would push
+  // the text down and back up while nobody sees why
+  const ruler = (open) => `return (document.querySelector('.page[data-id="heute"] .rr').dataset.open === "true") === ${open}`;
+  await q(`document.activeElement?.blur(); return 1`);
+  await t.key("ArrowLeft");
+  check("← opens the ruler under the time word", await until(ruler(true), 1500));
+  check("and it closes again", await until(ruler(false), 6000));
+  for (let i = 0; i < 4; i++) { await t.key("ArrowDown"); await t.wait(150); }
+  await t.wait(500);
+  const above = await q(`return document.querySelector('.page[data-id="heute"] .when').getBoundingClientRect().bottom < 0`);
+  await t.key("ArrowLeft");
+  await t.wait(700);
+  check("further down the page ← changes the month but leaves the ruler shut", above && (await base()) === 91 && (await q(ruler(false))), [above, await base()]);
+  await t.key("ArrowRight");
+  await t.key("ArrowRight");
+  for (let i = 0; i < 4; i++) { await t.key("ArrowUp"); await t.wait(150); }
+  await until(`return window.__kosmos.T.base === 93`, 3000);
+  await t.wait(2500);
+
   // ── the Kosmos' standard raster, in the settings
   await t.key(",");
   await t.wait(350);
