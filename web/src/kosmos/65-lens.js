@@ -35,6 +35,11 @@ function parkLens() {
   glideLens(...parkPos(), 380);
   growLens(0);
 }
+// A click beside the open glass sends it back to its corner. Inside the glass the click belongs to the page under it.
+function lensAside(sx, sy) {
+  if (lens.parked || diving || Math.hypot(sx - lens.x, sy - lens.y) <= lens.vr + 18) return;
+  parkLens();
+}
 
 function buildLens() {
   const r = lens.r, S = 2 * (r + 26), c = S / 2;

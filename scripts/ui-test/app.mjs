@@ -93,6 +93,22 @@ export default async (t) => {
   await t.click(tab.park[0], tab.park[1]);
   await t.wait(500);
   check("Parken puts the lens back in its corner", await q(`return window.__kosmos.lens.parked && window.__kosmos.lens.k === 0`));
+  // A click beside the lens parks it too. Inside the glass the click belongs to the page.
+  const parked = () => q(`return window.__kosmos.lens.parked`);
+  const sky = await q(`for (const [x, y] of [[innerWidth - 40, innerHeight * 0.3], [innerWidth - 40, innerHeight * 0.5], [40, innerHeight * 0.3]]) { const e = document.elementFromPoint(x, y); if (e && e.closest("#stage") && !e.closest("button, a, [role=button], .star, #lens, [contenteditable=true]")) return [x, y]; } return null`);
+  await t.drag(lens.x, lens.y, 760, 360, { steps: 24, ms: 700 });
+  await t.wait(700);
+  await t.click(790, 330);
+  await t.wait(400);
+  const inside = !(await parked());
+  await t.key("?");
+  await t.wait(300);
+  await t.click(sky[0], sky[1]);
+  await t.wait(400);
+  const first = (await q(`return document.getElementById("keys").hidden`)) && !(await parked());
+  await t.click(sky[0], sky[1]);
+  await t.wait(600);
+  check("a click inside the glass leaves the lens, a click beside it closes what is open, the next one parks the lens", inside && first && (await parked()), { inside, first, sky });
   await t.key("h");
   await t.wait(2400);
 

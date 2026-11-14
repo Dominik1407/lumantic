@@ -23,11 +23,11 @@ stage.addEventListener("pointerdown", (e) => {
     stage.classList.remove("is-pan");
     return;
   }
-  closeIdee();
-  closeKeys();
-  if (document.activeElement && document.activeElement.isContentEditable) document.activeElement.blur();
+  // A click that closes a menu, the idea or the keys, or ends the writing, does no more than that: the lens stays out.
+  const writing = !!document.activeElement && document.activeElement.isContentEditable, shut = [MENU.open, closeIdee(), closeKeys(), writing].some(Boolean);
+  if (writing) document.activeElement.blur();
   drag = { pid: e.pointerId, x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false, vx: 0, vy: 0, vt: performance.now(),
-    onPage: !!e.target.closest(".page, .plabel"), inter: !!e.target.closest("button, a, [role='button']") };
+    onPage: !!e.target.closest(".page, .plabel"), inter: !!e.target.closest("button, a, [role='button']"), shut };
 });
 stage.addEventListener("pointermove", (e) => {
   if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, [e.clientX, e.clientY]);
@@ -72,6 +72,7 @@ function release(e) {
   if (e.type === "pointercancel" || d.inter) return;
   const now = performance.now(), dbl = now - lastTap.t < 400 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 14;
   lastTap = { t: dbl ? 0 : now, x: e.clientX, y: e.clientY };
+  if (!d.shut) lensAside(e.clientX - off.left, e.clientY - off.top);
   if (d.onPage) return;
   if (dbl) startPage(e.clientX - off.left, e.clientY - off.top);
   else if (selId) { selId = null; invalidate(); }
