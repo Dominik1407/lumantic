@@ -109,6 +109,20 @@ export default async (t) => {
   await t.click(sky[0], sky[1]);
   await t.wait(600);
   check("a click inside the glass leaves the lens, a click beside it closes what is open, the next one parks the lens", inside && first && (await parked()), { inside, first, sky });
+  // A click on the parked coin brings it out to the middle of the page; a double click on the coin still dives.
+  await t.click(lens.x, lens.y);
+  await t.wait(900);
+  const out = await q(`const d = window.__kosmos, l = d.lens, pg = d.pages.get(d.activeId); return { parked: l.parked, k: l.k, off: Math.round(l.x - (pg.ox + (d.PAGE_W * d.cam.z) / 2)) }`);
+  check("a click on the parked coin brings the lens to the middle of the page", !out.parked && out.k === 1 && out.off === 0, out);
+  await t.key("Escape");
+  await t.wait(600);
+  const was = await q(`return window.__kosmos.T.base`);
+  await t.click(lens.x, lens.y, 2);
+  check("a double click on the coin dives, as before", await until(`const d = window.__kosmos; return d.T.base === ${was} - 12 && d.lens.parked`, 5000), await q(`const d = window.__kosmos; return { base: d.T.base, m: d.lens.m, parked: d.lens.parked }`));
+  await t.wait(800);
+  await q(`window.__kosmos.dive(${was}); return 1`);
+  await until(`const d = window.__kosmos; return d.T.base === ${was} && d.lens.parked && d.lens.k === 0`, 5000);
+  await t.wait(600);
   await t.key("h");
   await t.wait(2400);
 

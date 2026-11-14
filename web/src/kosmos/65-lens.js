@@ -2,7 +2,7 @@
 // Parked, it is a small closed coin in the corner and shows nothing. Picked up, it grows to full size, and every block
 // it touches shows the lens' month. Dropped back on the corner, or with Esc, it parks and closes again.
 const MDEG = 360 / 96; // one month on the rim; the whole history fits in one turn
-const lens = { el: $("lens"), tapAt: 0, x: 0, y: 0, r: 150, vr: 48, rr: 0, k: 0, m: Math.max(0, N - 1 - HOST.lensBack()), alpha: 1, parked: true, size: 0, svg: null, coin: null, arc: null, bead: null, beadHit: null, month: null, rel: null };
+const lens = { el: $("lens"), tapAt: 0, outAt: 0, x: 0, y: 0, r: 150, vr: 48, rr: 0, k: 0, m: Math.max(0, N - 1 - HOST.lensBack()), alpha: 1, parked: true, size: 0, svg: null, coin: null, arc: null, bead: null, beadHit: null, month: null, rel: null };
 const polar = (r, deg) => [r * Math.sin((deg * Math.PI) / 180), -r * Math.cos((deg * Math.PI) / 180)];
 // On a phone the page fills the width, so the coin is small and parks in the bottom row beside the places.
 const coinR = () => (narrow() ? 19 : 48);
@@ -35,10 +35,19 @@ function parkLens() {
   glideLens(...parkPos(), 380);
   growLens(0);
 }
+// A click on the parked coin brings the glass out to the middle of the page in view, or of the sky. From there it is
+// moved by hand.
+function lensOut() {
+  const pg = M.p >= 0.5 ? pages.get(activeId) : null, r = lens.r;
+  lens.outAt = performance.now();
+  glideLens(pg ? clamp(pg.ox + (PAGE_W * cam.z) / 2, r, Math.max(r, W - r)) : W / 2, clamp(H / 2 - 30, r + 70, Math.max(r + 70, H - r - 110)), 420);
+}
 // A click beside the open glass sends it back to its corner. Inside the glass the click belongs to the page under it.
 function lensAside(sx, sy) {
-  if (lens.parked || diving || Math.hypot(sx - lens.x, sy - lens.y) <= lens.vr + 18) return;
-  parkLens();
+  if (lens.parked || diving) return;
+  // the second click of a double click on the coin finds the corner empty: the glass has left for the page
+  if (performance.now() - lens.outAt < 420) { lens.outAt = 0; dive(lens.m); return; }
+  if (Math.hypot(sx - lens.x, sy - lens.y) > lens.vr + 18) parkLens();
 }
 
 function buildLens() {
@@ -85,7 +94,7 @@ function buildLens() {
     if (e.button > 0 || diving || e.target.closest("button")) return;
     e.stopPropagation();
     e.preventDefault();
-    lensDrag = { id: e.pointerId, lx: e.clientX, ly: e.clientY, moved: 0, viaTab: el === grip };
+    lensDrag = { id: e.pointerId, lx: e.clientX, ly: e.clientY, moved: 0, viaTab: el === grip, home: lens.parked };
     lensSel = true;
     lens.parked = false;
     userInput();
@@ -134,7 +143,8 @@ function endLensDrag(e) {
   lensDrag = null;
   lens.tapAt = tap ? now : 0;
   lens.el.classList.remove("is-drag");
-  if (Math.hypot(lens.x - px, lens.y - py) < parkZone() && !twice) parkLens(); // dropped back on the corner
+  if (tap && d.home && !twice) lensOut();
+  else if (Math.hypot(lens.x - px, lens.y - py) < parkZone() && !twice) parkLens(); // dropped back on the corner
   else if (tap && d.viaTab) lens.el.classList.toggle("is-open");
   if (twice) dive(lens.m); // a double click on rim or coin: Eintauchen
   invalidate();
