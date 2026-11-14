@@ -83,7 +83,14 @@ export default async (t) => {
   await t.wait(700);
   check("lens picked up", !(await q(`return window.__kosmos.lens.parked`)));
   await t.shot("05-linse");
-  await clickText(".l-more button", "Parken");
+  // The row of buttons under the date stays while the pointer walks down to it, slowly and across the gap.
+  const tab = await q(`const c = (s) => { const b = document.querySelector(s).getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; }; return { date: c(".l-date b"), park: c('.l-more [data-lens="park"]') }`);
+  await t.mouse("mouseMoved", tab.date[0], tab.date[1]);
+  await t.wait(300);
+  for (let i = 1; i <= 8; i++) { await t.mouse("mouseMoved", tab.date[0] + ((tab.park[0] - tab.date[0]) * i) / 8, tab.date[1] + ((tab.park[1] - tab.date[1]) * i) / 8); await t.wait(90); }
+  await t.wait(800);
+  check("the lens' buttons stay while the pointer walks down to them", await q(`const s = getComputedStyle(document.querySelector(".l-more")); return s.visibility === "visible" && s.opacity === "1"`));
+  await t.click(tab.park[0], tab.park[1]);
   await t.wait(500);
   check("Parken puts the lens back in its corner", await q(`return window.__kosmos.lens.parked && window.__kosmos.lens.k === 0`));
   await t.key("h");
