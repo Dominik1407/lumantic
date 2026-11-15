@@ -124,9 +124,11 @@ type dataView struct {
 
 type aiView struct {
 	config.AI
-	Token  config.SecretStatus `json:"token"`
-	Models []config.Model      `json:"models"`
-	Ready  bool                `json:"ready"`
+	Token       config.SecretStatus `json:"token"`       // Anthropic's
+	OpenAIToken config.SecretStatus `json:"openaiToken"` // the key for a server with OpenAI's chat completions
+	Models      []config.Model      `json:"models"`      // the Claude models offered
+	Ready       bool                `json:"ready"`
+	Missing     string              `json:"missing"` // what Lumina still lacks: off, model, token or ""
 }
 
 // kosmosRef says which Kosmos a settings answer is about.
@@ -169,6 +171,8 @@ type settingsView struct {
 func (s *Server) settingsFor(r *http.Request, id string) settingsView {
 	eff := s.Config.Effective()
 	_, aiTok, _ := s.Config.Secret(config.AnthropicToken)
+	_, oaTok, _ := s.Config.Secret(config.OpenAIToken)
+	_, aiMissing := s.aiSettings(eff)
 	_, wmTok, _ := s.Config.Secret(config.WindmillToken)
 	brand, _ := config.SanitizeBrand(eff.Brand)
 	rooms := roomsOf(eff)
@@ -219,7 +223,7 @@ func (s *Server) settingsFor(r *http.Request, id string) settingsView {
 		Status:  s.status(rm.id),
 		Refresh: refreshView{Refresh: rm.refresh, Own: rm.ownPlan, Watchable: config.Watchable(d.Type), Token: s.tokenState(rm.id)},
 		Grain:   rm.grain,
-		AI:      aiView{AI: eff.AI, Token: aiTok, Models: config.Models, Ready: eff.AI.Enabled && aiTok.Set},
+		AI:      aiView{AI: eff.AI, Token: aiTok, OpenAIToken: oaTok, Models: config.Models, Ready: aiMissing == "", Missing: aiMissing},
 		Brand:   brand,
 	}
 	v.Me = s.meOf(r, rm.id)
@@ -228,7 +232,7 @@ func (s *Server) settingsFor(r *http.Request, id string) settingsView {
 		v.ConfigPath, v.Locked, v.Metrics = "", []string{}, ""
 		v.Data = dataView{Type: d.Type, Name: d.Name}
 		v.Refresh.Token = config.SecretStatus{}
-		v.AI.Token = config.SecretStatus{}
+		v.AI.Token, v.AI.OpenAIToken = config.SecretStatus{}, config.SecretStatus{}
 	}
 	return v
 }
@@ -582,7 +586,7 @@ func (s *Server) putSecret(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch req.Key {
-	case config.AnthropicToken:
+	case config.AnthropicToken, config.OpenAIToken:
 		s.rebuildAI()
 	case config.WindmillToken:
 		// Every Kosmos on Windmill reads with the new token.
@@ -617,9 +621,12 @@ func (s *Server) testAI(w http.ResponseWriter, r *http.Request) {
 	lum := s.lum
 	s.mu.RUnlock()
 	if lum == nil {
-		if !eff.AI.Enabled {
+		switch _, missing := s.aiSettings(eff); missing {
+		case "off":
 			out.Error = "Die KI ist ausgeschaltet."
-		} else {
+		case "model":
+			out.Error = "Es fehlt das Modell. Trag es unter Einstellungen › Lumina ein."
+		default:
 			out.Error = "Es ist kein API-Token gesetzt."
 		}
 		writeJSON(w, 200, out)

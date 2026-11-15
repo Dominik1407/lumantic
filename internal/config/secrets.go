@@ -14,7 +14,9 @@ import (
 
 const (
 	AnthropicToken = "anthropicToken"
-	WindmillToken  = "windmillToken"
+	// The key for a server with OpenAI's chat completions (ai.provider openai). Local models often need none.
+	OpenAIToken   = "openaiToken"
+	WindmillToken = "windmillToken"
 	// The secrets of a warehouse belong to one Kosmos (see KosmosKey).
 	SnowflakeToken   = "snowflakeToken"   // a programmatic access token or OAuth token
 	DatabricksToken  = "databricksToken"  // a personal access token
@@ -32,6 +34,7 @@ var secretKeys = []struct {
 	perKosmos bool
 }{
 	{AnthropicToken, "ai.token", []string{"ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"}, false},
+	{OpenAIToken, "ai.openaiToken", []string{"OPENAI_API_KEY", "AZURE_OPENAI_API_KEY"}, false},
 	{WindmillToken, "data.windmill.token", []string{"WINDMILL_TOKEN"}, false},
 	{SnowflakeToken, "data.snowflake.token", []string{"SNOWFLAKE_TOKEN"}, true},
 	{DatabricksToken, "data.databricks.token", []string{"DATABRICKS_TOKEN"}, true},

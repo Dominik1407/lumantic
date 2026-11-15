@@ -350,26 +350,6 @@ func (s *Server) reload(ctx context.Context, id, by string) error {
 // Refresh reloads the catalog and the figures of the first Kosmos.
 func (s *Server) Refresh(ctx context.Context) error { return s.readNow(ctx, config.MainID, byHand) }
 
-// rebuildAI makes Lumina from the current settings and token.
-func (s *Server) rebuildAI() {
-	eff := s.Config.Effective()
-	tok, st, envName := s.Config.Secret(config.AnthropicToken)
-	var lum ai.Lumina
-	var tr lumina.Translator = lumina.Offline{}
-	if eff.AI.Enabled && st.Set {
-		set := ai.Settings{Model: eff.AI.Model, BaseURL: eff.AI.BaseURL, Token: tok, AuthToken: envName == "ANTHROPIC_AUTH_TOKEN"}
-		if s.NewLumina != nil {
-			lum = s.NewLumina(set)
-		} else {
-			c := ai.NewClaude(set)
-			lum, tr = c, lumina.NewClaude(c.Client(), eff.AI.Model)
-		}
-	}
-	s.mu.Lock()
-	s.lum, s.tr = lum, tr
-	s.mu.Unlock()
-}
-
 // The first board (legacy.go) works on the first Kosmos.
 func (s *Server) adapter() adapter.Adapter {
 	if k := s.get(config.MainID); k != nil && k.ad != nil {

@@ -77,6 +77,78 @@ func TestEnvWinsAndLocks(t *testing.T) {
 	}
 }
 
+func TestAIProviders(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "lumantic.json")
+	m, _ := Open(p, filepath.Join(dir, "secrets.json"), envOf(nil))
+	// Another provider: the model has no default, it may be empty until someone enters it.
+	c, err := m.Merge(map[string]json.RawMessage{"ai": json.RawMessage(`{"provider":"OpenAI","model":""}`)})
+	if err != nil || c.AI.Provider != "openai" || c.AI.Model != "" {
+		t.Fatalf("%v %+v", err, c.AI)
+	}
+	if err := m.Save(c); err != nil {
+		t.Fatal(err)
+	}
+	for _, model := range []string{"llama3.1:8b", "gpt-4.1-mini", "lmstudio-community/Qwen2.5-7B-Instruct", "Lumina-Prod_01"} {
+		c.AI.Model = model
+		if err := Validate(c); err != nil {
+			t.Errorf("%s: %v", model, err)
+		}
+	}
+	c.AI.Model = "gpt 4"
+	if err := Validate(c); err == nil {
+		t.Error("a model with a space")
+	}
+	// Back to Anthropic: an empty model is Claude's default, and Claude's names are strict.
+	c, _ = m.Merge(map[string]json.RawMessage{"ai": json.RawMessage(`{"provider":"anthropic","model":""}`)})
+	if c.AI.Model != DefaultModel {
+		t.Fatalf("%+v", c.AI)
+	}
+	c.AI.Model = "llama3.1:8b"
+	if err := Validate(c); err == nil {
+		t.Error("an Ollama name for Claude")
+	}
+	c.AI.Provider = "gemini"
+	if err := Validate(c); err == nil || !strings.Contains(err.Error(), "anthropic und openai") {
+		t.Errorf("unknown provider: %v", err)
+	}
+}
+
+func TestAIAddressFollowsTheProvider(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "lumantic.json")
+	env := map[string]string{"ANTHROPIC_BASE_URL": "https://gateway.example.ch/anthropic", "OPENAI_API_KEY": "sk-env-1234"}
+	m, _ := Open(p, filepath.Join(dir, "secrets.json"), envOf(env))
+	// Claude Code users have ANTHROPIC_BASE_URL set; with OpenAI's chat completions it does not count.
+	if c := m.Effective(); c.AI.BaseURL != "https://gateway.example.ch/anthropic" || !strings.Contains(strings.Join(m.Locked(), ","), "ai.baseURL") {
+		t.Fatalf("anthropic: %+v %v", c.AI, m.Locked())
+	}
+	os.WriteFile(p, []byte(`{"ai":{"provider":"openai","model":"llama3.1:8b","baseURL":"http://localhost:11434/v1"}}`), 0o644)
+	m, _ = Open(p, filepath.Join(dir, "secrets.json"), envOf(env))
+	if c := m.Effective(); c.AI.BaseURL != "http://localhost:11434/v1" || strings.Contains(strings.Join(m.Locked(), ","), "ai.baseURL") {
+		t.Fatalf("openai: %+v %v", c.AI, m.Locked())
+	}
+	if _, err := m.Merge(map[string]json.RawMessage{"ai": json.RawMessage(`{"baseURL":"http://localhost:1234/v1"}`)}); err != nil {
+		t.Fatalf("the other provider's variable locked the address: %v", err)
+	}
+	if v, st, n := m.Secret(OpenAIToken); v != "sk-env-1234" || st.Source != "umgebung" || n != "OPENAI_API_KEY" {
+		t.Fatalf("%s %+v %s", v, st, n)
+	}
+	// The provider from a variable brings its own address variable along.
+	env["LUMANTIC_AI_PROVIDER"], env["OPENAI_BASE_URL"] = "openai", "https://bank.openai.azure.com/openai/v1"
+	os.WriteFile(p, []byte(`{"ai":{"model":"gpt-4o"}}`), 0o644)
+	m, _ = Open(p, filepath.Join(dir, "secrets.json"), envOf(env))
+	locked := strings.Join(m.Locked(), ",")
+	if c := m.Effective(); c.AI.Provider != "openai" || c.AI.BaseURL != "https://bank.openai.azure.com/openai/v1" || !strings.Contains(locked, "ai.provider") || !strings.Contains(locked, "ai.baseURL") {
+		t.Fatalf("%+v %s", c.AI, locked)
+	}
+	_, err := m.Merge(map[string]json.RawMessage{"ai": json.RawMessage(`{"baseURL":"http://localhost:1234/v1"}`)})
+	var le *LockedError
+	if !errors.As(err, &le) || le.Env != "OPENAI_BASE_URL" {
+		t.Fatalf("want OPENAI_BASE_URL locked, got %v", err)
+	}
+}
+
 func TestMergeSaveRoundTrip(t *testing.T) {
 	dir := t.TempDir()
 	p := filepath.Join(dir, "sub", "lumantic.json")

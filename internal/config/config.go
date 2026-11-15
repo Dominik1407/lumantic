@@ -63,12 +63,23 @@ type Data struct {
 	Example bool `json:"example,omitempty"`
 }
 
+// AI is the model Lumina speaks with. Provider is anthropic (Claude, the default)
+// or openai: any server with OpenAI's chat completions (OpenAI, Azure OpenAI,
+// Ollama, LM Studio, vLLM, Mistral, LiteLLM, a company gateway). There the model
+// has no default, and BaseURL empty means https://api.openai.com/v1.
 type AI struct {
 	Enabled  bool   `json:"enabled"`
 	Provider string `json:"provider"`
 	Model    string `json:"model"`
 	BaseURL  string `json:"baseURL"`
 }
+
+const (
+	ProviderAnthropic = "anthropic"
+	ProviderOpenAI    = "openai"
+	// DefaultModel is Lumina's model with Anthropic.
+	DefaultModel = "claude-opus-5-5"
+)
 
 // UI holds the defaults for everyone; each person can override them in the app.
 type UI struct {
@@ -168,7 +179,7 @@ func Defaults() Config {
 		Data: Data{Type: "duckdb", Name: "Goldlayer", Path: "goldlayer/gold.duckdb", Schema: "gold",
 			Windmill: Windmill{Workspace: "lumantic", Describe: "f/lumantic/describe", Query: "f/lumantic/query"}},
 		Kosmen: []Kosmos{},
-		AI:     AI{Enabled: true, Provider: "anthropic", Model: "claude-opus-5-5"},
+		AI:     AI{Enabled: true, Provider: ProviderAnthropic, Model: DefaultModel},
 		Auth:   Auth{Kind: "none", Admins: []string{}},
 		UI:     UI{Design: "nebel", Motion: "voll", TextSize: "normal", Start: "heute", Lens: "1J", Hints: true},
 		Brand:  Brand{Designs: []Design{}},
@@ -222,15 +233,21 @@ var bindings = []binding{
 	{"auth.oidc.url", []string{"LUMANTIC_URL"}, func(c *Config) string { return c.Auth.OIDC.URL }, func(c *Config, v string) { c.Auth.OIDC.URL = v }},
 	{"metrics", []string{"LUMANTIC_METRICS"}, func(c *Config) string { return c.Metrics }, func(c *Config, v string) { c.Metrics = v }},
 	{"ai.enabled", []string{"LUMANTIC_LUMINA"}, func(c *Config) string { return boolText(c.AI.Enabled) }, func(c *Config, v string) { c.AI.Enabled = v == "true" }},
+	{"ai.provider", []string{"LUMANTIC_AI_PROVIDER"}, func(c *Config) string { return c.AI.Provider }, func(c *Config, v string) { c.AI.Provider = strings.ToLower(v) }},
 	{"ai.model", []string{"LUMANTIC_MODEL"}, func(c *Config) string { return c.AI.Model }, func(c *Config, v string) { c.AI.Model = v }},
-	{"ai.baseURL", []string{"ANTHROPIC_BASE_URL"}, func(c *Config) string { return c.AI.BaseURL }, func(c *Config, v string) { c.AI.BaseURL = v }},
+	// Each provider has its own variable for the address; only the one of the provider in use counts.
+	{"ai.baseURL", []string{"ANTHROPIC_BASE_URL", "OPENAI_BASE_URL"}, func(c *Config) string { return c.AI.BaseURL }, func(c *Config, v string) { c.AI.BaseURL = v }},
 }
 
 // envValue reads a binding's variable. LUMANTIC_LUMINA speaks in modes.
-func envValue(lookup func(string) (string, bool), b binding) (string, string, bool) {
+// provider is the AI provider in use: the address of the other one does not count.
+func envValue(lookup func(string) (string, bool), b binding, provider string) (string, string, bool) {
 	for _, name := range b.env {
 		v, ok := lookup(name)
 		if !ok || strings.TrimSpace(v) == "" {
+			continue
+		}
+		if (name == "ANTHROPIC_BASE_URL" && provider != ProviderAnthropic) || (name == "OPENAI_BASE_URL" && provider != ProviderOpenAI) {
 			continue
 		}
 		v = strings.TrimSpace(v)
@@ -368,8 +385,9 @@ func Normalize(c *Config) { normalize(c) }
 
 func (m *Manager) effective(file Config) Config {
 	c := clone(file)
+	p := m.provider(file)
 	for _, b := range bindings {
-		if v, _, ok := envValue(m.lookup, b); ok {
+		if v, _, ok := envValue(m.lookup, b, p); ok {
 			b.set(&c, v)
 		}
 	}
@@ -382,8 +400,9 @@ func (m *Manager) effective(file Config) Config {
 // Locked lists the settings fixed by environment variables, secrets included.
 func (m *Manager) Locked() []string {
 	out := []string{}
+	p := m.provider(m.File())
 	for _, b := range bindings {
-		if _, _, ok := envValue(m.lookup, b); ok {
+		if _, _, ok := envValue(m.lookup, b, p); ok {
 			out = append(out, b.path)
 		}
 	}
@@ -393,6 +412,17 @@ func (m *Manager) Locked() []string {
 		}
 	}
 	return out
+}
+
+// provider is the AI provider a config has once the environment is applied.
+func (m *Manager) provider(file Config) string {
+	if v, ok := m.lookup("LUMANTIC_AI_PROVIDER"); ok && strings.TrimSpace(v) != "" {
+		return strings.ToLower(strings.TrimSpace(v))
+	}
+	if p := strings.ToLower(strings.TrimSpace(file.AI.Provider)); p != "" {
+		return p
+	}
+	return ProviderAnthropic
 }
 
 // LockedError means a request tried to change a setting an env var fixes.
@@ -436,8 +466,9 @@ func (m *Manager) Merge(req map[string]json.RawMessage) (Config, error) {
 		}
 	}
 	normalize(&cand)
+	p := m.provider(cand)
 	for _, b := range bindings {
-		envV, name, ok := envValue(m.lookup, b)
+		envV, name, ok := envValue(m.lookup, b, p)
 		if !ok {
 			continue
 		}
@@ -571,11 +602,12 @@ func normalize(c *Config) {
 		k.Access, k.Editors, k.Rights = cleanList(k.Access), cleanList(k.Editors), strings.ToLower(strings.TrimSpace(k.Rights))
 		normalizeGrain(&k.Grain)
 	}
+	c.AI.Provider = strings.ToLower(c.AI.Provider)
 	if c.AI.Provider == "" {
-		c.AI.Provider = "anthropic"
+		c.AI.Provider = ProviderAnthropic
 	}
-	if c.AI.Model == "" {
-		c.AI.Model = "claude-opus-5-5"
+	if c.AI.Model == "" && c.AI.Provider == ProviderAnthropic {
+		c.AI.Model = DefaultModel
 	}
 	if c.Brand.Designs == nil {
 		c.Brand.Designs = []Design{}
@@ -583,13 +615,15 @@ func normalize(c *Config) {
 }
 
 var (
-	schemaRe  = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]{0,62}$`)
-	prefixRe  = regexp.MustCompile(`^[A-Za-z0-9_]{0,63}$`)
-	modelRe   = regexp.MustCompile(`^[a-z0-9][a-z0-9.\-]{0,63}$`)
-	slugRe    = regexp.MustCompile(`^[A-Za-z0-9\-]{0,40}$`)
-	kosmosRe  = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,39}$`)
-	accountRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.\-]{0,99}$`)
-	fontRe    = regexp.MustCompile(`^[A-Za-z0-9 \-]{0,40}$`)
+	schemaRe = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]{0,62}$`)
+	prefixRe = regexp.MustCompile(`^[A-Za-z0-9_]{0,63}$`)
+	modelRe  = regexp.MustCompile(`^[a-z0-9][a-z0-9.\-]{0,63}$`)
+	// Other servers name models more freely: llama3.1:8b, org/model, an Azure deployment.
+	openModelRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:/@+\-]{0,127}$`)
+	slugRe      = regexp.MustCompile(`^[A-Za-z0-9\-]{0,40}$`)
+	kosmosRe    = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,39}$`)
+	accountRe   = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.\-]{0,99}$`)
+	fontRe      = regexp.MustCompile(`^[A-Za-z0-9 \-]{0,40}$`)
 )
 
 func httpURL(s string) bool {
@@ -714,11 +748,18 @@ func Validate(c Config) error {
 			return fmt.Errorf("Kosmos %s: %w", k.ID, err)
 		}
 	}
-	if c.AI.Provider != "anthropic" {
-		return fmt.Errorf("Unbekannter KI-Anbieter %q. Möglich ist anthropic.", c.AI.Provider)
-	}
-	if !modelRe.MatchString(c.AI.Model) {
-		return fmt.Errorf("Ungültige Modell-ID %q.", c.AI.Model)
+	switch c.AI.Provider {
+	case ProviderAnthropic:
+		if !modelRe.MatchString(c.AI.Model) {
+			return fmt.Errorf("Ungültige Modell-ID %q.", c.AI.Model)
+		}
+	case ProviderOpenAI:
+		// Without a model Lumina waits; the settings say so.
+		if c.AI.Model != "" && !openModelRe.MatchString(c.AI.Model) {
+			return fmt.Errorf("Ungültige Modell-ID %q.", c.AI.Model)
+		}
+	default:
+		return fmt.Errorf("Unbekannter KI-Anbieter %q. Möglich sind anthropic und openai.", c.AI.Provider)
 	}
 	if c.AI.BaseURL != "" && !httpURL(c.AI.BaseURL) {
 		return errors.New("Die Adresse für die KI muss mit http:// oder https:// beginnen.")
