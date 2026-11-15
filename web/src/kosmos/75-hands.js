@@ -171,7 +171,7 @@ function endStarDrag(d, sx, sy) {
   st.el.classList.remove("is-drag");
   $("carry").hidden = true;
   hideMarks();
-  if (d.mode === "page") { src.user = true; save(); return; }
+  if (d.mode === "page") { src.user = true; save(); invalidate(); return; }
   if (d.mode !== "block" || (d.only && !t) || (t && t.y === null && t.pg === src)) return; // far away, a star dropped on its own constellation stays
   let to, at, fresh = false;
   if (t) { to = t.pg; at = t.at; }

@@ -156,14 +156,37 @@ function placeWorld() {
     if (!pg.user) { pg.x = Math.round(ring.rx * Math.cos(a)); pg.y = Math.round(ry * Math.sin(a)) - CY; }
   });
 }
-// After the pages were measured: when one grew into its neighbour's way, the ring widens. The page in view keeps its
-// place on the screen, so nothing jumps while someone reads.
+// After the pages were measured: when one grew into its neighbour's way, the ring widens, and a page placed by hand
+// steps aside. The page in view keeps its place on the screen, so nothing jumps while someone reads.
 function keepRingClear() {
-  // A flight or a pan sets the camera frame by frame; the ring waits until it has landed.
-  if (flyStop || zoomAnim || scrollAnim || ringNeed() <= ringMinY + 1) return;
+  // A flight or a pan sets the camera frame by frame; the pages wait until it has landed, and while one is in the hand.
+  if (flyStop || zoomAnim || scrollAnim || (starDrag && starDrag.mode === "page")) return;
   const pg = pages.get(activeId), y0 = pg ? pg.y : 0;
-  placeWorld();
+  if (ringNeed() > ringMinY + 1) placeWorld();
+  const aside = stepAside();
   if (pg && pg.y !== y0 && M.p >= 0.9) cam.y += pg.y - y0;
+  if (aside) { for (const p of pages.values()) seats(p); save(); }
+}
+// The ring only looks after its own pages. One placed by hand can be dropped on another page, grow into it later, or
+// find the ring moved under it. Then it goes below the page it lies on; where it is the upper one and the other
+// stands on the ring, it goes up above it. Caught between two, it steps sideways like a new page. Closer than a new
+// page may start (freeSpot) counts as lying on it.
+function stepAside() {
+  const all = [...pages.values()], w = PAGE_W + 2 * GUT, AIR = 160;
+  let moved = false;
+  for (let n = 0; n < 8; n++) {
+    let again = false;
+    for (const p of all) for (const q of all) {
+      if (p === q || p.y > q.y || (p.y === q.y && p.id > q.id)) continue; // p is the upper one of the two
+      if (Math.abs(p.x - q.x) >= w || q.y >= p.y + (p.h || 0) + 40 || !(p.user || q.user)) continue;
+      if (n >= 3) { const u = q.user ? q : p, o = u === q ? p : q; u.x = o.x + (u.x < o.x ? -1 : 1) * (w + 26); }
+      else if (q.user) q.y = Math.round(p.y + (p.h || 0) + AIR);
+      else p.y = Math.round(q.y - (p.h || 0) - AIR);
+      again = moved = true;
+    }
+    if (!again) break;
+  }
+  return moved;
 }
 function buildWorld() {
   addPage({ id: "heute", sys: "heute", x: 0, y: -CY });

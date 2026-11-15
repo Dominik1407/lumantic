@@ -45,5 +45,26 @@ export default async (t) => {
   await t.wait(900);
   const out = await q(`return window.__kosmos.cam.z`);
   check("beside the page the wheel zooms out", out < at.z - 0.05, { before: at.z, after: out });
+
+  // A page placed by hand is outside the ring's care. Laid on a page of the ring, or grown into it later, it steps
+  // aside: up above it where it is the upper one, else below it. The page in view keeps its place on the screen.
+  const TOP = `[...d.pages.values()].find((p) => p.id !== "heute" && p.sys && Math.abs(p.x) < 5 && p.y < 0)`;
+  const above = () => q(`const d = window.__kosmos, h = d.pages.get("heute"), t = ${TOP}; return Math.round(t.y - (h.y + h.h))`);
+  const held = () => q(`const d = window.__kosmos; return d.cam.y - d.pages.get("heute").y`);
+  const redraw = async () => { await t.key("ArrowDown"); await t.wait(600); await t.key("ArrowUp"); await t.wait(900); };
+  await q(`const d = window.__kosmos, h = d.pages.get("heute"), t = ${TOP}; h.user = true; h.x = t.x - 37; h.y = t.y - h.h + 200; return 1`);
+  await q(`window.__kosmos.flyPlace("heute"); return 1`);
+  await t.wait(2600);
+  check("a page laid on another by hand steps aside, up above it with air between", (await q(OVERLAPS)).length === 0 && (await above()) >= 150, [await q(OVERLAPS), await above()]);
+  const h0 = await held();
+  await q(`const d = window.__kosmos, pg = d.pages.get("heute"), x = document.createElement("div"); x.style.height = "700px"; pg.el.append(x); pg.dirty = true; return 1`);
+  await redraw();
+  check("when it grows into the page below, it makes room again", (await q(OVERLAPS)).length === 0 && (await above()) >= 150, [await q(OVERLAPS), await above()]);
+  check("and keeps its place on the screen", Math.abs((await held()) - h0) < 1, [h0, await held()]);
+  await q(`const d = window.__kosmos, h = d.pages.get("heute"), t = ${TOP}; h.y = t.y + 60; return 1`);
+  await redraw();
+  const below = await q(`const d = window.__kosmos, h = d.pages.get("heute"), t = ${TOP}; return Math.round(h.y - (t.y + t.h))`);
+  check("laid into a page from below, it goes below it", (await q(OVERLAPS)).length === 0 && below >= 150, [await q(OVERLAPS), below]);
+  await t.shot("von-hand");
   return done();
 };
