@@ -1,0 +1,67 @@
+name: Test report
+description: You tried Lumantic with a real system. Whether it worked or not, both help.
+labels: [test report]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for testing. The parts that have not met a real system yet are listed under «Help test it» in the README. Please remove tokens, internal addresses and real figures before you send this.
+  - type: dropdown
+    id: part
+    attributes:
+      label: What did you test?
+      multiple: true
+      options:
+        - Snowflake
+        - Databricks
+        - Windmill
+        - Asking in the person's name
+        - Login with OpenID Connect
+        - Login through a proxy
+        - Lumina with Claude
+        - Lumina with an OpenAI-compatible model
+        - Release file (Windows, macOS, Linux)
+        - Docker
+        - Browser or tablet
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: against
+    attributes:
+      label: Against what exactly?
+      placeholder: Keycloak 26, Snowflake on Azure, Safari on an iPad …
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options:
+        - Works
+        - Works, with problems
+        - Does not work
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What did you do, and what happened?
+      description: The settings you used (without tokens), your steps and the messages Lumantic showed.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Lumantic version
+      description: Shown in the settings under «About».
+  - type: input
+    id: system
+    attributes:
+      label: System and browser
+      placeholder: macOS 26, Safari 26
+  - type: textarea
+    id: logs
+    attributes:
+      label: Screenshots or logs
+      description: Please remove tokens and real figures first.

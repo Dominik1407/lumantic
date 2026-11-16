@@ -534,8 +534,32 @@ Bildschirmfotos in `scripts/ui-test/shots/` ab.
 - Kennzahlen eines neuen Kosmos aus seinen Tabellen vorschlagen
 - Feiertage beim Verteilen von Zielen auf Arbeitstage (je nach Kanton)
 - Lagebericht als Nachricht in Teams oder per Mail, jeden Morgen
-- Windmill, Snowflake und Databricks gegen echte Instanzen testen
 - Korrektur für Mehrfachvergleiche, wenn Lumina sehr viele Reihen prüft
+
+## Beim Testen helfen
+
+Lumantic macht eine Person, die an die meisten Systeme, mit denen es spricht, nicht herankommt.
+Die Tests oben decken viel ab, aber diese Teile kennen bisher nur nachgebaute Antworten ihrer
+Schnittstellen, nie das echte System:
+
+| Teil | Was ein Test braucht |
+|---|---|
+| Snowflake | ein Konto mit Warehouse; Schlüsselpaar oder Token |
+| Databricks | ein Workspace mit SQL-Warehouse; Service Principal oder Token |
+| Windmill | eine Instanz mit den beiden Skripten aus `adapters/windmill/` |
+| Fragen im Namen der Person | Snowflake mit OAuth oder Databricks mit Token-Föderation, `rights: "source"` |
+| Anmeldung mit OpenID Connect | Authentik, Entra ID, Keycloak, ADFS oder ein anderer Anbieter |
+| Anmeldung über einen Proxy | ein Authentik-Outpost oder ein anderer Proxy, der die Person in Kopfzeilen weitergibt |
+| Lumina mit Claude | ein API-Token von Anthropic |
+| Lumina mit einem OpenAI-kompatiblen Modell | ein Schlüssel für OpenAI oder Azure OpenAI, oder ein lokales Modell in Ollama, LM Studio oder vLLM |
+| Dateien der Releases | macOS und Linux; Doppelklick unter Windows. Die CI startet jede Datei nur einmal |
+| Docker | `docker compose up` mit einem Goldlayer, der als Ordner eingebunden ist |
+| Browser | Firefox und Safari, Tippen und Zoomen auf einem Tablet. Die Oberflächentests laufen nur in Edge |
+
+Für das meiste reichen die Beispiele: Lumina, Anmeldung, Browser und die Dateien der Releases
+brauchen keine eigenen Daten. Ein Bericht hilft auch, wenn alles geht. Bitte das Formular
+[«Test report»](https://github.com/Dominik1407/lumantic/issues/new?template=test.yml) nehmen und
+vorher Tokens, interne Adressen und echte Zahlen entfernen.
 
 ## Mitmachen
 

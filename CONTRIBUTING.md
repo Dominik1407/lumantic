@@ -4,6 +4,10 @@ Thanks for your interest. Lumantic is a small project with one maintainer and a 
 how it should look and feel. Contributions are welcome, in a curated way:
 
 - **Issues and ideas: always.** Bug reports, questions and proposals help the most.
+- **Test reports: always.** Lumantic talks to systems its maintainer cannot reach: warehouses,
+  login providers, AI models. Trying one of them takes no code; what is still untested is listed
+  under «Help test it» in the [README](README.md#help-test-it), and the issue form «Test report»
+  asks for the rest. A report that something works counts as much as a bug.
 - **Pull requests: after agreement.** Open an issue first and describe what you want to change.
   Once the direction is agreed, send the pull request and link the issue. Pull requests without
   a prior issue may be closed, however good they are.

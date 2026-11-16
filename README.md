@@ -536,8 +536,32 @@ app in Edge without a window with real keys and clicks, and puts screenshots in
 - Suggesting the key figures of a new Kosmos from its tables
 - Holidays when spreading targets over working days (per canton)
 - A morning report as a message in Teams or by mail
-- Testing Windmill, Snowflake and Databricks against real instances
 - Correcting for multiple comparisons when Lumina checks very many series
+
+## Help test it
+
+Lumantic is made by one person who cannot reach most of the systems it talks to. The tests above
+cover a lot, but these parts have so far met only rebuilt answers of their interfaces, never the
+real thing:
+
+| Part | What a test needs |
+|---|---|
+| Snowflake | an account with a warehouse; a key pair or a token |
+| Databricks | a workspace with a SQL warehouse; a service principal or a token |
+| Windmill | an instance with the two scripts from `adapters/windmill/` |
+| Asking in the person's name | Snowflake with OAuth or Databricks with token federation, `rights: "source"` |
+| Login with OpenID Connect | Authentik, Entra ID, Keycloak, ADFS or another provider |
+| Login through a proxy | an Authentik outpost or another proxy that passes the person on in headers |
+| Lumina with Claude | an Anthropic API token |
+| Lumina with an OpenAI-compatible model | a key for OpenAI or Azure OpenAI, or a local model in Ollama, LM Studio or vLLM |
+| Release files | macOS and Linux; a double-click on Windows. The CI starts each file only once |
+| Docker | `docker compose up` with a gold layer mounted as a folder |
+| Browsers | Firefox and Safari, touch and pinch on a tablet. The interface tests run only in Edge |
+
+For most of these the examples are enough: Lumina, login, browsers and the release files need no
+data of your own. A report helps even when everything works. Please use the form
+[«Test report»](https://github.com/Dominik1407/lumantic/issues/new?template=test.yml) and remove
+tokens, internal addresses and real figures first.
 
 ## Contributing
 
