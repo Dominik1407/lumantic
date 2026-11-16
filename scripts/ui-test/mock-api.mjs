@@ -90,7 +90,7 @@ const state = {
     ai: { enabled: true, provider: "anthropic", model: "claude-opus-5-5", baseURL: "" },
     brand: { name: "", logo: "", logoDark: "", designs: [] },
   },
-  secrets: { anthropicToken: "", windmillToken: "" }, // plus "key@id" entries for warehouse tokens
+  secrets: { anthropicToken: "", openaiToken: "", windmillToken: "" }, // plus "key@id" entries for warehouse tokens
   me: null, // who is signed in; null = nobody signs in, the local person may do everything
   asked: [],
   saves: 0,
@@ -153,6 +153,12 @@ function status(k) {
   return { ...base, ok: true, tables: tables.size, kpisLoaded: loaded(k).length, months: metrics.months.length, first: metrics.months[0], last: metrics.months.at(-1) };
 }
 const info = (k) => ({ id: k.id, name: k.data.name, type: k.data.type, main: k.id === "main", status: status(k) });
+// What Lumina still lacks, as the server says it: off, model, token or "". A server with OpenAI's chat completions
+// needs a model, and a key only without an address of its own.
+const lacks = () => {
+  const a = state.config.ai, has = a.provider === "openai" ? !!state.secrets.openaiToken || !!a.baseURL : !!state.secrets.anthropicToken;
+  return !a.enabled ? "off" : !a.model ? "model" : !has ? "token" : "";
+};
 function settings(k) {
   const c = state.config, tok = secret("anthropicToken");
   return { me: meOf(), version: "0.11.0", configPath: "config/lumantic.json", configExists: state.saves > 0, locked: ["data.duckdb"], ui: c.ui,
@@ -163,7 +169,7 @@ function settings(k) {
     metrics: k.metrics, status: status(k),
     refresh: { ...planOf(k), own: !!k.plan, watchable: watchable(k.data), token: k.token ? { set: true, hint: k.token.slice(-4), source: "datei" } : { set: false, hint: "", source: "" } },
     grain: k.grain || "monat",
-    ai: { ...c.ai, token: tok, models: MODELS, ready: c.ai.enabled && tok.set }, brand: c.brand };
+    ai: { ...c.ai, token: tok, openaiToken: secret("openaiToken"), models: MODELS, ready: lacks() === "", missing: lacks() }, brand: c.brand };
 }
 const missing = (d) => {
   const t = tables.get(d.monthly?.table);
@@ -280,6 +286,7 @@ async function api(req, res, url) {
     }
     const { data: _d, refresh: _r, grain: _g, ...rest } = b;
     merge(state.config, rest);
+    if (state.config.ai.provider !== "openai" && !state.config.ai.model) state.config.ai.model = "claude-opus-5-5";
     state.saves++;
     return send(res, 200, settings(k));
   }
@@ -297,7 +304,8 @@ async function api(req, res, url) {
     return send(res, 200, secret(b.key, id));
   }
   if (m === "POST" && path === "/api/settings/ai/test") {
-    return send(res, 200, state.secrets.anthropicToken ? { ok: true, model: state.config.ai.model, ms: 812, error: "" } : { ok: false, model: state.config.ai.model, ms: 0, error: "Es ist kein API-Token gesetzt." });
+    const why = { off: "Die KI ist ausgeschaltet.", model: "Es fehlt das Modell. Trag es unter Einstellungen › Lumina ein.", token: "Es ist kein API-Token gesetzt." }[lacks()];
+    return send(res, 200, !why ? { ok: true, model: state.config.ai.model, ms: 812, error: "" } : { ok: false, model: state.config.ai.model, ms: 0, error: why });
   }
   if (m === "POST" && path === "/api/refresh") return send(res, 200, status(k));
   if (m === "POST" && path === "/api/refresh/token") {
@@ -331,7 +339,7 @@ async function api(req, res, url) {
     if (m === "DELETE") { k.defs.splice(i, 1); wrote(k); return send(res, 204); }
   }
   if (m === "POST" && path === "/api/lumina/ask") {
-    if (!(state.config.ai.enabled && state.secrets.anthropicToken)) return fail(res, 409, "Für Lumina ist kein API-Token gesetzt.");
+    if (lacks()) return fail(res, 409, { off: "Lumina ist ohne KI eingestellt.", model: "Für Lumina ist kein Modell eingetragen.", token: "Für Lumina ist kein API-Token gesetzt." }[lacks()]);
     if (!String(b.question || "").trim()) return fail(res, 400, "Bitte stell eine Frage.");
     state.asked.push({ question: b.question, month: b.month, figures: (b.facts?.figures || []).length });
     const f = (b.facts?.figures || []).find((x) => x.id === "lcr") || b.facts?.figures?.[0];

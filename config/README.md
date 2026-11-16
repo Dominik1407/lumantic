@@ -12,7 +12,7 @@ Firmendesign liegt in `lumantic.example.json`. Kopieren, umbenennen und anpassen
 | `refresh` | Wann der erste Kosmos von selbst neu gelesen wird (siehe «Aktualisierung»). Fehlt es, gilt das Übliche für seine Datenquelle. |
 | `auth` | Wie man sich anmeldet und wer Administrator ist (siehe «Anmeldung und Rechte»). Nur in dieser Datei, nie aus der App. |
 | `access`, `editors`, `rights` | Wer den ersten Kosmos sieht, wer seine Kennzahlen pflegt, und ob die Datenbank selbst prüft. |
-| `ai` | Lumina mit Claude: an oder aus, Modell, und optional eine Adresse für ein Firmen-Gateway. |
+| `ai` | Lumina mit einer KI: an oder aus, Anbieter, Modell und Adresse (siehe «Lumina mit einer KI»). |
 | `ui` | Die Standard-Darstellung für alle. Jede Person kann sie in der App für sich ändern. `ui.language` ist die Sprache: `de`, `en` oder leer für die des Browsers. |
 | `brand` | Firmenname, eigenes Logo und eigene Designs (siehe unten). |
 
@@ -23,7 +23,26 @@ Benutzer lesbar). Die App zeigt von einem Token nur die letzten vier Zeichen.
 
 Die Tokens von Snowflake und Databricks gehören zu einem Kosmos. Für den ersten heissen sie `snowflakeToken`,
 `databricksToken` und `databricksSecret`, für jeden weiteren `snowflakeToken@<id>` und so fort. Wird ein Kosmos
-entfernt, gehen seine Tokens mit. Den Claude-Token und den Windmill-Token teilen sich alle Kosmen.
+entfernt, gehen seine Tokens mit. Den Claude-Token (`anthropicToken`), den Schlüssel für einen OpenAI-kompatiblen
+Server (`openaiToken`) und den Windmill-Token teilen sich alle Kosmen.
+
+## Lumina mit einer KI
+
+```json
+"ai": { "enabled": true, "provider": "openai", "model": "llama3.1:8b", "baseURL": "http://localhost:11434/v1" }
+```
+
+| Feld | Bedeutung |
+|---|---|
+| `provider` | `anthropic` (Claude, Standard) oder `openai`: jeder Server mit der Chat-Completions-Schnittstelle von OpenAI, etwa OpenAI, Azure OpenAI, Ollama, LM Studio, vLLM, Mistral, LiteLLM oder ein Firmen-Gateway. |
+| `model` | Bei `anthropic` eine Claude-ID, leer heisst `claude-opus-5-5`. Bei `openai` der Name, wie ihn der Server kennt (`gpt-4.1-mini`, `llama3.1:8b`, bei Azure das Deployment), ohne Standard: Bis er eingetragen ist, sucht Lumina nach Stichwörtern. |
+| `baseURL` | Bei `anthropic` die Adresse eines Firmen-Gateways, leer heisst direkt zu Anthropic. Bei `openai` die Adresse des Servers, leer heisst `https://api.openai.com/v1`; eine Adresse ohne Pfad bekommt `/v1`. Ollama `http://localhost:11434/v1`, LM Studio `http://localhost:1234/v1`, Azure `https://NAME.openai.azure.com/openai/v1` oder die Adresse eines Deployments mit `?api-version=…`. |
+
+Bei `openai` braucht es den Schlüssel `openaiToken` nur, wo der Server einen verlangt (OpenAI, Azure). Ohne eigene Adresse
+gilt Lumina ohne Schlüssel als nicht eingerichtet. Bei Azure-Adressen schickt Lumantic den Schlüssel im Header `api-key`,
+sonst als `Authorization: Bearer`. Lumina schickt dem Server die Frage und die Kennzahlen des Monats, keine
+Datenzeilen. Mit einem lokalen Modell bleibt also alles im eigenen Netz. Die Karten der ersten Oberfläche (`/api/ask`,
+`/api/brief`) baut nur Claude; mit `openai` antworten diese Routen mit 409 und sagen das.
 
 ## Datenort
 
@@ -64,8 +83,10 @@ Eine Umgebungsvariable gewinnt immer gegen die Datei. Die App zeigt solche Felde
 | `LUMANTIC_OPEN` | Lumantic ohne Anmeldung mit eigenen Daten von aussen erreichbar machen, nur hinter einer eigenen Absicherung. Ohne zeigt es von aussen nur die Beispiele |
 | `LUMANTIC_BROWSER` | `0`: beim Start den Browser nicht öffnen (er öffnet sich nur im eigenen Datenort und auf diesem Rechner) |
 | `LUMANTIC_DUCKDB_MEMORY` | wie viel Speicher eine Abfrage in DuckDB brauchen darf (Standard `2GB`, höchstens vier laufen gleichzeitig) |
-| `LUMANTIC_LUMINA` (`claude` oder `beispiel`), `LUMANTIC_MODEL`, `ANTHROPIC_BASE_URL` | `ai.enabled`, `ai.model`, `ai.baseURL` |
+| `LUMANTIC_LUMINA` (`claude` oder `beispiel`), `LUMANTIC_AI_PROVIDER` (`anthropic` oder `openai`), `LUMANTIC_MODEL` | `ai.enabled`, `ai.provider`, `ai.model` |
+| `ANTHROPIC_BASE_URL` bei `anthropic`, `OPENAI_BASE_URL` bei `openai` | `ai.baseURL` (die Variable des anderen Anbieters zählt nicht) |
 | `ANTHROPIC_API_KEY` oder `ANTHROPIC_AUTH_TOKEN` | der Claude-Token |
+| `OPENAI_API_KEY` oder `AZURE_OPENAI_API_KEY` | der Schlüssel für einen OpenAI-kompatiblen Server |
 | `LUMANTIC_ADDR`, `LUMANTIC_DATA` | Adresse des Servers (Standard `127.0.0.1:8080`; ist der Port belegt, nimmt Lumantic einen freien), Datei mit dem Arbeitsbereich |
 
 ## Snowflake und Databricks

@@ -826,35 +826,57 @@ export function createSettings(host: SettingsHost) {
 
   // ───────────── Lumina ─────────────
   function lumina(s: Settings): Node[] {
-    const ai = s.ai, locked = (k: string) => s.locked.includes("ai." + k), model = ai.models.find((x) => x.id === ai.model);
+    const ai = s.ai, locked = (k: string) => s.locked.includes("ai." + k), open = ai.provider === "openai", model = ai.models.find((x) => x.id === ai.model);
     const m = msgLine();
     const put = async (patch: Partial<Settings["ai"]>) => {
       try { host.setSettings(await api.saveSettings({ ai: patch })); render(); } catch (e) { m.set(errText(e), "bad"); }
     };
-    const state = ai.ready ? tr(`Lumina beantwortet Fragen mit ${model ? model.name : ai.model}.`, `Lumina answers questions with ${model ? model.name : ai.model}.`) : !ai.enabled ? tr("Die KI ist aus. Lumina sucht in deiner Frage nach Stichwörtern.", "The AI is off. Lumina looks for keywords in your question.") : tr("Es fehlt ein API-Token. Bis dahin sucht Lumina nach Stichwörtern.", "An API token is missing. Until then Lumina looks for keywords.");
-    const base = textInput(ai.baseURL, { placeholder: "https://api.anthropic.com", inputmode: "url", disabled: locked("baseURL") });
-    const fBase = field(tr("Adresse (optional)", "Address (optional)"), base, locked("baseURL") ? tr("Durch eine Umgebungsvariable festgelegt.", "Set by an environment variable.") : tr("Nur nötig, wenn Anfragen über ein Firmen-Gateway laufen. Leer heisst direkt zu Anthropic.", "Only needed when requests go through a company gateway. Empty means straight to Anthropic."));
-    const applyBase = () => { if (base.value.trim() !== ai.baseURL) void put({ baseURL: base.value.trim() }); };
-    base.addEventListener("change", applyBase);
+    // Where the questions go: Anthropic, OpenAI, an Azure resource, or the server at the address.
+    let at = "";
+    try { at = new URL(ai.baseURL).host; } catch { /* no address: the provider's own */ }
+    const local = /^(localhost|127\.\d+\.\d+\.\d+|\[::1\])(:\d+)?$/i.test(at);
+    const to = !open ? "Anthropic" : !at || at === "api.openai.com" ? "OpenAI" : /\.(openai|cognitiveservices|services\.ai)\.azure\.com$/i.test(at.replace(/:\d+$/, "")) ? `Azure OpenAI (${at})` : at;
+    const shown = open ? ai.model : model ? model.name : ai.model;
+    const state = ai.ready ? (open ? tr(`Lumina beantwortet Fragen mit ${shown} über ${to}.`, `Lumina answers questions with ${shown} via ${to}.`) : tr(`Lumina beantwortet Fragen mit ${shown}.`, `Lumina answers questions with ${shown}.`))
+      : !ai.enabled ? tr("Die KI ist aus. Lumina sucht in deiner Frage nach Stichwörtern.", "The AI is off. Lumina looks for keywords in your question.")
+      : ai.missing === "model" ? tr("Es fehlt das Modell. Bis dahin sucht Lumina nach Stichwörtern.", "The model is missing. Until then Lumina looks for keywords.")
+      : tr("Es fehlt ein API-Token. Bis dahin sucht Lumina nach Stichwörtern.", "An API token is missing. Until then Lumina looks for keywords.");
+    const privacy = h("p", { class: "s-privacy" }, local
+      ? tr(`Lumina schickt deine Frage und die Kennzahlen dieses Monats an ${at}, auf dem Rechner, auf dem Lumantic läuft. Keine Datenzeilen aus dem Goldlayer.`, `Lumina sends your question and this month's key figures to ${at}, on the computer Lumantic runs on. No data rows from the gold layer.`)
+      : tr(`Lumina schickt deine Frage und die Kennzahlen dieses Monats an ${to}. Keine Datenzeilen aus dem Goldlayer.`, `Lumina sends your question and this month's key figures to ${to}. No data rows from the gold layer.`));
+    const status = h("p", { class: "s-status", "data-tone": ai.ready ? "ok" : "off" }, h("i", { class: "s-led", "aria-hidden": "true" }), state);
+    if (!admin(s)) return [status, note(tr("Lumina richten Administratoren ein.", "Administrators set up Lumina.")), privacy];
+    const fixed = tr("Durch eine Umgebungsvariable festgelegt.", "Set by an environment variable.");
+    const base = textInput(ai.baseURL, { placeholder: open ? "https://api.openai.com/v1" : "https://api.anthropic.com", inputmode: "url", disabled: locked("baseURL") });
+    const fBase = open
+      ? field(tr("Adresse", "Address"), base, locked("baseURL") ? fixed : tr("Leer heisst OpenAI. Ollama: http://localhost:11434/v1 · LM Studio: http://localhost:1234/v1 · Azure: https://NAME.openai.azure.com/openai/v1", "Empty means OpenAI. Ollama: http://localhost:11434/v1 · LM Studio: http://localhost:1234/v1 · Azure: https://NAME.openai.azure.com/openai/v1"))
+      : field(tr("Adresse (optional)", "Address (optional)"), base, locked("baseURL") ? fixed : tr("Nur nötig, wenn Anfragen über ein Firmen-Gateway laufen. Leer heisst direkt zu Anthropic.", "Only needed when requests go through a company gateway. Empty means straight to Anthropic."));
+    base.addEventListener("change", () => { if (base.value.trim() !== ai.baseURL) void put({ baseURL: base.value.trim() }); });
     const test = btn(tr("Verbindung testen", "Test the connection"), async () => {
-      m.set(tr("Lumina fragt kurz bei Claude nach …", "Lumina is checking with Claude …"));
+      m.set(open ? tr("Lumina fragt kurz beim Modell nach …", "Lumina is checking with the model …") : tr("Lumina fragt kurz bei Claude nach …", "Lumina is checking with Claude …"));
       try {
         const r = await api.testAI();
         const nm = ai.models.find((x) => x.id === r.model)?.name || r.model;
         m.set(r.ok ? tr(`Verbunden mit ${nm}, Antwort in ${thousands(r.ms)} ms.`, `Connected to ${nm}, answer in ${thousands(r.ms)} ms.`) : r.error || tr("Die Verbindung klappt nicht.", "The connection does not work."), r.ok ? "ok" : "bad");
       } catch (e) { m.set(errText(e), "bad"); }
     });
-    if (!admin(s)) return [
-      h("p", { class: "s-status", "data-tone": ai.ready ? "ok" : "off" }, h("i", { class: "s-led", "aria-hidden": "true" }), state),
-      note(tr("Lumina richten Administratoren ein.", "Administrators set up Lumina.")),
-      h("p", { class: "s-privacy" }, tr("Lumina schickt deine Frage und die Kennzahlen dieses Monats an Anthropic. Keine Datenzeilen aus dem Goldlayer.", "Lumina sends your question and this month's key figures to Anthropic. No data rows from the gold layer.")),
-    ];
+    // Another provider means another server: model and address of the one before do not fit it.
+    const providers = [{ v: "anthropic", name: "Anthropic", note: "Claude" }, { v: "openai", name: tr("OpenAI-kompatibel", "OpenAI-compatible"), note: "OpenAI, Azure, Ollama, LM Studio …" }];
+    const pick = (v: string) => void put({ provider: v, ...(locked("model") ? {} : { model: "" }), ...(locked("baseURL") ? {} : { baseURL: "" }) });
+    let modelPart: Node;
+    if (open) {
+      const name = textInput(ai.model, { placeholder: "llama3.1:8b, gpt-4.1-mini …", disabled: locked("model") });
+      name.addEventListener("change", () => { if (name.value.trim() !== ai.model) void put({ model: name.value.trim() }); });
+      modelPart = field(tr("Name des Modells", "Name of the model"), name, locked("model") ? fixed : tr("So, wie der Server es nennt. Bei Azure der Name des Deployments.", "As the server names it. With Azure, the name of the deployment.")).wrap;
+    } else modelPart = choice(tr("Modell", "Model"), ai.models.map((x) => ({ v: x.id, name: x.name, note: x.note })), ai.model, (v) => void put({ model: v }), { stacked: true, disabled: locked("model") });
     return [
-      h("p", { class: "s-status", "data-tone": ai.ready ? "ok" : "off" }, h("i", { class: "s-led", "aria-hidden": "true" }), state),
-      group(tr("KI", "AI"), toggle(tr("KI verwenden", "Use AI"), ai.enabled, (v) => void put({ enabled: v }), locked("enabled")), locked("enabled") ? note(tr("Durch eine Umgebungsvariable festgelegt.", "Set by an environment variable.")) : null),
-      group(tr("Modell", "Model"), choice(tr("Modell", "Model"), ai.models.map((x) => ({ v: x.id, name: x.name, note: x.note })), ai.model, (v) => void put({ model: v }), { stacked: true, disabled: locked("model") })),
-      group(tr("Zugang", "Access"), secretBlock("anthropicToken", tr("API-Token", "API token"), ai.token, tr("Das API-Token", "The API token")), fBase.wrap, actions(test), m.el),
-      h("p", { class: "s-privacy" }, tr("Lumina schickt deine Frage und die Kennzahlen dieses Monats an Anthropic. Keine Datenzeilen aus dem Goldlayer.", "Lumina sends your question and this month's key figures to Anthropic. No data rows from the gold layer.")),
+      status,
+      group(tr("KI", "AI"), toggle(tr("KI verwenden", "Use AI"), ai.enabled, (v) => void put({ enabled: v }), locked("enabled")), locked("enabled") ? note(fixed) : null),
+      group(tr("Anbieter", "Provider"), choice(tr("Anbieter", "Provider"), providers, open ? "openai" : "anthropic", pick, { stacked: true, disabled: locked("provider") }), locked("provider") ? note(fixed) : null),
+      group(tr("Modell", "Model"), modelPart),
+      group(tr("Zugang", "Access"), open ? secretBlock("openaiToken", tr("API-Token", "API token"), ai.openaiToken, tr("Das API-Token", "The API token")) : secretBlock("anthropicToken", tr("API-Token", "API token"), ai.token, tr("Das API-Token", "The API token")),
+        open ? note(tr("Ein lokales Modell wie Ollama oder LM Studio braucht meist keins.", "A local model such as Ollama or LM Studio usually needs none.")) : null, fBase.wrap, actions(test), m.el),
+      privacy,
     ];
   }
 

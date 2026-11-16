@@ -141,7 +141,7 @@ Wer welchen Kosmos sieht, regelt die Anmeldung (siehe «Anmeldung und Rechte»).
 | **Start** | Ansicht beim Öffnen, wohin die Zeitlinse schaut, Hinweise zu Gesten | dich |
 | **Daten** | Für den Kosmos, in dem man ist: Datenquelle verbinden und prüfen, neu laden; Kennzahlen hinzufügen, Ziel, Limit und Richtung ändern; den Kosmos entfernen | alle |
 | **Kosmen** | Im Hauptmenü an der Stelle von «Daten»: alle Kosmen, einen weiteren anlegen, einen entfernen | alle |
-| **Lumina** | KI an oder aus, Modell, API-Token, optional die Adresse eines Firmen-Gateways, Verbindung testen | alle |
+| **Lumina** | KI an oder aus, Anbieter (Anthropic oder OpenAI-kompatibel), Modell, API-Token, Adresse, Verbindung testen | alle |
 | **Über** | Version, Kosmos, Pfad der Konfiguration, eigene Seiten zurücksetzen | |
 
 Persönliches liegt im Arbeitsbereich auf dem Server, alles für alle in `config/lumantic.json`.
@@ -400,17 +400,43 @@ und keine Passwörter. Es nimmt Konto, Name und Gruppen aus der Anmeldung:
 Jede Person hat ihre eigenen Seiten, und `data/zugriff.log` hält fest, wer sich anmeldet und welchen Kosmos öffnet.
 Einrichtung im Detail: `config/README.md`, Abschnitt «Anmeldung und Rechte».
 
-## Lumina mit Claude
+## Lumina mit einer KI
 
-Ohne API-Token sucht Lumina Fragen nach Stichwörtern ab. Mit Token (Einstellungen → Lumina,
-oder `ANTHROPIC_API_KEY`) beantwortet Claude die Frage in ein bis drei Sätzen und schlägt
-bis zu drei Diagramme vor. Standardmodell ist `claude-opus-5-5`.
+Ohne KI sucht Lumina Fragen nach Stichwörtern ab. Mit einer KI beantwortet das Modell die Frage
+in ein bis drei Sätzen und schlägt bis zu drei Diagramme vor. Lumantic bewertet die Zahlen mit
+festen Regeln, das Modell formuliert nur und beantwortet Fragen. Dafür reicht auch ein
+kleineres Modell. Die Regeln, Sätze und Empfehlungen auf den Seiten laufen ohne KI.
 
-Lumina schickt die Frage und die ausgewerteten Kennzahlen des gezeigten Monats an Anthropic
-(Wert, Vormonat, Ziel, Limit, Stufe, die letzten 13 Monate, Teile), keine Datenzeilen aus dem
-Goldlayer. Das Token liegt in `data/secrets.json`, nie in der Konfiguration, und die App zeigt
-davon nur die letzten vier Zeichen. Läuft der Zugang über ein Firmen-Gateway, trägt man dessen
-Adresse ein. Die Regeln, Sätze und Empfehlungen auf den Seiten laufen ohne KI.
+Lumina schickt die Frage und die ausgewerteten Kennzahlen des gezeigten Monats (Wert, Vormonat,
+Ziel, Limit, Stufe, die letzten 13 Monate, Teile), keine Datenzeilen aus dem Goldlayer. Tokens
+liegen in `data/secrets.json`, nie in der Konfiguration, und die App zeigt davon nur die
+letzten vier Zeichen.
+
+**Claude (Standard).** Mit API-Token (Einstellungen → Lumina, oder `ANTHROPIC_API_KEY`)
+antwortet Claude, Standardmodell ist `claude-opus-5-5`. Die Kennzahlen gehen an Anthropic.
+Läuft der Zugang über ein Firmen-Gateway, trägt man dessen Adresse ein.
+
+**Jedes Modell hinter der Chat-Completions-Schnittstelle von OpenAI.** Unter Einstellungen →
+Lumina «OpenAI-kompatibel» wählen (oder `ai.provider: "openai"`, `LUMANTIC_AI_PROVIDER=openai`).
+Diese Schnittstelle bieten viele Server an: OpenAI, Azure OpenAI, Ollama, LM Studio, vLLM,
+Mistral, LiteLLM und viele Firmen-Gateways. Dazu gehören:
+
+- **Modell**: der Name, wie ihn der Server kennt (`gpt-4.1-mini`, `llama3.1:8b`, bei Azure der
+  Name des Deployments). Einen Standard gibt es nicht.
+- **Adresse**: leer heisst `https://api.openai.com/v1`. Ollama: `http://localhost:11434/v1`,
+  LM Studio: `http://localhost:1234/v1`, Azure: `https://NAME.openai.azure.com/openai/v1` (die
+  ältere Adresse eines Deployments mit `?api-version=…` geht auch). Eine Adresse ohne Pfad
+  bekommt `/v1`.
+- **API-Token** (oder `OPENAI_API_KEY`): nötig bei OpenAI und Azure, bei einem lokalen Modell
+  meist nicht. Bei Azure schickt Lumantic es im Header `api-key`, sonst als
+  `Authorization: Bearer`.
+
+Die Kennzahlen gehen dann an diesen Server. Mit einem lokalen Modell (Ollama oder LM Studio auf
+dem eigenen Rechner oder im eigenen Netz) verlässt nichts das eigene Netz. Lumantic verlangt die
+Antwort zuerst als JSON mit Schema (`response_format: json_schema`). Lehnt ein Server das ab,
+fragt es mit `json_object`, dann nur mit dem Prompt, und liest das JSON aus dem Text. Was
+geklappt hat, merkt es sich. Die Karten der ersten Oberfläche (`/api/ask`, `/api/brief`) baut
+nur Claude; mit einem anderen Anbieter sagen diese Routen das.
 
 ## Architektur
 
@@ -422,7 +448,7 @@ Adresse ein. Die Regeln, Sätze und Empfehlungen auf den Seiten laufen ohne KI.
    │  config   Einstellungen, Umgebungsvariablen, Tokens    │
    │  source   baut aus den Einstellungen die Datenquelle   │
    │  metrics  Definitionen + Goldlayer → Zeitreihen        │
-   │  ai       Claude für Lumina                            │
+   │  ai       Claude oder ein anderes Modell für Lumina    │
    │  store    Arbeitsbereich: Seiten, Blöcke, Darstellung  │
    └────────────┬──────────────────────────────────────────┘
                 │  zwei Anschlüsse: describe() und query()
@@ -444,7 +470,7 @@ Adresse ein. Die Regeln, Sätze und Empfehlungen auf den Seiten laufen ohne KI.
 | `internal/source`, `internal/adapter` | Datenquelle aus den Einstellungen; DuckDB-, Ordner- und Windmill-Adapter, die SQL-Dialekte; DuckDB eingebaut (`duckdb_builtin.go`, mit cgo) oder als CLI |
 | `internal/adapter/snowflake`, `internal/adapter/databricks` | Snowflake über die SQL API, Databricks über die SQL Statement Execution API |
 | `internal/metrics` | Kennzahlen-Definitionen, Prüfung gegen den Katalog, Laden der Zeitreihen, Bearbeiten |
-| `internal/ai`, `internal/lumina` | Claude für Lumina; Fragen-Karten der ersten Oberfläche |
+| `internal/ai`, `internal/lumina` | Lumina mit Claude oder einem Modell hinter der Chat-Completions-Schnittstelle von OpenAI; Fragen-Karten der ersten Oberfläche |
 | `internal/server` | HTTP-API |
 | `internal/i18n` | Lumantics Meldungen auf Englisch: die deutschen Formate mit ihrer Übersetzung, angewandt am Rand der API |
 | `web/src/kosmos/` | der Raum: nummerierte JS-Teile, die `vite.config.ts` zu einem Modul zusammenfügt |
@@ -473,7 +499,7 @@ Adresse ein. Die Regeln, Sätze und Empfehlungen auf den Seiten laufen ohne KI.
 | `PUT /api/katalog/kennzahl/{id}`, `PUT /api/katalog/begriffe` | ergänzen, was der Fachkatalog offen lässt; die Begriffe von Lumantic |
 | `GET /api/katalog/export?format=sql` | den Katalog als SQL für die drei Views im Goldlayer (oder `json`) |
 | `/auth/login`, `/auth/callback`, `/auth/logout` | Anmeldung mit OpenID Connect; beim Proxy nur das Abmelden |
-| `POST /api/settings/ai/test` | eine kurze Anfrage an Claude |
+| `POST /api/settings/ai/test` | eine kurze Anfrage an das Modell |
 | `GET/POST /api/kpis`, `PUT/DELETE /api/kpis/{id}` | Kennzahlen-Definitionen |
 | `POST /api/lumina/ask` | eine Frage an Lumina mit den Fakten des Monats |
 | `GET /api/catalog` | der Katalog, wie Lumina ihn sieht |

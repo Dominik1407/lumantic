@@ -21,7 +21,7 @@ import (
 )
 
 type Translator interface {
-	Mode() string // "claude" or "beispiel"
+	Mode() string // "claude", "beispiel", or "openai" (Elsewhere)
 	Model() string
 	Ask(ctx context.Context, cat *catalog.Catalog, question string) ([]card.Spec, error)
 	Brief(ctx context.Context, cat *catalog.Catalog, about string) ([]card.Spec, error)
@@ -202,6 +202,27 @@ func (c *Claude) Ask(ctx context.Context, cat *catalog.Catalog, question string)
 
 func (c *Claude) Brief(ctx context.Context, cat *catalog.Catalog, about string) ([]card.Spec, error) {
 	return c.call(ctx, cat, "Eine Person beschreibt ihre Rolle und was sie interessiert. Schlage 3 bis 6 Karten vor, die sie jede Woche wirklich braucht, mit sinnvollen Regeln dafür, was gut ist:\n\n"+about)
+}
+
+// ---- another provider ----
+
+// ErrClaudeOnly says why the cards cannot be built: they need Claude.
+var ErrClaudeOnly = errors.New("Karten aus Fragen baut nur Claude. Stell dafür unter Einstellungen › Lumina den Anbieter Anthropic ein. Lumina im Kosmos antwortet auch mit dem jetzigen Modell.")
+
+// Elsewhere stands in while Lumina speaks with a model behind OpenAI's chat
+// completions: the cards of the first board are built by Claude alone, so
+// questions and briefings there answer with ErrClaudeOnly.
+type Elsewhere struct{ Name string }
+
+func (Elsewhere) Mode() string    { return "openai" }
+func (e Elsewhere) Model() string { return e.Name }
+
+func (Elsewhere) Ask(context.Context, *catalog.Catalog, string) ([]card.Spec, error) {
+	return nil, ErrClaudeOnly
+}
+
+func (Elsewhere) Brief(context.Context, *catalog.Catalog, string) ([]card.Spec, error) {
+	return nil, ErrClaudeOnly
 }
 
 // ---- Beispielmodus ----

@@ -1,7 +1,9 @@
-// Package ai connects Lumina to Claude. It builds the one Anthropic client the
-// server uses (token from the secrets file or the environment, an optional
-// company gateway as base URL) and answers questions about the month's key
-// figures. Lumina sees the figures the app shows, never rows of the gold layer.
+// Package ai connects Lumina to a language model: Claude through the Anthropic
+// API (the default), or any model behind OpenAI's chat completions (openai.go).
+// It builds the one client the server uses (token from the secrets file or the
+// environment, an optional company gateway as base URL) and answers questions
+// about the month's key figures. Lumina sees the figures the app shows, never
+// rows of the gold layer. Prompt, schema and Parse are the same for every model.
 package ai
 
 import (
@@ -17,9 +19,11 @@ import (
 	"github.com/anthropics/anthropic-sdk-go/v2/option"
 )
 
-// Settings is what the client needs. AuthToken means Token is a bearer token
-// (ANTHROPIC_AUTH_TOKEN) rather than an API key.
+// Settings is what the client needs. Provider is "anthropic" or "openai" (see
+// config.AI). AuthToken means Token is a bearer token (ANTHROPIC_AUTH_TOKEN)
+// rather than an API key; it only matters for Anthropic.
 type Settings struct {
+	Provider  string
 	Model     string
 	BaseURL   string
 	Token     string
@@ -174,7 +178,9 @@ type reply struct {
 	Blocks []Block `json:"blocks"`
 }
 
-func (c *Claude) Ask(ctx context.Context, q Question) (*Answer, error) {
+// userText is the one user turn of a question: the figures, the words of the
+// team, the question and the language to answer in.
+func userText(q Question) string {
 	facts, _ := json.Marshal(q.Facts)
 	user := "Kennzahlen (" + q.Facts.Month + "):\n" + string(facts)
 	if len(q.Words) > 0 {
@@ -186,7 +192,11 @@ func (c *Claude) Ask(ctx context.Context, q Question) (*Answer, error) {
 	if q.Lang == "en" {
 		lang = "en"
 	}
-	user += "\n\nSprache: " + lang
+	return user + "\n\nSprache: " + lang
+}
+
+func (c *Claude) Ask(ctx context.Context, q Question) (*Answer, error) {
+	user := userText(q)
 	start := time.Now()
 	resp, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:     c.model,
@@ -240,12 +250,30 @@ func (c *Claude) Test(ctx context.Context) error {
 	return nil
 }
 
-var monthRe = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2])$`)
+var (
+	monthRe = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2])$`)
+	// Models without a schema may think aloud first or wrap the JSON in a code block.
+	thinkRe = regexp.MustCompile(`(?s)<think>.*?</think>`)
+	fenceRe = regexp.MustCompile("(?s)```(?:json|JSON)?\\s*(.*?)```")
+)
 
-// Parse reads Claude's JSON reply and keeps only blocks the app can show.
+// jsonOf finds the JSON object in a model's reply: as it is, inside a code
+// block, or from the first { to the last } of the text.
+func jsonOf(text string) string {
+	text = strings.TrimSpace(thinkRe.ReplaceAllString(text, ""))
+	if m := fenceRe.FindStringSubmatch(text); m != nil {
+		text = strings.TrimSpace(m[1])
+	}
+	if i, j := strings.Index(text, "{"), strings.LastIndex(text, "}"); i >= 0 && j > i {
+		text = text[i : j+1]
+	}
+	return text
+}
+
+// Parse reads the model's JSON reply and keeps only blocks the app can show.
 func Parse(text string, q Question) (*Answer, error) {
 	var r reply
-	if err := json.Unmarshal([]byte(strings.TrimSpace(text)), &r); err != nil {
+	if err := json.Unmarshal([]byte(jsonOf(text)), &r); err != nil {
 		return nil, fmt.Errorf("Lumina hat unlesbar geantwortet: %v", err)
 	}
 	r.Answer = strings.TrimSpace(r.Answer)

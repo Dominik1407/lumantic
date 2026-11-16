@@ -69,6 +69,10 @@ func (s *Server) suggestions(w http.ResponseWriter, r *http.Request) {
 // translateError maps Lumina's errors to responses: "no answer" is the
 // person's question not fitting the data; anything else is a service problem.
 func translateError(w http.ResponseWriter, err error) {
+	if errors.Is(err, lumina.ErrClaudeOnly) {
+		fail(w, 409, err.Error())
+		return
+	}
 	var na *lumina.NoAnswer
 	if errors.As(err, &na) {
 		fail(w, 422, na.Msg)

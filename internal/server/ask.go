@@ -43,12 +43,7 @@ func (s *Server) askLumina(w http.ResponseWriter, r *http.Request) {
 	lum := s.lum
 	s.mu.RUnlock()
 	if lum == nil {
-		eff := s.Config.Effective()
-		msg := "Für Lumina ist kein API-Token gesetzt."
-		if !eff.AI.Enabled {
-			msg = "Lumina ist ohne KI eingestellt."
-		}
-		fail(w, 409, msg)
+		fail(w, 409, s.waiting())
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)

@@ -203,6 +203,29 @@ export default async (t) => {
   await t.wait(400);
   check("AI test", (await msgs()).includes("Verbunden mit Claude Opus 5.5"), await msgs());
   await t.shot("11-lumina");
+  // ── another provider: any server with OpenAI's chat completions, here a model on this computer
+  const status = () => q(`return document.querySelector("#settings .s-status").textContent`);
+  const change = (label, v) => q(`const l = [...document.querySelectorAll("#settings .s-field > label")].find((x) => x.textContent === ${JSON.stringify(label)}); if (!l) return false;
+    const i = document.getElementById(l.htmlFor); i.value = ${JSON.stringify(v)}; i.dispatchEvent(new Event("change", { bubbles: true })); return true`);
+  await clickText("#settings [role=radio]", "OpenAI-kompatibel");
+  await t.wait(500);
+  check("another provider asks for its model, no list of Claude models", (await status()).includes("Es fehlt das Modell") && !(await clickText("#settings [role=radio]", "Claude Haiku")), await status());
+  await t.shot("11b-lumina-openai-ohne-modell");
+  check("the model is a name to type", await change("Name des Modells", "llama3.1:8b"));
+  await t.wait(500);
+  check("at OpenAI itself a key is needed", (await status()).includes("API-Token"), await status());
+  await change("Adresse", "http://localhost:11434/v1");
+  await t.wait(600);
+  check("a local model needs no key", (await status()).includes("mit llama3.1:8b über localhost:11434"), await status());
+  check("the privacy line names the computer", (await q(`return document.querySelector("#settings .s-privacy").textContent`)).includes("localhost:11434, auf dem Rechner, auf dem Lumantic läuft"));
+  await clickText(".s-btn", "Verbindung testen");
+  await t.wait(400);
+  check("AI test with the local model", (await msgs()).includes("Verbunden mit llama3.1:8b"), await msgs());
+  await t.shot("11c-lumina-ollama");
+  // Back to Claude: its models again, its token still there.
+  await clickText("#settings [role=radio]", "Anthropic");
+  await t.wait(500);
+  check("back to Claude with its default model", (await status()).includes("mit Claude Opus 5.5") && (await q(`return document.querySelector("#settings .s-privacy").textContent`)).includes("an Anthropic"), await status());
   // ── Über, with the reset step
   await clickText(".s-tabs [role=tab]", "Über");
   await t.wait(200);

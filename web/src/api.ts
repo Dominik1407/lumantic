@@ -72,7 +72,7 @@ export type Unit = "%" | "Mio" | "Mrd" | "Tsd" | "Stk" | "Tage" | "h" | "Zahl";
 
 export interface SecretState { set: boolean; hint: string; source: "datei" | "umgebung" | "" }
 
-export type SecretKey = "anthropicToken" | "windmillToken" | "snowflakeToken" | "databricksToken" | "databricksSecret";
+export type SecretKey = "anthropicToken" | "openaiToken" | "windmillToken" | "snowflakeToken" | "databricksToken" | "databricksSecret";
 // Secrets of a warehouse belong to one Kosmos; the others are shared.
 export type SourceSecrets = Partial<Record<"snowflakeToken" | "databricksToken" | "databricksSecret", string>>;
 
@@ -138,7 +138,8 @@ export interface Settings {
   refresh: RefreshPlan;
   grain: Grain; // the standard raster: «Heute» and the main menu judge in it
   me?: Me;
-  ai: { enabled: boolean; provider: string; model: string; baseURL: string; token: SecretState; models: { id: string; name: string; note: string }[]; ready: boolean };
+  // provider is anthropic or openai (any server with OpenAI's chat completions); missing says what Lumina lacks: off, model, token or "".
+  ai: { enabled: boolean; provider: string; model: string; baseURL: string; token: SecretState; openaiToken: SecretState; models: { id: string; name: string; note: string }[]; ready: boolean; missing: string };
   brand: { name: string; logo: string; logoDark?: string; designs: CorporateDesign[] };
 }
 

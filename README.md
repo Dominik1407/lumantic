@@ -140,7 +140,7 @@ Who sees which Kosmos is a matter of the login (see «Login and rights»).
 | **Start** | the view on opening, where the time lens looks, hints for gestures | you |
 | **Data** | for the Kosmos you are in: connect and test the data source, reload; add key figures, change target, limit and direction; remove the Kosmos | everyone |
 | **Kosmen** | in the main menu in place of «Data»: all Kosmen, add one, remove one | everyone |
-| **Lumina** | AI on or off, model, API token, optionally the address of a company gateway, test the connection | everyone |
+| **Lumina** | AI on or off, provider (Anthropic or OpenAI-compatible), model, API token, address, test the connection | everyone |
 | **About** | version, Kosmos, path of the configuration, reset your own pages | |
 
 What is personal lies in the workspace on the server, what holds for everyone in the
@@ -404,17 +404,40 @@ name and groups from the sign-in:
 Everyone has their own pages, and `zugriff.log` records who signs in and opens which Kosmos.
 Setup in detail: `config/README.md`, section «Anmeldung und Rechte».
 
-## Lumina with Claude
+## Lumina with an AI
 
-Without an API token, Lumina searches questions by keywords. With a token (Settings → Lumina, or
-`ANTHROPIC_API_KEY`) Claude answers the question in one to three sentences and suggests up to
-three charts. The default model is `claude-opus-5-5`.
+Without an AI, Lumina searches questions by keywords. With one, the model answers the question in
+one to three sentences and suggests up to three charts. Lumantic judges the figures with fixed
+rules; the model only puts them into words and answers questions, so a smaller model will do too.
+The rules, sentences and recommendations on the pages run without AI.
 
-Lumina sends the question and the evaluated key figures of the month shown to Anthropic (value,
-previous month, target, limit, level, the last 13 months, parts), no data rows from the gold
-layer. The token lives in `secrets.json`, never in the configuration, and the app shows only its
-last four characters. If access runs through a company gateway, enter its address. The rules,
-sentences and recommendations on the pages run without AI.
+Lumina sends the question and the evaluated key figures of the month shown (value, previous month,
+target, limit, level, the last 13 months, parts), no data rows from the gold layer. Tokens live in
+`secrets.json`, never in the configuration, and the app shows only their last four characters.
+
+**Claude (the default).** With an API token (Settings → Lumina, or `ANTHROPIC_API_KEY`) Claude
+answers; the default model is `claude-opus-5-5`. The figures go to Anthropic. If access runs
+through a company gateway, enter its address.
+
+**Any model behind OpenAI's chat completions.** Under Settings → Lumina choose «OpenAI-compatible»
+(or `ai.provider: "openai"`, `LUMANTIC_AI_PROVIDER=openai`). Many servers offer this interface:
+OpenAI, Azure OpenAI, Ollama, LM Studio, vLLM, Mistral, LiteLLM and many company gateways. Enter:
+
+- **Model**: the name as the server knows it (`gpt-4.1-mini`, `llama3.1:8b`; with Azure the name
+  of the deployment). There is no default.
+- **Address**: empty means `https://api.openai.com/v1`. Ollama: `http://localhost:11434/v1`,
+  LM Studio: `http://localhost:1234/v1`, Azure: `https://NAME.openai.azure.com/openai/v1` (the
+  older address of a deployment with `?api-version=…` works too). An address without a path gets
+  `/v1`.
+- **API token** (or `OPENAI_API_KEY`): needed by OpenAI and Azure, usually not by a local model.
+  For Azure, Lumantic sends it in the `api-key` header, elsewhere as `Authorization: Bearer`.
+
+The figures then go to that server. With a local model (Ollama or LM Studio on your own machine
+or network) nothing leaves your own network. Lumantic first asks for the answer as JSON with a
+schema (`response_format: json_schema`). A server that refuses it gets `json_object`, then only the
+prompt, and Lumantic reads the JSON from the text; it remembers what worked. The cards of the
+first interface (`/api/ask`, `/api/brief`) are built by Claude alone; with another provider those
+routes say so.
 
 ## Architecture
 
@@ -426,7 +449,7 @@ sentences and recommendations on the pages run without AI.
    │  config   settings, environment variables, tokens      │
    │  source   builds the data source from the settings     │
    │  metrics  definitions + gold layer → time series       │
-   │  ai       Claude for Lumina                            │
+   │  ai       Claude or another model for Lumina           │
    │  store    workspace: pages, blocks, look               │
    └────────────┬──────────────────────────────────────────┘
                 │  two connectors: describe() and query()
@@ -448,7 +471,7 @@ sentences and recommendations on the pages run without AI.
 | `internal/source`, `internal/adapter` | data source from the settings; DuckDB, folder and Windmill adapters, the SQL dialects; DuckDB built in (`duckdb_builtin.go`, with cgo) or as the CLI |
 | `internal/adapter/snowflake`, `internal/adapter/databricks` | Snowflake through the SQL API, Databricks through the SQL Statement Execution API |
 | `internal/metrics` | key figure definitions, checks against the catalogue, loading the time series, editing |
-| `internal/ai`, `internal/lumina` | Claude for Lumina; question cards of the first interface |
+| `internal/ai`, `internal/lumina` | Lumina with Claude or a model behind OpenAI's chat completions; question cards of the first interface |
 | `internal/server` | HTTP API |
 | `internal/i18n` | Lumantic's messages in English: the German formats with their translation, applied at the edge of the API |
 | `web/src/kosmos/` | the room: numbered JS parts that `vite.config.ts` joins into one module |
@@ -477,7 +500,7 @@ sentences and recommendations on the pages run without AI.
 | `PUT /api/katalog/kennzahl/{id}`, `PUT /api/katalog/begriffe` | add what the company catalogue leaves open; Lumantic's terms |
 | `GET /api/katalog/export?format=sql` | the catalogue as SQL for the three views in the gold layer (or `json`) |
 | `/auth/login`, `/auth/callback`, `/auth/logout` | sign-in with OpenID Connect; with a proxy only signing out |
-| `POST /api/settings/ai/test` | a short request to Claude |
+| `POST /api/settings/ai/test` | a short request to the model |
 | `GET/POST /api/kpis`, `PUT/DELETE /api/kpis/{id}` | key figure definitions |
 | `POST /api/lumina/ask` | a question to Lumina with the facts of the month |
 | `GET /api/catalog` | the catalogue as Lumina sees it |

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -312,6 +313,60 @@ func TestSecretMakesLuminaReady(t *testing.T) {
 }
 
 func mustJSON(v any) string { b, _ := json.Marshal(v); return string(b) }
+
+func TestLuminaWithOpenAICompatibleServer(t *testing.T) {
+	e := newEnv(t, true, map[string]string{"ANTHROPIC_BASE_URL": "https://gateway.example.ch/anthropic"})
+	// Without a model Lumina waits, and says why.
+	if code, out := e.do("PUT", "/api/settings", `{"ai":{"provider":"openai","model":"","baseURL":"http://localhost:11434/v1"}}`); code != 200 {
+		t.Fatalf("%d %v", code, out)
+	}
+	_, s := e.do("GET", "/api/settings", "")
+	if get(s, "ai.ready") != false || get(s, "ai.missing") != "model" || get(s, "ai.baseURL") != "http://localhost:11434/v1" {
+		t.Fatalf("%v", get(s, "ai"))
+	}
+	if code, out := e.do("POST", "/api/lumina/ask", `{"question":"Wie steht der Wert?","facts":{"figures":[{"id":"x"}]}}`); code != 409 || !strings.Contains(fmt.Sprint(out["error"]), "kein Modell") {
+		t.Fatalf("ask without model: %d %v", code, out)
+	}
+	if _, out := e.do("POST", "/api/settings/ai/test", ""); out["ok"] != false || !strings.Contains(fmt.Sprint(out["error"]), "Es fehlt das Modell") {
+		t.Fatalf("test without model: %v", out)
+	}
+	// A local model needs no key; Claude's gateway variable does not count for it.
+	e.do("PUT", "/api/settings", `{"ai":{"model":"llama3.1:8b"}}`)
+	_, s = e.do("GET", "/api/settings", "")
+	if get(s, "ai.ready") != true || get(s, "ai.missing") != "" || e.lum == nil || e.lum.set.Provider != "openai" || e.lum.set.Model != "llama3.1:8b" || e.lum.set.Token != "" || e.lum.set.BaseURL != "http://localhost:11434/v1" {
+		t.Fatalf("%v %+v", get(s, "ai"), e.lum)
+	}
+	if code, out := e.do("POST", "/api/lumina/ask", `{"question":"Wie steht der Wert?","facts":{"figures":[{"id":"x"}]}}`); code != 200 || out["answer"] == "" {
+		t.Fatalf("ask: %d %v", code, out)
+	}
+	// The cards of the first board need Claude and say so.
+	if code, out := e.do("POST", "/api/ask", `{"question":"Wie entwickelt sich der Wert?"}`); code != 409 || !strings.Contains(fmt.Sprint(out["error"]), "nur Claude") {
+		t.Fatalf("legacy ask: %d %v", code, out)
+	}
+	if _, out := e.do("GET", "/api/meta", ""); get(out, "lumina.mode") != "openai" {
+		t.Fatalf("meta: %v", out)
+	}
+	// At OpenAI itself a key is needed, and it never leaves the server again.
+	e.do("PUT", "/api/settings", `{"ai":{"model":"gpt-4.1-mini","baseURL":""}}`)
+	if _, s = e.do("GET", "/api/settings", ""); get(s, "ai.missing") != "token" {
+		t.Fatalf("%v", get(s, "ai"))
+	}
+	if code, out := e.do("PUT", "/api/settings/secret", `{"key":"openaiToken","value":"sk-proj-test-9876wxyz"}`); code != 200 || out["hint"] != "wxyz" {
+		t.Fatalf("%d %v", code, out)
+	}
+	_, s = e.do("GET", "/api/settings", "")
+	if get(s, "ai.ready") != true || get(s, "ai.openaiToken.hint") != "wxyz" || get(s, "ai.token.set") != false || strings.Contains(mustJSON(s), "sk-proj") || e.lum.set.Token != "sk-proj-test-9876wxyz" {
+		t.Fatalf("%v %+v", get(s, "ai"), e.lum.set)
+	}
+	if _, out := e.do("POST", "/api/settings/ai/test", ""); out["ok"] != true {
+		t.Fatalf("test: %v", out)
+	}
+	// Back to Claude: its own token and its default model.
+	e.do("PUT", "/api/settings", `{"ai":{"provider":"anthropic","model":""}}`)
+	if _, s = e.do("GET", "/api/settings", ""); get(s, "ai.model") != "claude-opus-5-5" || get(s, "ai.missing") != "token" || get(s, "ai.baseURL") != "https://gateway.example.ch/anthropic" {
+		t.Fatalf("%v", get(s, "ai"))
+	}
+}
 
 func TestSecretFromEnvIsLocked(t *testing.T) {
 	e := newEnv(t, true, map[string]string{"ANTHROPIC_API_KEY": "sk-ant-env-0000abcd"})
