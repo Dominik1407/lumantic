@@ -42,6 +42,25 @@ function lensOut() {
   lens.outAt = performance.now();
   glideLens(pg ? clamp(pg.ox + (PAGE_W * cam.z) / 2, r, Math.max(r, W - r)) : W / 2, clamp(H / 2 - 30, r + 70, Math.max(r + 70, H - r - 110)), 420);
 }
+// T: the parked lens comes out as with a click on the coin, the open one parks.
+function lensKey() {
+  if (diving) return;
+  if (!lens.parked) { parkLens(); return; }
+  lens.parked = false; lensSel = true;
+  closeMenu();
+  stopLensGlide();
+  growLens(1);
+  lensClasses();
+  lensOut();
+  lens.outAt = 0; // no double click to finish here
+}
+// < and >: the glass one period back or on. A parked lens comes out first, so the key shows what it did.
+function lensTurn(d) {
+  if (diving) return;
+  if (lens.parked) lensKey();
+  lensSel = true;
+  setLensMonth(shiftBy(lens.m, d));
+}
 // A click beside the open glass sends it back to its corner. Inside the glass the click belongs to the page under it.
 function lensAside(sx, sy) {
   if (lens.parked || diving) return;

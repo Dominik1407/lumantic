@@ -123,6 +123,8 @@ Wer welchen Kosmos sieht, regelt die Anmeldung (siehe «Anmeldung und Rechte»).
 | `←` `→` | eine Periode zurück oder vor (Monat, Quartal oder Jahr), mit `Shift` ein Jahr |
 | `G` | Raster wechseln: Tag, Woche, Monat, Quartal, Jahr |
 | `Z` | zwischen jetzt und dem letzten Monat in der Vergangenheit wechseln |
+| `T` | Zeitlinse hervorholen oder parken |
+| `<` `>` | Zeitlinse eine Periode zurück oder vor drehen |
 | `Leertaste` | Geschichte abspielen oder anhalten |
 | `/` | Baustein einfügen |
 | `↑` `↓` | weiterlesen |

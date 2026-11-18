@@ -122,6 +122,8 @@ Who sees which Kosmos is a matter of the login (see «Login and rights»).
 | `←` `→` | one period back or forward (month, quarter or year), with `Shift` a year |
 | `G` | change the raster: day, week, month, quarter, year |
 | `Z` | switch between now and the last month looked at in the past |
+| `T` | bring out the time lens, or park it |
+| `<` `>` | turn the time lens one period back or forward |
 | `Space` | play or pause the story |
 | `/` | insert a block |
 | `↑` `↓` | read on |

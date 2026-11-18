@@ -512,6 +512,8 @@ document.addEventListener("keydown", (e) => {
   else if (k === "ArrowUp" || k === "ArrowDown") { e.preventDefault(); panBy(0, ((k === "ArrowDown" ? 1 : -1) * 120) / cam.z); }
   else if (k === "PageUp" || k === "PageDown") { e.preventDefault(); panBy(0, ((k === "PageDown" ? 1 : -1) * 0.7 * H) / cam.z); }
   else if (k === "z" || k === "Z") toggleZ();
+  else if (k === "t" || k === "T") lensKey();
+  else if (k === "<" || k === ">") lensTurn(k === ">" ? 1 : -1);
   else if (k === "g" || k === "G") setGrain(AVAILABLE[(AVAILABLE.indexOf(G) + 1) % AVAILABLE.length]);
   else if (k === " " && !onButton) { e.preventDefault(); if (T.playing) stopPlay(); else play(); }
   else if (k === "?") toggleKeys();

@@ -14,6 +14,8 @@ const KEY_ROWS = () => [
     ["slr", ["Shift", "←", "→"], tr("Ein Jahr zurück, vor", "One year back, on")],
     ["g", ["G"], tr("Raster: Tag bis Jahr", "Raster: day to year")],
     ["z", ["Z"], tr("Heute und Rückblick", "Today and looking back")],
+    ["t", ["T"], tr("Zeitlinse hervorholen, parken", "Bring out the time lens, park it")],
+    ["angle", ["<", ">"], tr("Zeitlinse eine Periode zurück, vor", "Time lens one period back, on")],
     ["space", [tr("Leertaste", "Space")], tr("Die Geschichte abspielen", "Play the story")],
   ]],
   [tr("Lesen und bauen", "Read and build"), [
@@ -53,7 +55,7 @@ function keyRow(e) {
   if (/^[1-9]$/.test(k)) return "n";
   if (k === "ArrowLeft" || k === "ArrowRight") return e.shiftKey ? "slr" : "lr";
   if (k === "ArrowUp" || k === "ArrowDown" || k === "PageUp" || k === "PageDown") return "ud";
-  return { " ": "space", "/": "slash", Tab: "tab", Delete: "del", Backspace: "del", ",": "comma", "?": "q" }[k] || k.toLowerCase();
+  return { " ": "space", "/": "slash", Tab: "tab", Delete: "del", Backspace: "del", ",": "comma", "?": "q", "<": "angle", ">": "angle" }[k] || k.toLowerCase();
 }
 // The key lights up in the legend, the way a key gives under the finger.
 function flashKey(e) {

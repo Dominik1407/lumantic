@@ -123,6 +123,23 @@ export default async (t) => {
   await q(`window.__kosmos.dive(${was}); return 1`);
   await until(`const d = window.__kosmos; return d.T.base === ${was} && d.lens.parked && d.lens.k === 0`, 5000);
   await t.wait(600);
+  // T brings the lens out and parks it; < and > turn its month, and a parked lens comes out first.
+  await t.key("t");
+  await t.wait(900);
+  const byKey = await q(`const d = window.__kosmos, l = d.lens, pg = d.pages.get(d.activeId); return { parked: l.parked, k: l.k, off: Math.round(l.x - (pg.ox + (d.PAGE_W * d.cam.z) / 2)), m: l.m }`);
+  check("T brings the lens to the middle of the page", !byKey.parked && byKey.k === 1 && byKey.off === 0, byKey);
+  await t.key("<");
+  await t.wait(300);
+  check("< turns the lens one month back", await q(`return window.__kosmos.lens.m === ${byKey.m - 1}`), await q(`return window.__kosmos.lens.m`));
+  await t.key("t");
+  await t.wait(700);
+  check("T again parks it", await parked());
+  await t.key(">");
+  await t.wait(900);
+  const turned = await q(`const l = window.__kosmos.lens; return { parked: l.parked, k: l.k, m: l.m }`);
+  check("> brings the parked lens out and turns it one month on", !turned.parked && turned.k === 1 && turned.m === byKey.m, turned);
+  await t.key("Escape");
+  await t.wait(600);
   await t.key("h");
   await t.wait(2400);
 
@@ -364,7 +381,7 @@ export default async (t) => {
   // ── the keys: a small legend of the room, and a key pressed lights up in it
   await q(`document.activeElement?.blur(); return 1`);
   await t.key("?");
-  check("? opens the legend of the keys", await until(`return !document.getElementById("keys").hidden && document.querySelectorAll("#keys .keys-row").length === 18`, 3000),
+  check("? opens the legend of the keys", await until(`return !document.getElementById("keys").hidden && document.querySelectorAll("#keys .keys-row").length === 20`, 3000),
     await q(`return document.querySelectorAll("#keys .keys-row").length`));
   await t.key("h");
   await t.wait(120);
