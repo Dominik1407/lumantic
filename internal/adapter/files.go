@@ -108,7 +108,7 @@ func (f *Files) tables(dir string) ([]fileTable, error) {
 		case !e.IsDir() && ext == ".parquet":
 			from = fmt.Sprintf("read_parquet(%s)", QuoteLiteral(p))
 		case !e.IsDir() && ext == ".csv":
-			from = fmt.Sprintf("read_csv_auto(%s)", QuoteLiteral(p))
+			from = fmt.Sprintf("read_csv_auto(%s%s)", QuoteLiteral(p), csvBuffer(e))
 		default:
 			continue
 		}
@@ -120,6 +120,22 @@ func (f *Files) tables(dir string) ([]fileTable, error) {
 		out = append(out, fileTable{name: v, from: from})
 	}
 	return out, nil
+}
+
+// csvBuffer fits the CSV reader's buffer to a small file. DuckDB reserves 32 MB for every read of a CSV file, and a
+// query that reads a table once per column (the values of every text column) adds that up beyond the memory limit.
+// A line is never longer than its file, so the line limit shrinks with it.
+func csvBuffer(e os.DirEntry) string {
+	info, err := e.Info()
+	if err != nil {
+		return ""
+	}
+	const mib = 1 << 20
+	n := (info.Size()/mib + 1) * mib
+	if n >= 32_000_000 {
+		return ""
+	}
+	return fmt.Sprintf(", buffer_size = %d, max_line_size = %d", n, n)
 }
 
 // preamble restricts the process to the folder and defines the views.

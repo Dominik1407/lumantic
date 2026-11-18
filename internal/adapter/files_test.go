@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -87,6 +88,29 @@ func TestFilesReadsCSVAndParquet(t *testing.T) {
 	os.WriteFile(outside, []byte("a\n1\n"), 0o644)
 	if _, err := f.Query(context.Background(), "SELECT * FROM read_csv_auto("+QuoteLiteral(filepath.ToSlash(outside))+")"); err == nil {
 		t.Fatal("reading outside the folder must fail")
+	}
+}
+
+// The values of every text column are asked in one query that reads each CSV file once per column. Small files
+// must not reserve DuckDB's full CSV buffer for every read: 8 tables with 4 text columns stay well under 256 MB.
+func TestFilesManySmallCSVReadsFitInLittleMemory(t *testing.T) {
+	bin := duckdbBin(t)
+	t.Setenv("LUMANTIC_DUCKDB_MEMORY", "256MB")
+	dir := t.TempDir()
+	for i := range 8 {
+		var b strings.Builder
+		b.WriteString("monat,werk,sparte,name,notiz,wert\n")
+		for m := 1; m <= 12; m++ {
+			fmt.Fprintf(&b, "2026-%02d-28,Werk %d,Sparte %d,Name %d,Notiz %d,%d\n", m, m%3, m%4, i, m, m*10)
+		}
+		os.WriteFile(filepath.Join(dir, fmt.Sprintf("tabelle_%d.csv", i)), []byte(b.String()), 0o644)
+	}
+	cat, err := NewFiles(bin, dir, "gold", "Viele").Describe(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c := cat.Table("gold.tabelle_7").Column("werk"); c == nil || len(c.Values) != 3 {
+		t.Fatalf("values of werk: %+v", c)
 	}
 }
 
