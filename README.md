@@ -466,7 +466,7 @@ routes say so.
 | `cmd/lumantic` | the server |
 | `cmd/seed` | writes the example gold layers for development: «ALCO» and «Retail Banking» as a DuckDB file, «Firmenkunden», «Privatkunden» and «Industrie» as CSV folders (all figures invented) |
 | `internal/beispiele` | the examples themselves: stories in numbers that always end last month; the first start writes Industry and ALCO |
-| `config/beispiele/` | key figure definitions of the example Kosmen Industrie, Firmenkunden and Privatkunden |
+| `config/beispiele/` | key figure definitions of the example Kosmen Industrie, Firmenkunden and Privatkunden, and a template for software subscriptions (`saas.json`, see its README) |
 | `config/` | template and description of the settings, corporate designs in `brand/` |
 | `internal/config` | loading, checking and saving the settings; tokens |
 | `internal/auth` | sign-in: none, through a proxy or with OpenID Connect |

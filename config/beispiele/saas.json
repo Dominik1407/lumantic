@@ -1,0 +1,128 @@
+{
+  "title": "Software-Abo (SaaS)",
+  "source": "Goldlayer · Beispiel Software AG",
+  "en": { "title": "Software subscriptions (SaaS)", "source": "Gold layer · Example Software AG" },
+  "groups": [
+    { "id": "umsatz", "name": "Wiederkehrender Umsatz", "en": { "name": "Recurring revenue" } },
+    { "id": "kunden", "name": "Kunden", "en": { "name": "Customers" } },
+    { "id": "wirtschaft", "name": "Wirtschaftlichkeit", "en": { "name": "Profitability" } },
+    { "id": "betrieb", "name": "Betrieb", "en": { "name": "Operations" } }
+  ],
+  "kpis": [
+    {
+      "id": "mrr", "group": "umsatz", "name": "MRR", "long": "Monatlich wiederkehrender Umsatz", "short": "MRR",
+      "unit": "Tsd", "dec": 0, "kind": "stock", "dir": 1,
+      "desc": "Summe der Abo-Beträge, die laufende Kunden pro Monat zahlen, per Monatsende.",
+      "en": { "name": "MRR", "long": "Monthly recurring revenue", "short": "MRR",
+        "desc": "Sum of the subscription amounts that current customers pay per month, at month end.",
+        "formula": "Sum of the monthly subscription amounts of all paying customers" },
+      "formula": "Summe der monatlichen Abo-Beträge aller zahlenden Kunden",
+      "monthly": { "table": "gold.mrr_monat", "value": "mrr_tsd" },
+      "parts": { "mode": "sum", "split": "tarif" }
+    },
+    {
+      "id": "kunden", "group": "kunden", "name": "Zahlende Kunden", "long": "Kunden mit laufendem Abo", "short": "Kunden",
+      "unit": "Zahl", "dec": 0, "kind": "stock", "dir": 1,
+      "desc": "Kunden mit einem bezahlten, laufenden Abo per Monatsende.",
+      "en": { "name": "Paying customers", "long": "Customers with a running subscription", "short": "Customers",
+        "desc": "Customers with a paid, running subscription at month end." },
+      "monthly": { "table": "gold.kunden_monat", "value": "kunden_zahl" }
+    },
+    {
+      "id": "neukunden", "group": "kunden", "name": "Neukunden", "long": "Im Monat gewonnene Kunden", "short": "Neu",
+      "unit": "Zahl", "dec": 0, "kind": "flow", "dir": 1,
+      "desc": "Kunden, deren bezahltes Abo im Monat begonnen hat.",
+      "en": { "name": "New customers", "long": "Customers won in the month", "short": "New",
+        "desc": "Customers whose paid subscription started in the month." },
+      "monthly": { "table": "gold.kunden_monat", "value": "neukunden_zahl" }
+    },
+    {
+      "id": "churn", "group": "kunden", "name": "Kundenabgang", "long": "Kunden, die im Monat gekündigt haben, in Prozent", "short": "Churn",
+      "unit": "%", "dec": 1, "kind": "avg", "dir": -1,
+      "desc": "Anteil der Kunden vom Monatsanfang, die im Monat nicht mehr zahlen.",
+      "en": { "name": "Customer churn", "long": "Customers who cancelled in the month, in percent", "short": "Churn",
+        "desc": "Share of the customers at the start of the month who no longer pay in the month.",
+        "formula": "Customers lost in the month ÷ customers at the start of the month" },
+      "formula": "Im Monat verlorene Kunden ÷ Kunden am Monatsanfang",
+      "monthly": { "table": "gold.kunden_monat", "value": "churn_pct" }
+    },
+    {
+      "id": "nrr", "group": "kunden", "name": "Net Revenue Retention", "long": "Umsatz der Bestandskunden gegenüber dem Vorjahr", "short": "NRR",
+      "unit": "%", "dec": 0, "kind": "ratio", "dir": 1,
+      "limit": 100, "limitName": "Untergrenze (Bestand wächst nicht)",
+      "desc": "Wie viel die Kunden, die vor einem Jahr schon zahlten, heute zahlen, mit Upgrades und Kündigungen. Unter 100 % schrumpft der Bestand.",
+      "en": { "name": "Net revenue retention", "long": "Revenue of existing customers compared with a year ago", "short": "NRR",
+        "desc": "How much the customers who already paid a year ago pay today, with upgrades and cancellations. Below 100 % the existing base shrinks.",
+        "limitName": "Lower bound (base does not grow)",
+        "formula": "MRR today of the customers of 12 months ago ÷ MRR of these customers 12 months ago" },
+      "formula": "MRR heute der Kunden von vor 12 Monaten ÷ MRR dieser Kunden vor 12 Monaten",
+      "monthly": { "table": "gold.kunden_monat", "value": "nrr_pct" },
+      "parts": { "mode": "ratio", "kind": "stock", "columns": [
+        { "name": "MRR heute", "column": "mrr_bestand_tsd" },
+        { "name": "MRR vor 12 Monaten", "column": "mrr_vorjahr_tsd" } ] }
+    },
+    {
+      "id": "bruttomarge", "group": "wirtschaft", "name": "Bruttomarge", "long": "Bruttomarge der Abo-Umsätze", "short": "Marge",
+      "unit": "%", "dec": 0, "kind": "avg", "dir": 1,
+      "desc": "Was vom Abo-Umsatz nach den direkten Kosten für Betrieb und Support übrig bleibt.",
+      "en": { "name": "Gross margin", "long": "Gross margin of the subscription revenue", "short": "Margin",
+        "desc": "What is left of the subscription revenue after the direct costs of running and supporting the service.",
+        "formula": "(Subscription revenue − direct costs of running the service) ÷ subscription revenue" },
+      "formula": "(Abo-Umsatz − direkte Kosten des Betriebs) ÷ Abo-Umsatz",
+      "monthly": { "table": "gold.kpi_monat", "value": "bruttomarge_pct" }
+    },
+    {
+      "id": "ltvcac", "group": "wirtschaft", "name": "LTV zu CAC", "long": "Kundenwert im Verhältnis zu den Kosten der Gewinnung", "short": "LTV:CAC",
+      "unit": "Zahl", "dec": 1, "kind": "avg", "dir": 1,
+      "target": 3, "targetName": "Faustregel (3 zu 1)",
+      "desc": "Wie viel ein Kunde über seine Laufzeit einbringt, verglichen mit dem, was seine Gewinnung kostet.",
+      "en": { "name": "LTV to CAC", "long": "Customer value relative to the cost of winning the customer", "short": "LTV:CAC",
+        "desc": "What a customer brings in over their lifetime, compared with what winning them costs.",
+        "targetName": "Rule of thumb (3 to 1)",
+        "formula": "Customer lifetime value (LTV) ÷ cost of winning the customer (CAC)" },
+      "formula": "Kundenwert über die Laufzeit (LTV) ÷ Kosten der Kundengewinnung (CAC)",
+      "monthly": { "table": "gold.kpi_monat", "value": "ltv_cac_faktor" }
+    },
+    {
+      "id": "rule40", "group": "wirtschaft", "name": "Rule of 40", "long": "Umsatzwachstum plus Gewinnmarge", "short": "Rule of 40",
+      "unit": "%", "dec": 0, "kind": "avg", "dir": 1,
+      "target": 40, "targetName": "Faustregel (40 %)",
+      "desc": "Umsatzwachstum und Gewinnmarge in Prozent zusammengezählt. 40 oder mehr gilt als ausgewogen.",
+      "en": { "name": "Rule of 40", "long": "Revenue growth plus profit margin", "short": "Rule of 40",
+        "desc": "Revenue growth and profit margin in percent added together. 40 or more counts as balanced.",
+        "targetName": "Rule of thumb (40 %)",
+        "formula": "Revenue growth year on year (%) + profit margin (%)" },
+      "formula": "Umsatzwachstum zum Vorjahr (%) + Gewinnmarge (%)",
+      "monthly": { "table": "gold.kpi_monat", "value": "rule_of_40_pct" }
+    },
+    {
+      "id": "verfuegbarkeit", "group": "betrieb", "name": "Verfügbarkeit", "long": "Anteil der Zeit, in der der Dienst erreichbar war", "short": "Uptime",
+      "unit": "%", "dec": 2, "kind": "avg", "dir": 1,
+      "limit": 99.9, "limitName": "Zusage im Vertrag (anpassen)",
+      "desc": "Anteil des Monats, in dem der Dienst für die Kunden erreichbar war.",
+      "en": { "name": "Availability", "long": "Share of the time the service was reachable", "short": "Uptime",
+        "desc": "Share of the month in which the service was reachable for customers.",
+        "limitName": "Promise in the contract (adjust)",
+        "formula": "Minutes with the service reachable ÷ minutes in the month" },
+      "formula": "Minuten mit erreichbarem Dienst ÷ Minuten des Monats",
+      "monthly": { "table": "gold.betrieb_monat", "value": "verfuegbarkeit_pct" }
+    }
+  ],
+  "terms": [
+    {
+      "term": "MRR", "definition": "Monatlich wiederkehrender Umsatz aus laufenden Abos.",
+      "synonyms": ["Monthly Recurring Revenue", "wiederkehrender Umsatz"], "kpi": "mrr",
+      "en": { "term": "MRR", "definition": "Monthly recurring revenue from running subscriptions." }
+    },
+    {
+      "term": "Churn", "definition": "Kunden, die ihr Abo beenden, im Verhältnis zu allen Kunden zu Beginn des Zeitraums.",
+      "synonyms": ["Kundenabgang", "Kündigungsquote"], "kpi": "churn",
+      "en": { "term": "Churn", "definition": "Customers who end their subscription, relative to all customers at the start of the period." }
+    },
+    {
+      "term": "NRR", "definition": "Umsatz der Bestandskunden heute im Verhältnis zu ihrem Umsatz vor einem Jahr.",
+      "synonyms": ["Net Revenue Retention", "Net Dollar Retention"], "kpi": "nrr",
+      "en": { "term": "NRR", "definition": "Revenue of existing customers today relative to their revenue a year ago." }
+    }
+  ]
+}

@@ -465,7 +465,7 @@ nur Claude; mit einem anderen Anbieter sagen diese Routen das.
 | `cmd/lumantic` | Server |
 | `cmd/seed` | erzeugt zum Entwickeln die Beispiel-Goldlayer «ALCO» und «Retail Banking» als DuckDB-Datei, «Firmenkunden», «Privatkunden» und «Industrie» als CSV-Ordner (alle Zahlen erfunden) |
 | `internal/beispiele` | die Beispiele selbst: Geschichten in Zahlen, die immer im letzten Monat enden; der erste Start schreibt Industrie und ALCO |
-| `config/beispiele/` | Kennzahlen-Definitionen der Beispiel-Kosmen «Industrie», «Firmenkunden» und «Privatkunden» |
+| `config/beispiele/` | Kennzahlen-Definitionen der Beispiel-Kosmen «Industrie», «Firmenkunden» und «Privatkunden» und eine Vorlage für Software-Abos (`saas.json`, siehe dessen README) |
 | `config/` | Vorlage und Beschreibung der Einstellungen, Firmen-Designs in `brand/` |
 | `internal/config` | Einstellungen laden, prüfen, speichern; Tokens |
 | `internal/auth` | Anmeldung: keine, über einen Proxy oder mit OpenID Connect |
