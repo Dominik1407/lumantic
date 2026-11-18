@@ -534,12 +534,7 @@ app in Edge without a window with real keys and clicks, and puts screenshots in
 
 ## Next steps
 
-- Rights on single parts of a key figure (region East sees only East) and rights like Windows
-  folder rights
-- Suggesting the key figures of a new Kosmos from its tables
-- Holidays when spreading targets over working days (per canton)
-- A morning report as a message in Teams or by mail
-- Correcting for multiple comparisons when Lumina checks very many series
+What is planned, and what Lumantic deliberately does not do: [ROADMAP.md](ROADMAP.md).
 
 ## Help test it
 

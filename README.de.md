@@ -533,11 +533,7 @@ Bildschirmfotos in `scripts/ui-test/shots/` ab.
 
 ## Nächste Schritte
 
-- Rechte auf einzelne Teile einer Kennzahl (Region Ost sieht nur Ost) und Rechte wie die Windows-Ordnerrechte
-- Kennzahlen eines neuen Kosmos aus seinen Tabellen vorschlagen
-- Feiertage beim Verteilen von Zielen auf Arbeitstage (je nach Kanton)
-- Lagebericht als Nachricht in Teams oder per Mail, jeden Morgen
-- Korrektur für Mehrfachvergleiche, wenn Lumina sehr viele Reihen prüft
+Was geplant ist und was Lumantic bewusst nicht tut: [ROADMAP.md](ROADMAP.md) (englisch).
 
 ## Beim Testen helfen
 
