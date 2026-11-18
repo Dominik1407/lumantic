@@ -155,6 +155,7 @@ type Bound struct {
 	Kind  string  `json:"kind"` // "ziel" or "grenze"
 	Value float64 `json:"value"`
 	Name  string  `json:"name,omitempty"`
+	En    Words   `json:"en,omitempty"`    // name
 	From  string  `json:"from,omitempty"`  // first month, YYYY-MM or YYYY-MM-DD; empty = from the start
 	Until string  `json:"until,omitempty"` // last month, inclusive; empty = open
 	// Per says what time a flow's value covers: "jahr" (the default for a
@@ -587,18 +588,30 @@ func Load(ctx context.Context, ad adapter.Adapter, cat *catalog.Catalog, c *Conf
 			conv = func(v float64, per, month string) float64 { return toMonth(v, per, month, phasing, k.Profile) }
 		}
 		if len(k.Bounds) > 0 || (k.Kind == "flow" && k.TargetPer == "jahr" && k.Target != nil) {
-			var tn, ln string
-			kpi.Targets, kpi.Target, tn, kpi.TargetPer = boundSeries(k.Bounds, "ziel", k.Target, k.TargetPer, d.Months, conv)
-			kpi.Limits, kpi.Limit, ln, _ = boundSeries(k.Bounds, "grenze", k.Limit, "monat", d.Months, conv)
+			var tb, lb Bound
+			kpi.Targets, kpi.Target, tb, kpi.TargetPer = boundSeries(k.Bounds, "ziel", k.Target, k.TargetPer, d.Months, conv)
+			kpi.Limits, kpi.Limit, lb, _ = boundSeries(k.Bounds, "grenze", k.Limit, "monat", d.Months, conv)
 			if k.Kind != "flow" {
 				kpi.TargetPer = ""
 			}
-			// A bound's name ("Budget 2026", "Mindestwert") speaks where the figure gives none.
+			// A bound's name ("Budget 2026", "Mindestwert") speaks where the figure gives none, and its English name
+			// in English. That goes to a copy: k.En belongs to the definitions.
+			en := func(field string, b Bound) {
+				if kpi.En[field] == "" && b.En["name"] != "" {
+					w := Words{}
+					for f, v := range kpi.En {
+						w[f] = v
+					}
+					kpi.En = w.With(field, b.En["name"])
+				}
+			}
 			if kpi.TargetName == "" {
-				kpi.TargetName = tn
+				kpi.TargetName = tb.Name
+				en("targetName", tb)
 			}
 			if kpi.LimitName == "" {
-				kpi.LimitName = ln
+				kpi.LimitName = lb.Name
+				en("limitName", lb)
 			}
 		}
 		if kpi.Short == "" {
@@ -660,14 +673,14 @@ func Load(ctx context.Context, ad adapter.Adapter, cat *catalog.Catalog, c *Conf
 // that always holds) where none applies, the later bound where two do. conv
 // turns a value into the month's (an annual budget into its share). It
 // returns nil when nothing changes over time, then the value of the last
-// month, the name of the bound that holds then and what time it covers.
-func boundSeries(bounds []Bound, kind string, base *float64, basePer string, months []string, conv func(v float64, per, month string) float64) ([]*float64, *float64, string, string) {
+// month, the bound that holds then (for its name) and what time it covers.
+func boundSeries(bounds []Bound, kind string, base *float64, basePer string, months []string, conv func(v float64, per, month string) float64) ([]*float64, *float64, Bound, string) {
 	any := false
 	for _, b := range bounds {
 		any = any || b.Kind == kind
 	}
 	if (!any && (basePer != "jahr" || base == nil)) || len(months) == 0 {
-		return nil, base, "", ""
+		return nil, base, Bound{}, ""
 	}
 	ym := func(s string) string {
 		if len(s) > 7 {
@@ -676,7 +689,8 @@ func boundSeries(bounds []Bound, kind string, base *float64, basePer string, mon
 		return s
 	}
 	out := make([]*float64, len(months))
-	name, per := "", basePer
+	var named Bound
+	per := basePer
 	for i, m := range months {
 		out[i], per = nil, basePer
 		if base != nil {
@@ -695,12 +709,12 @@ func boundSeries(bounds []Bound, kind string, base *float64, basePer string, mon
 				v := conv(b.Value, p, m)
 				out[i], per = &v, p
 				if i == len(months)-1 {
-					name = b.Name
+					named = b
 				}
 			}
 		}
 	}
-	return out, out[len(out)-1], name, per
+	return out, out[len(out)-1], named, per
 }
 
 func columnsOf(p *Parts) []string {

@@ -302,8 +302,10 @@ function born(b) {
   if (v) v.el.animate([{ opacity: 0, translate: "0 10px" }, { opacity: 1, translate: "0 0" }], { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)" });
   if (st) { st.el.classList.remove("is-born"); void st.el.offsetWidth; st.el.classList.add("is-born"); }
 }
-// Blocks that changed places glide there, and their stars with them.
-function flip(pg, old) {
+// Blocks that changed places glide there, and their stars with them. While the story plays the next change comes
+// after 280 ms, and a hand that drags through time is quicker still: there the glide ends before it, and a block that
+// has to move down makes room twice as fast. Until it has, it lies on what grew above it.
+function flip(pg, old, mode) {
   let any = false;
   for (const b of blocksOf(pg)) {
     const o = old.get(b.id);
@@ -312,7 +314,8 @@ function flip(pg, old) {
   }
   if (pg.flipStop) { pg.flipStop(); pg.flipStop = null; }
   if (!any) { for (const b of blocksOf(pg)) b.fy = b.fy0 = 0; return; }
-  pg.flipStop = tween(420, (e) => { for (const b of blocksOf(pg)) b.fy = b.fy0 * (1 - e); }, easeOut, () => { pg.flipStop = null; });
+  const brisk = mode === "scrub";
+  pg.flipStop = tween(brisk ? 200 : 420, (e) => { const down = brisk ? Math.min(1, e * 2) : e; for (const b of blocksOf(pg)) b.fy = b.fy0 * (1 - (b.fy0 < 0 ? down : e)); }, easeOut, () => { pg.flipStop = null; });
 }
 // Writes a page for the month of the room.
 // mode: "init" first paint · "scrub" while dragging or playing · "step" one deliberate change of month · "edit" the person changed the page.
@@ -332,7 +335,7 @@ function renderPage(pg, mode) {
   updateLabel(pg);
   syncStars(pg);
   measure(pg);
-  if (live) flip(pg, old); else for (const b of blocksOf(pg)) b.fy = b.fy0 = 0;
+  if (live) flip(pg, old, mode); else for (const b of blocksOf(pg)) b.fy = b.fy0 = 0;
   for (const b of blocksOf(pg)) VIEWS.get(b.id).fresh = false;
   invalidate();
 }
