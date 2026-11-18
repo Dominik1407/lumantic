@@ -9,6 +9,7 @@ Bibliotheken. Jede Änderung hier geht mit dem Push auf `main` live (`.github/wo
 | `styles.css` | Gestaltung. Die Designs sind dieselben Tokens wie in der App (`web/src/styles/themes.css`) |
 | `app.js` | Was sich bewegt: der Auftakt (ein Stern, der aufleuchtet), der Flug vom Überblick in die Seite, dazu die Räume Zeit, Bauen und Design |
 | `fonts/` | Die Schriften der App als Latin-Subsets, mit ihrer Lizenz (`fonts/LICENSE.txt`) |
+| `social-preview.png` | Das Bild, das erscheint, wenn jemand die Seite teilt (`og:image`, 1280 × 640); dasselbe gehört auf GitHub unter Settings › General › Social preview |
 
 Ansehen: `index.html` im Browser öffnen. In Echtzeit prüfen wie die App, mit einem eigenen Szenario:
 
