@@ -18,7 +18,7 @@ import (
 	"sync"
 )
 
-const Version = "0.12.0"
+const Version = "0.12.1"
 
 type Windmill struct {
 	URL       string `json:"url"`
